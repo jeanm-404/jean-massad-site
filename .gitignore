@@ -1,0 +1,20 @@
+# dependencies (installed via `npm install`)
+node_modules/
+
+# local tooling / editor state
+.vercel
+.claude/
+.thumbnail
+.DS_Store
+
+# scratch + pristine video backups (regenerate-able)
+scratch/
+uploads/cases/_originals/
+
+# legacy media from earlier iterations — NOT used by the live site
+uploads/work/
+uploads/*.mp4
+uploads/*.webp
+uploads/*.csv
+uploads/CleanShot*.png
+uploads/pasted-*.png

@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en" data-reveal="pending">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Jean Massad — DEV (live app.jsx)</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400..600&family=JetBrains+Mono:wght@400;500&display=swap" />
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <!-- LOCAL DEV ONLY: live-compiles app.jsx in the browser via Babel so
+       edits show on refresh with no build step. Production is index.html
+       (precompiled app.compiled.js + minified React). Run `npm run build`
+       before deploying so the two stay in sync. dev.html is not shipped. -->
+  <div id="root"></div>
+
+  <script type="module">
+    import { animate } from 'https://cdn.jsdelivr.net/npm/animejs@4/+esm';
+    window.__anime = { animate };
+  </script>
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js"></script>
+  <script type="text/babel" src="app.jsx"></script>
+</body>
+</html>

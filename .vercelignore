@@ -1,0 +1,11 @@
+scratch/
+.thumbnail
+.claude/
+uploads/*.csv
+node_modules/
+package.json
+package-lock.json
+app.jsx
+dev.html
+covers.html
+uploads/cases/_originals/

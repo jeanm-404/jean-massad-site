@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Konpo covers — save helper</title>
+<style>
+  body { font-family: -apple-system, sans-serif; background: #fbfbfb; padding: 32px; }
+  h1 { font-size: 16px; } p { color: #666; font-size: 13px; max-width: 640px; }
+  .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-top: 24px; }
+  figure { margin: 0; }
+  img { width: 100%; display: block; border-radius: 4px; border: 1px solid #e5e5e5; }
+  figcaption { font-size: 11px; color: #888; margin-top: 6px; font-family: ui-monospace, monospace; }
+</style>
+</head>
+<body>
+<h1>Konpo work covers</h1>
+<p><strong>Right-click each image → “Save Image As…” → save into
+<code>~/portfolio/jean-website/jean-website/project/uploads/work/</code></strong>
+(keep the suggested filenames — I’ll map + rename them automatically). Or select all → drag to that folder in Finder.</p>
+<div class="grid" id="g"></div>
+<script>
+const covers = {
+  "fyler": "683ef51fa9f1670e9d3939dd_Frame%20427320758%20(1).webp",
+  "amp": "671e4d42dc757970e5c1bafa_Cover%20(1).webp",
+  "coachable": "65d91cc90e98644f5b265476_Frame%208143.webp",
+  "hair-skin": "661f996e8b52c11215bed5b2_Hair%20and%20Skin%20(3).webp",
+  "hutte": "65f7cdbe84038dee307aa718_Hutte%20(1).webp",
+  "relias": "65e13b5aa62fd047c8bd0531_Relias-Cover%20(2x).webp",
+  "system-one": "65f29e64e4be675e92d26d6e_SystemOne%20(1).webp",
+  "clinical-ink": "65f290090a852f8285540309_Clinical%20Ink%20-%20product%20design.webp",
+  "flair": "65f294c053f7c30d8d4584fc_Cover%20(2).webp",
+  "moveek": "66362d918481b8f28cb94a82_Home%20screen%20(1).webp",
+  "whitelight": "65d861dfa0146d2c5bf6a1e0_cover-wl.webp",
+  "surge-ai": "6807492f56666aa7f9d2d128_surge1.jpg",
+  "nantucket": "65f7c958d69a4a3407574278_Nantucket%20(1).webp",
+  "vectornator": "65d1333ee2e33453afc5629f_Vectornator%20main.webp",
+  "kudanil": "6911d5d03b2503fa6b304a3b_1.webp",
+  "cada": "65f29bfb870cb15ee329bdad_Cada.webp",
+  "linearity": "65f299f48271b5b81f8482bb_Linearity.webp",
+  "circles-life": "65f29aba1b05369ff0c304c6_Circle.life.webp",
+  "zello": "65f3027e2e2eb2657866e0c9_Zello.webp",
+  "possible-ventures": "65f29873bb030e2ac24bfe91_Possible%20Ventures.webp",
+  "compsych": "6992a2e0cb7221fdb5f7f3f6_ComPsych%20Branding%20.webp",
+  "vectron": "65f3051d0d2aaa5763006435_Vectron%20(1).webp",
+};
+const base = 'https://cdn.prod.website-files.com/65544f28fc8e963bc080b6f4/';
+const g = document.getElementById('g');
+for (const [name, file] of Object.entries(covers)) {
+  const f = document.createElement('figure');
+  const i = document.createElement('img');
+  i.src = base + file;
+  i.loading = 'lazy';
+  const c = document.createElement('figcaption');
+  c.textContent = name;
+  f.appendChild(i); f.appendChild(c); g.appendChild(f);
+}
+</script>
+</body>
+</html>

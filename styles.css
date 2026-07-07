@@ -1,0 +1,1511 @@
+/* ───────────────────────────────────────────────
+   Jean Massad — personal site
+   B&W indy-tech, monospace accents
+   ─────────────────────────────────────────────── */
+
+/* ───── reveal-on-load (blur-in) ─────
+   Avatar stays visible immediately; everything else fades+un-blurs
+   in a soft staggered cascade. Grid cells reveal one at a time fast
+   via per-cell --i delay. */
+@keyframes jm-reveal {
+  from { opacity: 0; filter: blur(10px); transform: translateY(4px); }
+  to   { opacity: 1; filter: blur(0);    transform: translateY(0); }
+}
+@keyframes jm-reveal-cell {
+  from { opacity: 0; filter: blur(6px); }
+  to   { opacity: 1; filter: blur(0); }
+}
+
+/* Pre-reveal: hide everything except the avatar so layout doesn't pop.
+   We use [data-reveal="pending"] on <html> so first paint is already hidden. */
+html[data-reveal="pending"] .reveal,
+html[data-reveal="pending"] .reveal-chunk,
+html[data-reveal="pending"] .reveal-grid {
+  opacity: 0;
+}
+
+/* Behind the gate: the whole page stays dark and content hidden until
+   the switch is flipped. Also covers the pre-React flash. */
+html[data-reveal="pending"] body { background: #0600f4; }
+html[data-reveal="pending"] .container { opacity: 0; }
+
+/* Per-word reveal — used inside .intro-paragraph */
+.reveal-word {
+  display: inline-block;
+  white-space: pre;
+}
+html[data-reveal="pending"] .reveal-word { opacity: 0; }
+@keyframes jm-reveal-word {
+  from { opacity: 0; filter: blur(6px); }
+  to   { opacity: 1; filter: blur(0); }
+}
+html[data-reveal="go"] .reveal-word {
+  animation: jm-reveal-word 480ms cubic-bezier(.2,.7,.2,1) both;
+  animation-delay: var(--reveal-delay, 0ms);
+}
+
+
+/* Once revealing, run the animation with staggered delays. */
+html[data-reveal="go"] .reveal {
+  animation: jm-reveal 700ms cubic-bezier(.2,.7,.2,1) both;
+  animation-delay: var(--reveal-delay, 0ms);
+}
+/* Inline chunks: no translateY (would break line flow), gentler distance. */
+@keyframes jm-reveal-inline {
+  from { opacity: 0; filter: blur(8px); }
+  to   { opacity: 1; filter: blur(0); }
+}
+html[data-reveal="go"] .reveal-chunk {
+  animation: jm-reveal-inline 620ms cubic-bezier(.2,.7,.2,1) both;
+  animation-delay: var(--reveal-delay, 0ms);
+}
+
+/* Grid: fade the entire grid in as one block, after the text reveal. */
+@keyframes jm-reveal-grid {
+  from { opacity: 0; filter: blur(6px); transform: translateY(4px); }
+  to   { opacity: 1; filter: blur(0);   transform: translateY(0); }
+}
+html[data-reveal="go"] .reveal-grid {
+  animation: jm-reveal-grid 900ms cubic-bezier(.2,.7,.2,1) both;
+  animation-delay: var(--grid-reveal-delay, 11600ms);
+  transform-origin: top left;
+  will-change: opacity, filter, transform;
+}
+
+/* Respect reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  html[data-reveal="go"] .reveal,
+  html[data-reveal="go"] .reveal-chunk,
+  html[data-reveal="go"] .reveal-grid {
+    animation: none;
+    opacity: 1;
+    filter: none;
+    transform: none;
+  }
+}
+
+
+:root {
+  /* Velvet-style neutrals — zero chroma, opacity tiers on black */
+  --ink: rgba(0, 0, 0, 0.85);
+  --ink-2: rgba(0, 0, 0, 0.72);
+  --muted: rgba(0, 0, 0, 0.55);
+  --muted-2: rgba(0, 0, 0, 0.42);
+  --muted-3: rgba(0, 0, 0, 0.30);
+  --rule: rgba(0, 0, 0, 0.08);
+  --rule-2: rgba(0, 0, 0, 0.05);
+  --accent: #0600f4;   /* Konpo blue — the gate's color, used sparingly */
+  --paper: #fbfbfb;
+  --surface: #f5f5f5;
+  --paper-2: #f5f5f5;
+  --solid: #161616;
+
+  --radius: 10px;
+
+  --sans: "Inter", -apple-system, BlinkMacSystemFont, "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --mono: "JetBrains Mono", "IBM Plex Mono", "SF Mono", ui-monospace, Menlo, monospace;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: 15px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+::selection { background: var(--ink); color: var(--paper); }
+
+a { color: inherit; }
+.ulink {
+  text-decoration: none;
+  border-bottom: 1px solid currentColor;
+  padding-bottom: 0.5px;
+  transition: color .18s, border-color .18s;
+}
+.ulink:hover {
+  color: var(--muted);
+  border-bottom-color: var(--muted-2);
+}
+
+.mono {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.01em;
+}
+
+/* inline brand chips (Konpo / Surge AI) */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 3px 12px 3px 9px;
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  background: var(--surface);
+  text-decoration: none;
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.4;
+  color: var(--ink);
+  white-space: nowrap;
+  /* baseline comes from the chip's TEXT (first flex item in DOM);
+     the logo is pulled left visually via order — this keeps the
+     chip text sitting exactly on the paragraph baseline */
+  vertical-align: baseline;
+  transition: border-color .15s ease, background-color .15s ease, transform .15s ease;
+}
+a.chip:hover {
+  border-color: var(--muted-3);
+  background: #efefef;
+  transform: translateY(-1px);
+}
+.chip-logo {
+  display: block;
+  order: -1;
+  height: 14px;
+  width: auto;
+}
+/* round avatar inside the Jean chip */
+.chip-avatar {
+  display: block;
+  order: -1;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+.chip-logo--konpo { color: #9747ff; }
+.chip-logo--surge { color: #782396; }
+
+/* ──── gate (light-switch entry) ──── */
+.gate {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #0600f4;
+  /* .gate--on is added at the moment the struggling knob breaks
+     through (~1.35s after click): flood 0.6s, then fade out */
+  transition:
+    background-color .6s ease,
+    opacity .45s ease .8s,
+    visibility 0s linear 1.3s;
+}
+.gate--on {
+  background: var(--paper);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+.gate-toggle {
+  appearance: none;
+  -webkit-appearance: none;
+  -webkit-tap-highlight-color: transparent;
+  position: relative;
+  display: inline-block;
+  width: 116px;
+  height: 64px;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.16);
+  cursor: pointer;
+  padding: 0;
+  transition: background-color .45s ease;
+}
+/* the real switch under the finger — invisible but tappable, so iOS
+   fires its native switch haptic on the actual user gesture */
+.gate-toggle-input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+.gate-toggle:hover { background: rgba(255, 255, 255, 0.22); }
+.gate-toggle--on,
+.gate-toggle--on:hover { background: var(--solid); }
+.gate-toggle-knob {
+  position: absolute;
+  top: 5px;
+  left: 5px;
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.35);
+  /* no CSS transition — anime.js (outInBounce) drives the transform;
+     a frame-driven animation fights transitions on the same property */
+}
+
+/* reopened gate (footer toggle) fades back in — fully opaque well
+   before the hidden page reset happens at +700ms */
+.gate--fadein { animation: gate-fadein .35s ease-out both; }
+@keyframes gate-fadein {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* mini footer toggle — same switch, colophon-scaled, starts ON */
+.gate-toggle--mini {
+  width: 58px;
+  height: 32px;
+  background: rgba(0, 0, 0, 0.14);
+}
+.gate-toggle--mini:hover { background: rgba(0, 0, 0, 0.20); }
+.gate-toggle--mini.gate-toggle--on,
+.gate-toggle--mini.gate-toggle--on:hover { background: #0600f4; }
+.gate-toggle--mini .gate-toggle-knob {
+  top: 3px;
+  left: 3px;
+  width: 26px;
+  height: 26px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gate, .gate-toggle, .gate-toggle-knob { transition: none; }
+  .gate--fadein { animation: none; }
+}
+
+/* ──── whiteboard / blueprint decoration ────
+   A quiet graph-paper grid materializes with the white flood,
+   plus chanhdai-style column hairlines and hatched dividers.
+   Everything shares ONE coordinate system: the 32px cell, with
+   origin at the container's top-left corner. Paddings (64 = 2
+   cells, 96 = 3 cells), hairlines (32 = 1 cell) and dividers
+   (snapped via JS) all land exactly on grid lines. */
+:root {
+  --board-grid: rgba(0, 0, 0, 0.035);
+  --board-cell: 32px;
+  --board-inset: calc(var(--board-cell) * 1);  /* hairlines: 1 cell in */
+  --pad-x: 64px;                               /* container side padding, 2 cells */
+}
+
+/* gate page: no scrollbars until the switch is flipped */
+html[data-reveal="pending"] { overflow: hidden; }
+/* reserve the scrollbar gutter permanently so the viewport width
+   doesn't change when the reveal unlocks scrolling — otherwise the
+   centered gate toggle visibly shifts sideways mid-transition */
+html { scrollbar-gutter: stable; }
+/* never allow horizontal scroll */
+body { overflow-x: clip; }
+/* The grid scrolls with the page and spans the FULL viewport width;
+   its pattern is phase-aligned to the container origin via JS
+   (backgroundPositionX) so lines stay on the content coordinates. */
+.board-grid {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  left: calc(50% - 50vw);
+  width: 100vw;
+  z-index: -1;
+  pointer-events: none;
+  background-image:
+    linear-gradient(to right,  var(--board-grid) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--board-grid) 1px, transparent 1px);
+  background-size: var(--board-cell) var(--board-cell);
+  opacity: 0;
+}
+
+/* paper masks: hero + footer bands are grid-free between the main
+   vertical hairlines (the grid stays visible in the outer gutters).
+   Vertical extents are set by JS from the divider positions. */
+.board-cover {
+  position: absolute;
+  left: var(--board-inset);
+  right: var(--board-inset);
+  z-index: -1;
+  background: var(--paper);
+  pointer-events: none;
+}
+.board-cover--hero { top: 0; height: 0; }
+.board-cover--foot { bottom: 0; }
+@keyframes board-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+html[data-reveal="go"] .board-grid {
+  animation: board-in .5s ease 100ms both;
+}
+
+/* top frame rule — exactly one square down from the very top of the
+   page, spanning the whiteboard box so it crosses both column hairlines */
+.board-topline {
+  position: absolute;
+  top: var(--board-cell);
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: var(--rule);
+  pointer-events: none;
+  transform: scaleX(0);
+  transform-origin: left;
+}
+@keyframes board-line-draw-x {
+  from { transform: scaleX(0); }
+  to   { transform: scaleX(1); }
+}
+html[data-reveal="go"] .board-topline {
+  animation: board-line-draw-x .5s cubic-bezier(.3, .6, .2, 1) 250ms both;
+}
+
+/* full-height column hairlines (drawn top→down after the flip) */
+.container::before,
+.container::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: var(--rule);
+  pointer-events: none;
+  transform: scaleY(0);
+  transform-origin: top;
+}
+.container::before { left: var(--board-inset); }
+.container::after  { right: var(--board-inset); }
+@keyframes board-line-draw {
+  from { transform: scaleY(0); }
+  to   { transform: scaleY(1); }
+}
+html[data-reveal="go"] .container::before,
+html[data-reveal="go"] .container::after {
+  animation: board-line-draw .5s cubic-bezier(.3, .6, .2, 1) 250ms both;
+}
+
+/* hatched divider bands — full-bleed 45° stripes between sections.
+   Exactly 1 cell tall; JS snaps their top edge to a grid row, so
+   both rules sit on background lines. */
+.board-divider {
+  /* span the whiteboard (container box), not the viewport — 100vw
+     includes the scrollbar and causes overflow + off-center bands */
+  width: calc(100% + 2 * var(--pad-x));
+  margin-left: calc(-1 * var(--pad-x));
+  /* +1px so the bottom rule overlaps the next grid line exactly;
+     the -1px margin keeps everything below on the grid rhythm */
+  height: calc(var(--board-cell) + 1px);
+  margin-bottom: -1px;
+  border-top: 1px solid var(--rule-2);
+  border-bottom: 1px solid var(--rule-2);
+  background-image: repeating-linear-gradient(
+    315deg,
+    var(--rule) 0,
+    var(--rule) 1px,
+    transparent 1px,
+    transparent 6px
+  );
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html[data-reveal="go"] .board-grid,
+  html[data-reveal="go"] .board-topline,
+  html[data-reveal="go"] .container::before,
+  html[data-reveal="go"] .container::after {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* ──── layout ──── */
+.page { min-height: 100vh; }
+.container {
+  /* Full width on large screens with comfortable side margins.
+     All box metrics are multiples of --board-cell (32px) so edges
+     land on the whiteboard grid: 96 = 3 cells, 64 = 2 cells.
+     Top: ONE square above the frame rule, content one square below it. */
+  position: relative;
+  z-index: 1;
+  max-width: 1920px;
+  margin: 0 auto;
+  padding: 64px var(--pad-x) 96px;
+  display: flex;
+  flex-direction: column;
+  gap: 64px;
+}
+
+.top-row {
+  display: grid;
+  /* Intro stays at a readable width; elsewhere column is exactly 16
+     grid cells wide, anchored to the content's right edge — its left
+     edge lands on a board grid column. */
+  grid-template-columns: minmax(420px, 720px) calc(var(--board-cell) * 16);
+  gap: 64px;
+  align-items: start;
+  justify-content: space-between;
+}
+.top-intro { min-width: 0; max-width: 720px; }
+.top-elsewhere {
+  min-width: 0;
+  /* align with the first line of the intro paragraph (skip avatar height + margin) */
+  padding-top: 74px;
+}
+
+/* Grid + feed stretch to fill the full container width so cells / tiles get larger. */
+.grid-area {
+  width: 100%;
+  /* cancel the container gap (2 cells): the feed starts flush at the
+     divider band's bottom rule, the tiles' 1-cell FIG row fills the
+     next square, so each THUMBNAIL starts exactly one square below
+     the divider */
+  margin-top: calc(var(--board-cell) * -2);
+}
+
+@media (max-width: 1100px) {
+  /* 32 = 1 cell: hairlines sit exactly on the content edge */
+  :root { --pad-x: 32px; }
+  .container { padding: 64px var(--pad-x) 96px; }
+  .top-row { grid-template-columns: minmax(0, 720px) auto; }
+}
+@media (max-width: 900px) {
+  /* mobile: 24px cell so the tighter padding stays on-grid */
+  :root { --board-cell: 24px; --pad-x: 24px; }
+  .container {
+    padding: 48px var(--pad-x) 72px;  /* top 2 cells, bottom 3 */
+    gap: 48px;                        /* 2 × 24 */
+  }
+  .top-row {
+    grid-template-columns: 1fr;
+    gap: 24px;
+    max-width: none;
+  }
+  .top-elsewhere { padding-top: 0; }
+  /* the column hairlines coincide with the content margin down here —
+     too heavy right against the text; the topline carries the frame */
+  .container::before, .container::after { display: none; }
+}
+
+/* ──── headline (typographical opener) ──── */
+.headline-block {
+  max-width: 1100px;
+}
+.headline-eyebrow {
+  /* same voice as the intro body text */
+  margin: 0 0 22px;
+  font-family: var(--sans);
+  font-size: 18px;
+  line-height: 1.55;
+  letter-spacing: -0.012em;
+  color: var(--ink);
+  text-wrap: pretty;
+}
+/* chips-only row: a little air between pills */
+.headline-eyebrow .chip { margin-right: 6px; }
+.headline {
+  margin: 0;
+  font-family: var(--sans);
+  font-size: clamp(34px, 4.6vw, 64px);
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  line-height: 1.12;
+  color: var(--ink);
+  text-wrap: balance;
+}
+.headline .hl-muted {
+  color: var(--muted-2);
+  font-weight: 480;
+}
+
+@media (max-width: 720px) {
+  .headline { font-size: clamp(28px, 8vw, 34px); }
+}
+
+/* ──── intro ──── */
+.intro {
+  padding: 0 0 8px;
+  margin-bottom: 0;
+}
+
+.mono-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--muted);
+  margin-bottom: 36px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.mono-dot {
+  width: 5px; height: 5px; border-radius: 50%;
+  background: var(--muted-2);
+  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.05);
+  margin-right: 2px;
+}
+
+.intro-paragraph {
+  font-family: var(--sans);
+  font-size: 18px;
+  line-height: 1.55;
+  font-weight: 400;
+  color: var(--ink);
+  margin: 0 0 22px;
+  letter-spacing: -0.012em;
+  text-wrap: pretty;
+}
+
+.intro-paragraph .ulink { border-bottom-color: var(--muted-2); }
+
+/* ──── github contribution map — accent blue, quiet ──── */
+.contrib { margin: 34px 0 0; }
+.contrib-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+.contrib-label {
+  margin-bottom: 0;
+  text-decoration: none;
+}
+.contrib-label:hover { color: var(--ink-2); }
+.contrib-count {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  color: var(--muted-3);
+}
+.contrib-grid {
+  display: flex;
+  gap: 3px;
+}
+.contrib-week {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  flex: 1;
+  min-width: 0;
+}
+.contrib-cell {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: 2px;
+  background: rgba(0, 0, 0, 0.045);
+}
+.contrib-cell--pad { background: transparent; }
+.contrib-cell[data-level="1"] { background: rgba(6, 0, 244, 0.18); }
+.contrib-cell[data-level="2"] { background: rgba(6, 0, 244, 0.40); }
+.contrib-cell[data-level="3"] { background: rgba(6, 0, 244, 0.68); }
+.contrib-cell[data-level="4"] { background: #0600f4; }
+/* opacity-only sweep — 371 cells, so no blur/transform here */
+html[data-reveal="pending"] .contrib-cell { opacity: 0; }
+@keyframes jm-contrib { from { opacity: 0; } to { opacity: 1; } }
+html[data-reveal="go"] .contrib-cell {
+  animation: jm-contrib 420ms ease-out both;
+  animation-delay: var(--reveal-delay, 0ms);
+}
+@media (max-width: 600px) {
+  .contrib-grid, .contrib-week { gap: 2px; }
+  .contrib-cell { border-radius: 1.5px; }
+}
+
+/* ──── brag slot — switch the angle on the brag paragraph ──── */
+.brag-slot {
+  margin: 28px 0 32px;
+  padding: 20px 22px 18px;
+  border: 1px solid var(--rule);
+  border-radius: 10px;
+  background: var(--paper);
+}
+.brag-slider {
+  position: relative;
+  width: 100%;
+  margin: 0 0 18px;
+  user-select: none;
+}
+.brag-track {
+  position: relative;
+  height: 1px;
+  background: var(--rule);
+  margin-bottom: 10px;
+}
+.brag-thumb {
+  position: absolute;
+  top: 50%;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--solid);
+  border: 2px solid var(--paper);
+  box-shadow: 0 0 0 1px var(--solid);
+  transform: translate(-50%, -50%);
+  transition: left 220ms cubic-bezier(.4, .1, .2, 1);
+}
+.brag-ticks {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+.brag-tick {
+  appearance: none;
+  background: none;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  color: var(--muted-2);
+  transition: color 180ms ease;
+}
+.brag-tick:hover { color: var(--muted); }
+.brag-tick--on { color: var(--ink); }
+.brag-dot {
+  width: 1px;
+  height: 4px;
+  background: currentColor;
+  opacity: 0.6;
+}
+.brag-tick--on .brag-dot { opacity: 1; }
+.brag-label {
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  text-transform: lowercase;
+  font-feature-settings: "tnum" 1;
+  color: inherit;
+}
+.brag-text {
+  margin: 0;
+  transition: opacity 140ms ease;
+}
+.brag-text--out { opacity: 0; }
+
+/* tiny audio/pronunciation link */
+.pron-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  margin-left: 4px;
+  vertical-align: 1px;
+  color: var(--muted);
+  border-radius: 2px;
+  transition: color .14s ease, background-color .14s ease, transform .14s ease;
+}
+.pron-link:hover {
+  color: var(--ink);
+  background: rgba(0, 0, 0, 0.05);
+  transform: translateY(-1px);
+}
+.pron-icon { display: block; }
+
+.inline-portrait {
+  display: inline-block;
+  width: 22px;
+  height: 22px;
+  vertical-align: -5px;
+  margin: 0 3px;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 35% 30%, #efefe9 0%, #d6d6cf 45%, #b9b9b1 100%),
+    repeating-linear-gradient(45deg, #d0d0c8 0 3px, #c5c5bd 3px 6px);
+  background-blend-mode: multiply;
+  border: 1px solid var(--rule);
+}
+
+.inline-portrait--jean {
+  width: 26px;
+  height: 26px;
+  vertical-align: -7px;
+  margin: 0 6px 0 0;
+  background: url("jean-avatar.png") center / cover no-repeat;
+  background-blend-mode: normal;
+  border: 1px solid var(--rule);
+}
+
+.block-portrait {
+  display: block;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  margin: 0 0 18px;
+  border: 1px solid var(--rule);
+  position: relative;
+  overflow: hidden;
+}
+.block-portrait--jean {
+  background: #3633fc url("jean-avatar.png") center / cover no-repeat;
+}
+
+/* ──── scroll nav (avatar bar that appears on scroll) ──── */
+.scroll-nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 50;
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(-6px);
+  transition: opacity .3s ease, transform .3s ease;
+}
+.scroll-nav--on {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+/* progressive-blur layer behind the avatar — fades out at the bottom edge */
+.scroll-nav-blur {
+  position: absolute;
+  inset: 0 0 -28px 0;
+  backdrop-filter: blur(14px) saturate(110%);
+  -webkit-backdrop-filter: blur(14px) saturate(110%);
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--paper) 78%, transparent) 0%,
+    color-mix(in srgb, var(--paper) 60%, transparent) 50%,
+    transparent 100%
+  );
+  mask-image: linear-gradient(180deg, #000 0%, #000 60%, transparent 100%);
+  -webkit-mask-image: linear-gradient(180deg, #000 0%, #000 60%, transparent 100%);
+  pointer-events: none;
+}
+.scroll-nav-inner {
+  position: relative;
+  max-width: 1920px;
+  margin: 0 auto;
+  padding: 16px 64px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.scroll-nav-avatar {
+  display: inline-block;
+  text-decoration: none;
+}
+.scroll-nav-portrait {
+  width: 36px;
+  height: 36px;
+  margin: 0;
+}
+.scroll-nav-name {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 2px;
+  text-decoration: none;
+  color: var(--ink);
+}
+.scroll-nav-name-text {
+  font-family: var(--sans);
+  font-size: 16px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  line-height: 1;
+}
+.scroll-nav-dotcom {
+  display: inline-block;
+  width: 30px;
+  height: 22px;
+  color: var(--ink);
+  margin-left: -2px;
+  /* tiny rotate so it feels hand-placed */
+  transform: rotate(-2deg) translateY(2px);
+  filter: drop-shadow(0 0 0.4px currentColor);
+  overflow: visible;
+}
+@media (max-width: 720px) {
+  .scroll-nav-inner { padding: 12px 24px; gap: 10px; }
+  .scroll-nav-portrait { width: 32px; height: 32px; }
+  .scroll-nav-name-text { font-size: 14px; }
+  .scroll-nav-dotcom { width: 27px; height: 20px; }
+}
+
+/* spacer pushes content to the right edge */
+.scroll-nav-spacer { flex: 1; }
+
+/* media pop on hover (snow/surf) */
+.ulink--media {
+  position: relative;
+}
+.media-pop {
+  position: absolute;
+  bottom: calc(100% + 10px);
+  left: 50%;
+  transform: translate(-50%, 4px);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .18s ease, transform .18s ease;
+  z-index: 30;
+  width: 180px;
+  border: 0.5px solid var(--rule);
+  background: var(--paper);
+  border-radius: var(--radius);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.10);
+  padding: 4px;
+  overflow: hidden;
+}
+.ulink--media:hover .media-pop {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+.media-pop-img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  background-size: cover;
+  background-position: center;
+  border-radius: calc(var(--radius) - 4px);
+}
+.media-pop-img--snow {
+  background-color: #d6e3ee;
+  background-image:
+    radial-gradient(circle at 30% 20%, rgba(255,255,255,0.9) 0%, transparent 30%),
+    radial-gradient(circle at 70% 60%, rgba(255,255,255,0.7) 0%, transparent 35%),
+    linear-gradient(180deg, #c8d8e8 0%, #8aa6c4 60%, #4a6480 100%);
+}
+.media-pop-img--surf {
+  background-color: #1d4a6e;
+  background-image:
+    radial-gradient(ellipse at 50% 70%, rgba(255,255,255,0.8) 0%, transparent 25%),
+    repeating-linear-gradient(180deg, rgba(255,255,255,0.08) 0 4px, transparent 4px 10px),
+    linear-gradient(180deg, #2c8aa6 0%, #1d4a6e 70%, #0f2a44 100%);
+}
+
+.intro-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 36px;
+  color: var(--muted);
+}
+.intro-meta .mono { font-size: 11px; }
+.dot-sep { color: var(--muted-3); font-size: 11px; user-select: none; }
+
+/* ──── assets feed (masonry) ──── */
+/* section rhythm comes from the container gap + the tiles' own
+   cell-multiple margins — no extra off-grid padding */
+.feed-section { padding: 0; }
+
+/* glitch hover link in footer */
+.glitch-link {
+  display: inline-block;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+}
+.glitch-link-text {
+  white-space: nowrap;
+}
+.feed-masonry {
+  /* Row-major grid of covers; each row is followed by a full-width
+     expansion band (grid-column 1/-1). Column gap only — row rhythm
+     comes from the tiles' own cell-multiple margins, so a collapsed
+     0-height band adds no phantom gap. `column-count` is unused by
+     grid layout but snap() reads it for the whiteboard width math;
+     the actual tracks come from an inline style set in JS. */
+  display: grid;
+  gap: 0 var(--board-cell);
+  align-items: start;
+  column-count: 2;
+}
+@media (max-width: 480px)  { .feed-masonry { column-count: 1; } }
+/* desktop: covers stagger across the 12-track grid (spans/offsets in JS).
+   Mobile/tablet keep one track per cover — no --cspan/--cmt applied. */
+@media (min-width: 901px) {
+  .feed-masonry > .proj {
+    grid-column: span var(--cspan, 4);
+    margin-top: calc(var(--cmt, 0) * var(--board-cell));
+  }
+}
+
+/* ──── project stack — cover + inline fold, no popup ──── */
+.proj-fold {
+  display: grid;
+  grid-template-rows: 0fr;
+  visibility: hidden;
+  transition: grid-template-rows .45s cubic-bezier(.2, .7, .2, 1), visibility 0s .45s;
+}
+.proj-fold--open {
+  grid-template-rows: 1fr;
+  visibility: visible;
+  transition: grid-template-rows .45s cubic-bezier(.2, .7, .2, 1), visibility 0s 0s;
+}
+.proj-fold-inner {
+  min-height: 0;
+  /* clip while folding, but let the frames' corner ticks breathe */
+  overflow: clip;
+  overflow-clip-margin: 6px;
+}
+.proj-fold--open .proj-fold-inner { overflow: visible; }
+/* cards drop in with a small stagger once the fold opens */
+.proj-fold .proj-card {
+  opacity: 0;
+  transform: translateY(-6px);
+  transition: opacity .3s ease, transform .3s ease;
+}
+.proj-fold--open .proj-card {
+  opacity: 1;
+  transform: none;
+  transition-delay: calc(120ms + var(--j, 0) * 70ms);
+}
+.asset-expand {
+  display: inline-block;
+  margin-left: 10px;
+  color: var(--accent);   /* solid Konpo blue, no opacity tier */
+  font-variant-numeric: tabular-nums;
+}
+/* focus mode: while any project is unfolded, the others step back —
+   a light blur + fade; hover eases them halfway forward again */
+.proj { transition: opacity .45s ease, filter .45s ease; }
+.feed-masonry--focus .proj:not(.proj--open) {
+  opacity: 0.32;
+  filter: blur(6px);
+}
+.feed-masonry--focus .proj:not(.proj--open):hover {
+  opacity: 0.7;
+  filter: blur(1.5px);
+}
+/* the expansion band spans the whole whiteboard; its cards run two
+   across on desktop — roughly half the canvas each */
+.proj-band { grid-column: 1 / -1; }
+.proj-band-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);   /* mobile: single column */
+  column-gap: var(--board-cell);
+  align-items: start;
+}
+@media (min-width: 481px) {
+  .proj-band-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+/* desktop canvas: 12-col grid, cards scatter via --span / --mt (set in JS) */
+@media (min-width: 901px) {
+  .proj-band-grid {
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+  }
+  .proj-band-grid > .proj-card {
+    grid-column: span var(--span, 6);
+    margin-top: calc(var(--mt, 0) * var(--board-cell));
+  }
+}
+
+/* intro card — white board with accent-blue name + subtitle */
+.proj-intro .asset-frame,
+.proj-close .asset-frame {
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+}
+.proj-intro-inner {
+  width: 100%;
+  height: 100%;
+  background: var(--accent);
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 20px;
+}
+.proj-intro-tag {
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  color: rgba(255, 255, 255, 0.6);
+  margin-bottom: auto;
+}
+.proj-intro-name {
+  font-family: var(--sans);
+  font-size: 17px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+  color: #fff;
+}
+.proj-intro-sub {
+  font-family: var(--sans);
+  font-size: 13px;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.72);
+  max-width: 38ch;
+  text-wrap: pretty;
+}
+
+/* close card — full accent blue, ends the project */
+.proj-close {
+  appearance: none;
+  border: 0;
+  font: inherit;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.proj-close-inner {
+  width: 100%;
+  height: 100%;
+  background: var(--accent);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  transition: filter .18s ease;
+}
+.proj-close:hover .proj-close-inner { filter: brightness(1.12); }
+.proj-close-label {
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+/* rail + masonry layout: rail is 5 cells, gap 1 cell */
+.feed-layout {
+  display: grid;
+  /* minmax(0, 1fr): an fr track refuses to shrink below its content's
+     min-width, which let wide tiles push past the right hairline */
+  grid-template-columns: calc(var(--board-cell) * 5) minmax(0, 1fr);
+  gap: var(--board-cell);
+  align-items: start;
+}
+.work-rail {
+  position: sticky;
+  top: var(--board-cell);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.work-rail-item {
+  appearance: none;
+  border: 0;
+  background: none;
+  padding: 4px 0;
+  text-align: left;
+  font-family: var(--sans);
+  font-size: 17px;
+  line-height: 1.5;
+  color: var(--muted-2);
+  cursor: pointer;
+  transition: color .14s ease;
+}
+.work-rail-item:hover { color: var(--muted); }
+.work-rail-item--on { color: var(--ink); }
+.work-rail-dot { font-size: 11px; vertical-align: 2px; }
+@media (max-width: 900px) {
+  .feed-layout { grid-template-columns: 1fr; }
+  .work-rail {
+    position: static;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 4px 18px;
+    margin-bottom: 8px;
+  }
+}
+
+.asset-tile {
+  appearance: none;
+  border: 0;
+  background: none;
+  padding: 0;
+  font: inherit;
+  text-align: left;
+  width: 100%;
+  display: block;
+  margin: 0 0 var(--board-cell);
+  break-inside: avoid;
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.asset-tile--cover { position: relative; }
+/* the real switch under the finger (same trick as the gate): a tap on
+   the cover toggles an actual switch control → native iOS haptic */
+.cover-switch {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+.asset-tile--cover .asset-media { transition: transform .18s ease; }
+.asset-tile--cover:hover .asset-media { transform: translateY(-2px); }
+.asset-tile--cover:hover .asset-title { color: var(--ink); text-decoration: underline; text-underline-offset: 3px; }
+figure.asset-tile { cursor: default; }
+
+/* ──── expanded view (recent.design-style) ──── */
+.work-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px;
+  background: rgba(251, 251, 251, 0.86);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  animation: modal-in .18s ease-out;
+}
+@keyframes modal-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+.work-modal-panel {
+  position: relative;
+  width: min(1080px, 100%);
+  max-height: calc(100vh - 64px);
+  overflow-y: auto;
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.14);
+  animation: panel-in .22s cubic-bezier(.2, .8, .3, 1);
+}
+@keyframes panel-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.work-modal-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 2;
+  appearance: none;
+  border: 1px solid var(--rule);
+  background: rgba(251, 251, 251, 0.9);
+  color: var(--muted);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  padding: 6px 10px;
+  cursor: pointer;
+  transition: color .14s ease, border-color .14s ease;
+}
+.work-modal-close:hover { color: var(--ink); border-color: var(--muted-3); }
+.work-modal-media {
+  background: var(--surface);
+  border-bottom: 1px solid var(--rule);
+}
+.work-modal-media video {
+  display: block;
+  width: 100%;
+  max-height: 64vh;
+  object-fit: contain;
+}
+.work-modal-body { padding: 24px 28px 28px; }
+.work-modal-title {
+  margin: 0 0 8px;
+  font-family: var(--sans);
+  font-size: 22px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+}
+.work-modal-desc {
+  margin: 0 0 18px;
+  font-size: 15px;
+  line-height: 1.65;
+  color: var(--ink-2);
+  max-width: 60ch;
+  text-wrap: pretty;
+}
+/* key/value info grid — muted labels left, ink values right-aligned,
+   hairline rules between rows; multi-value fields stack */
+.work-info { margin-top: 4px; }
+.work-info-row {
+  display: grid;
+  grid-template-columns: minmax(96px, auto) 1fr;
+  gap: 24px;
+  align-items: start;
+  padding: 13px 0;
+  border-top: 1px solid var(--rule);
+}
+.work-info-label {
+  font-size: 15px;
+  color: var(--muted-2);
+}
+.work-info-value {
+  font-size: 15px;
+  color: var(--ink);
+  text-align: right;
+}
+.work-info-value--stack {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: flex-end;
+}
+/* frame wraps the media so corner marks can sit outside its clipped edges */
+.asset-frame { position: relative; }
+
+/* media block — quiet gray canvas, sharp blueprint corners */
+.asset-media {
+  position: relative;
+  width: 100%;
+  background: var(--surface);
+  overflow: hidden;
+  box-shadow: inset 0 0 0 0.5px rgba(0, 0, 0, 0.06);
+}
+.asset-media--img img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+/* JS snaps media heights to whole cells; images then cover-crop */
+.asset-media--locked img,
+.asset-media--fixed img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+/* real video assets — ambient autoplay loops, cover-cropped */
+.asset-media--video video {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.asset-media--canvas {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* figure number — floats in the single grid square ABOVE the media,
+   right-aligned; exactly one cell tall so tile pitch stays on-grid */
+.asset-fig {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  height: var(--board-cell);
+  margin: 0 2px;
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  color: var(--muted-3);
+  white-space: nowrap;
+}
+
+/* meta row below the media — exactly one grid cell tall so tile
+   pitch (media + meta + margin) stays a whole number of cells */
+.asset-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  height: var(--board-cell);
+  margin: 0 2px;
+}
+.asset-meta-left {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+}
+.asset-idx {
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  color: var(--muted-3);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.asset-title {
+  font-family: var(--sans);
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: -0.005em;
+  line-height: 1.4;
+  color: var(--ink);
+}
+.asset-note {
+  font-size: 10px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--muted-2);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* video placeholder — quiet play affordance */
+.asset-play {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  background: var(--solid);
+  color: #fff;
+  transition: transform .16s ease;
+}
+.asset-play svg { margin-left: 2px; }
+.asset-media:hover .asset-play { transform: scale(1.06); }
+
+/* gif placeholder */
+.asset-gif {
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  color: var(--muted-3);
+}
+
+/* ──── live component demos (velvet-style) ──── */
+.demo-toggle {
+  appearance: none;
+  -webkit-appearance: none;
+  position: relative;
+  width: 46px;
+  height: 28px;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.14);
+  cursor: pointer;
+  padding: 0;
+  transition: background-color .22s ease;
+}
+.demo-toggle--on { background: var(--solid); }
+.demo-toggle-knob {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.18);
+  transition: transform .22s cubic-bezier(.3, .8, .3, 1);
+}
+.demo-toggle--on .demo-toggle-knob { transform: translateX(18px); }
+
+.demo-book {
+  appearance: none;
+  -webkit-appearance: none;
+  border: 0;
+  border-radius: 999px;
+  background: var(--solid);
+  color: #fff;
+  font-family: var(--sans);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: -0.005em;
+  padding: 8px 18px;
+  cursor: pointer;
+  transition: transform .16s ease, background-color .2s ease;
+}
+.demo-book:hover { transform: scale(1.03); }
+.demo-book--done {
+  background: rgba(0, 0, 0, 0.55);
+  transform: scale(0.98);
+}
+
+.demo-segment {
+  display: inline-flex;
+  gap: 2px;
+  padding: 3px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.05);
+}
+.demo-segment-btn {
+  appearance: none;
+  -webkit-appearance: none;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--muted);
+  font-family: var(--sans);
+  font-size: 11px;
+  font-weight: 500;
+  padding: 5px 12px;
+  cursor: pointer;
+  transition: background-color .16s ease, color .16s ease;
+}
+.demo-segment-btn:hover { color: var(--ink); }
+.demo-segment-btn--on {
+  background: #fff;
+  color: var(--ink);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.10);
+}
+
+/* ──── footer (top-right "elsewhere" block) ──── */
+.footer {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: 0;
+  min-width: 200px;
+}
+.footer-row {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+.footer-label {
+  font-family: var(--mono);
+  font-size: 9px;
+  color: var(--muted-2);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 14px;
+}
+.footer-links {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.footer-links a { font-size: 13px; }
+
+/* elsewhere column: each link is a full-width ruled row, so the
+   rules visibly extend to the content's right edge */
+.top-elsewhere .footer-links { gap: 0; }
+.top-elsewhere .footer-links li { border-bottom: 1px solid var(--rule); }
+.top-elsewhere .footer-links li:first-child { border-top: 1px solid var(--rule); }
+.top-elsewhere .footer-links .ulink {
+  display: block;
+  width: 100%;
+  padding: 9px 0;
+  border-bottom: none;
+}
+.top-elsewhere .footer-links .ulink:hover { color: var(--accent); }
+.footer-note {
+  font-size: 11px;
+  color: var(--muted);
+  margin: 0 0 4px;
+  line-height: 1.6;
+  text-wrap: pretty;
+}
+.footer-note .mono { font-size: 10px; }
+
+/* colophon — centered below the grid */
+.colophon {
+  margin-top: 32px;
+  text-align: center;
+  max-width: 360px;
+  margin-left: auto;
+  margin-right: auto;
+}
+/* small centered rule between the toggle and the note */
+.colophon-rule {
+  height: 1px;
+  background: var(--rule);
+  margin: 40px 0 32px;
+}
+.colophon .footer-label { margin-bottom: 14px; }
+.colophon .footer-note {
+  font-size: 11px;
+  color: var(--muted);
+  margin: 0 auto 8px;
+  max-width: 32ch;
+  text-wrap: pretty;
+}
+.colophon .footer-note.mono { font-size: 10px; }
+
+@media (max-width: 900px) {
+  /* 24 = 1 cell on the mobile grid */
+  .colophon { margin-top: 24px; }
+}
+
+/* responsive */
+@media (max-width: 720px) {
+  .intro-paragraph { font-size: 16px; }
+  .footer-row { grid-template-columns: 1fr; gap: 24px; }
+}
