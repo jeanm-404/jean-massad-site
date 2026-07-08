@@ -1365,8 +1365,9 @@ function feedIsDesktop() {
 // widths (spans summing to 12) + vertical offsets, cycling per row, so
 // the feed itself reads like a canvas. Mobile / tablet stay uniform.
 const COVER_SPANS = [[7, 5], [5, 7], [8, 4]];
-// second card drops ~half a card-height (covers ≈14 cells) below the first
-const COVER_MTS = [[0, 7], [0, 6], [0, 8]];
+// second card drops a few cells below the first — enough offset to keep
+// the canvas feel without opening half-a-card of dead scroll per row
+const COVER_MTS = [[0, 3], [0, 2], [0, 4]];
 function coverSlot(rowIdx, colIdx, desktop) {
   if (!desktop) return null;                 // only desktop staggers
   const spans = COVER_SPANS[rowIdx % COVER_SPANS.length];
@@ -1397,7 +1398,7 @@ function ProjectCover({ project, index, open, onToggle, bandId, slotStyle }) {
   const fig = `FIG_${String(index + 1).padStart(3, '0')}`;
   const guard = useTapGuard();
   return (
-    <div className={`proj ${open ? 'proj--open' : ''}`} style={slotStyle || undefined}>
+    <div className={`proj ${open ? 'proj--open' : ''}`} data-proj={project.key} style={slotStyle || undefined}>
       <label
         className="asset-tile asset-tile--cover reveal"
         style={{ '--reveal-delay': `${5700 + index * 100}ms` }}
@@ -1416,6 +1417,14 @@ function ProjectCover({ project, index, open, onToggle, bandId, slotStyle }) {
         <span className="asset-fig mono">{fig}</span>
         <div className="asset-frame">
           <AssetMedia asset={project.cover} />
+          {/* the clicked cover IS the project's info card: open → the
+              media fades under an accent-blue panel with tag/name/sub,
+              and the band below holds only the pieces */}
+          <div className="cover-info" aria-hidden={!open}>
+            <span className="cover-info-tag mono">{(project.tag || project.cat).toUpperCase()}</span>
+            <span className="cover-info-name">{project.title}</span>
+            <span className="cover-info-sub">{project.sub}</span>
+          </div>
         </div>
         <div className="asset-meta">
           <span className="asset-meta-left">
@@ -1448,9 +1457,9 @@ function useLingering(value, ms) {
 // plus a staggered vertical offset — so frames land at different sizes
 // and heights, like pinned to a whiteboard rather than stacked in a grid.
 const CANVAS_SPLITS = [[7, 5], [4, 8], [6, 6], [8, 4], [5, 7]];
-// second card of each pair drops ~half a card height (~14 cells) below
-// the first — the same pronounced offset the covers use
-const CANVAS_MTS = [7, 6, 8, 7, 6];
+// second card of each pair drops a few cells below the first — the same
+// tightened offset the covers use, so open projects scan quickly too
+const CANVAS_MTS = [3, 2, 4, 3, 2];
 function canvasSlot(i) {
   const pair = Math.floor(i / 2), side = i % 2;
   const span = CANVAS_SPLITS[pair % CANVAS_SPLITS.length][side];
@@ -1466,27 +1475,17 @@ function RowBand({ project, bandId, onClose }) {
   const open = !!project;
   const idx = shown ? PROJECTS.indexOf(shown) : -1;
   const fig = idx >= 0 ? `FIG_${String(idx + 1).padStart(3, '0')}` : '';
-  const lastI = shown ? shown.cards.length + 1 : 0;
+  const lastI = shown ? shown.cards.length : 0;
   const closeGuard = useTapGuard();
   return (
     <div className={`proj-fold proj-band ${open ? 'proj-fold--open' : ''}`} id={bandId}>
       <div className="proj-fold-inner">
         {shown && (
           <div className="proj-band-grid">
-            {/* intro card — full accent blue, white technical type.
-                No meta row: nothing prints outside the card but its FIG. */}
-            <figure className="asset-tile proj-card proj-intro" style={{ '--j': 0, ...canvasSlot(0) }} key="intro">
-              <span className="asset-fig mono">{fig}</span>
-              <div className="asset-frame">
-                <div className="proj-intro-inner">
-                  <span className="proj-intro-tag mono">{(shown.tag || shown.cat).toUpperCase()}</span>
-                  <span className="proj-intro-name">{shown.title}</span>
-                  <span className="proj-intro-sub">{shown.sub}</span>
-                </div>
-              </div>
-            </figure>
+            {/* no intro card — the clicked cover itself turns into the
+                blue info panel, so the band holds only the pieces */}
             {shown.cards.map((a, j) => (
-              <figure className="asset-tile proj-card" style={{ '--j': j + 1, ...canvasSlot(j + 1) }} key={a.title}>
+              <figure className="asset-tile proj-card" style={{ '--j': j, ...canvasSlot(j) }} key={a.title}>
                 <span className="asset-fig mono">{`${fig}.${j + 1}`}</span>
                 <div className="asset-frame">
                   <AssetMedia asset={a} />
@@ -1524,6 +1523,27 @@ function RowBand({ project, bandId, onClose }) {
   );
 }
 
+// Floating "you are here" pill while a project is open — fixed at the
+// bottom of the screen, so however deep into a band you've scrolled
+// there's always a visible, one-click way out (Escape works too).
+// Portaled to <body>: ancestors animate transforms, which would break fixed.
+function ProjPill({ project, onClose }) {
+  const shown = useLingering(project, 260);
+  if (!shown) return null;
+  const idx = PROJECTS.indexOf(shown);
+  const fig = `FIG_${String(idx + 1).padStart(3, '0')}`;
+  return ReactDOM.createPortal(
+    <div className={`proj-pill ${project ? 'proj-pill--in' : 'proj-pill--out'}`} role="status">
+      <span className="proj-pill-fig mono">{fig}</span>
+      <span className="proj-pill-name">{shown.title}</span>
+      <button type="button" className="proj-pill-close mono" onClick={onClose} aria-label={`Close ${shown.title}`}>
+        ✕ CLOSE
+      </button>
+    </div>,
+    document.body
+  );
+}
+
 function AssetsFeed() {
   const [cols, setCols] = useState(feedColCount);
   const [desktop, setDesktop] = useState(feedIsDesktop);
@@ -1541,19 +1561,33 @@ function AssetsFeed() {
   // The captured Y is above the band, valid in both layouts, so a plain
   // synchronous scroll works (no rAF — and it survives the collapse).
   const restoreScroll = () => window.scrollTo(0, scrollAtExpand.current);
-  // Accordion: one project focused at a time — its band spans the full
-  // whiteboard, so two open at once would stack confusingly. Switching
-  // takes two clicks: while a project is open, clicking a DIFFERENT
-  // cover only closes the current one — a second click then opens it.
+  // After (un)folding settles, glide the opened cover up near the top of
+  // the viewport so the band's content is actually on screen — and make
+  // that spot the anchor a later close returns to. Opening from rest only
+  // needs a beat (the cover doesn't move); switching waits out the old
+  // band's collapse, which may shift the new cover's position.
+  const nudgeToCover = (key, delay) => setTimeout(() => {
+    const el = document.querySelector(`.proj[data-proj="${key}"]`);
+    if (!el) return;
+    const cell = parseFloat(
+      getComputedStyle(document.documentElement).getPropertyValue('--board-cell')
+    ) || 32;
+    const y = Math.max(0, el.getBoundingClientRect().top + window.scrollY - cell * 2);
+    scrollAtExpand.current = y;
+    if (Math.abs(y - window.scrollY) > 8) window.scrollTo({ top: y, behavior: 'smooth' });
+  }, delay);
+  // One project focused at a time — its band spans the full whiteboard,
+  // so two open at once would stack confusingly. But switching is ONE
+  // click: tapping a different cover while a project is open closes it
+  // and opens the new one in the same gesture — hop, don't double-tap.
   const toggle = (key) => {
     const isThisOpen = openSet.has(key);
-    const somethingElseOpen = openSet.size > 0 && !isThisOpen;
-    const opening = !isThisOpen && !somethingElseOpen;
-    if (opening) scrollAtExpand.current = window.scrollY; // remember the click spot
+    const switching = openSet.size > 0 && !isThisOpen;
+    const opening = !isThisOpen;
     setOpenSet(opening ? new Set([key]) : new Set());
-    // Closing THIS project (same cover) → return to the click spot. When
-    // switching (a different cover), stay put near the cover just tapped.
+    // Closing THIS project (same cover) → return to the click spot.
     if (isThisOpen) restoreScroll();
+    else nudgeToCover(key, switching ? 480 : 60);
     playStateChange(opening); // velvet state.change: up on unfold, down on tuck
     haptic(10);               // Android; iOS ticks natively via the cover switch
     resnap();
@@ -1566,10 +1600,17 @@ function AssetsFeed() {
     resnap();
   };
   // Clicking anywhere outside the open band (and off the covers, which
-  // run their own toggle) collapses it.
+  // run their own toggle) collapses it. Escape does the same — a way out
+  // that works from anywhere, however deep into a band you've scrolled.
   useEffect(() => {
     if (!openSet.size) return;
     let down = null;
+    const collapse = () => {
+      setOpenSet(new Set());
+      playStateChange(false);
+      restoreScroll();
+      resnap();
+    };
     const onDown = (e) => { down = [e.clientX, e.clientY]; };
     const onDocClick = (e) => {
       // ignore scroll flicks — only a near-stationary tap counts as "outside"
@@ -1577,17 +1618,17 @@ function AssetsFeed() {
       down = null;
       if (moved) return;
       const t = e.target;
-      if (t.closest && (t.closest('.proj-band') || t.closest('.asset-tile--cover'))) return;
-      setOpenSet(new Set());
-      playStateChange(false);
-      restoreScroll();
-      resnap();
+      if (t.closest && (t.closest('.proj-band') || t.closest('.asset-tile--cover') || t.closest('.proj-pill'))) return;
+      collapse();
     };
+    const onKey = (e) => { if (e.key === 'Escape') collapse(); };
     document.addEventListener('pointerdown', onDown, true);
     document.addEventListener('click', onDocClick);
+    document.addEventListener('keydown', onKey);
     return () => {
       document.removeEventListener('pointerdown', onDown, true);
       document.removeEventListener('click', onDocClick);
+      document.removeEventListener('keydown', onKey);
     };
   }, [openSet]);
   // Row-major grid: after each row of covers sits that row's band.
@@ -1597,12 +1638,19 @@ function AssetsFeed() {
   const indexed = PROJECTS.map((p, i) => [p, i]);
   const rows = [];
   for (let i = 0; i < indexed.length; i += cols) rows.push(indexed.slice(i, i + cols));
+  const openProj = PROJECTS.find((p) => openSet.has(p.key)) || null;
   return (
     <section className="feed-section" data-screen-label="02 Work">
       <div
         className={`feed-masonry ${openSet.size ? 'feed-masonry--focus' : ''}`}
         style={{ gridTemplateColumns: `repeat(${trackCount}, minmax(0, 1fr))` }}
       >
+        {/* focus veil — while a project is open this blurs EVERYTHING
+            underneath it (other covers, hero, footer, the whiteboard
+            grid itself); the open cover + band are lifted above it.
+            pointer-events: none, so blurred covers stay one-click
+            switch targets and outside-click-to-close still lands. */}
+        <div className="feed-veil" aria-hidden="true" />
         {rows.map((row, ri) => (
           <React.Fragment key={ri}>
             {row.map(([p, i], ci) => (
@@ -1624,6 +1672,7 @@ function AssetsFeed() {
           </React.Fragment>
         ))}
       </div>
+      <ProjPill project={openProj} onClose={closeAll} />
     </section>
   );
 }

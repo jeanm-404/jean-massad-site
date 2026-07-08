@@ -891,6 +891,55 @@ html[data-reveal="go"] .contrib-cell {
    cell-multiple margins — no extra off-grid padding */
 .feed-section { padding: 0; }
 
+/* floating "you are here" pill — fixed bottom-center while a project is
+   open; the always-reachable way out (portaled to <body>) */
+.proj-pill {
+  position: fixed;
+  left: 50%;
+  bottom: 20px;
+  transform: translateX(-50%);
+  z-index: 80;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 8px 8px 16px;
+  background: rgba(251, 251, 251, 0.88);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  box-shadow: 0 8px 28px rgba(10, 10, 20, 0.12);
+  white-space: nowrap;
+}
+.proj-pill--in  { animation: pill-in .28s cubic-bezier(.2, .7, .2, 1) both; }
+.proj-pill--out { animation: pill-out .24s ease both; }
+@keyframes pill-in  { from { opacity: 0; transform: translate(-50%, 12px); } to { opacity: 1; transform: translate(-50%, 0); } }
+@keyframes pill-out { to   { opacity: 0; transform: translate(-50%, 12px); } }
+.proj-pill-fig {
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  color: var(--muted-3);
+}
+.proj-pill-name {
+  font-family: var(--sans);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink);
+}
+.proj-pill-close {
+  appearance: none;
+  border: 0;
+  cursor: pointer;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: #fff;
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  transition: filter .16s ease;
+}
+.proj-pill-close:hover { filter: brightness(1.15); }
+
 /* glitch hover link in footer */
 .glitch-link {
   display: inline-block;
@@ -958,17 +1007,30 @@ html[data-reveal="go"] .contrib-cell {
   color: var(--accent);   /* solid Konpo blue, no opacity tier */
   font-variant-numeric: tabular-nums;
 }
-/* focus mode: while any project is unfolded, the others step back —
-   a light blur + fade; hover eases them halfway forward again */
-.proj { transition: opacity .45s ease, filter .45s ease; }
-.feed-masonry--focus .proj:not(.proj--open) {
-  opacity: 0.32;
-  filter: blur(6px);
+/* focus mode: while a project is open, one fixed veil backdrop-blurs
+   EVERYTHING beneath it — other covers, hero, footer, scroll nav, the
+   whiteboard grid itself. The open cover + band lift above it (z 61);
+   the floating pill (z 80, body-level) and modal stay above too.
+   pointer-events: none keeps blurred covers clickable through it. */
+.feed-veil {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  background: rgba(251, 251, 251, 0.45);
+  -webkit-backdrop-filter: blur(9px);
+  backdrop-filter: blur(9px);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity .45s ease, visibility 0s .45s;
 }
-.feed-masonry--focus .proj:not(.proj--open):hover {
-  opacity: 0.7;
-  filter: blur(1.5px);
+.feed-masonry--focus > .feed-veil {
+  opacity: 1;
+  visibility: visible;
+  transition: opacity .45s ease, visibility 0s 0s;
 }
+.proj--open { position: relative; z-index: 61; }
+.proj-fold--open { position: relative; z-index: 61; }
 /* the expansion band spans the whole whiteboard; its cards run two
    across on desktop — roughly half the canvas each */
 .proj-band { grid-column: 1 / -1; }
@@ -992,29 +1054,36 @@ html[data-reveal="go"] .contrib-cell {
   }
 }
 
-/* intro card — white board with accent-blue name + subtitle */
-.proj-intro .asset-frame,
-.proj-close .asset-frame {
-  aspect-ratio: 4 / 3;
-  overflow: hidden;
-}
-.proj-intro-inner {
-  width: 100%;
-  height: 100%;
+/* the open cover IS the info card — an accent-blue panel with white
+   technical type fades in over the cover media (under .cover-switch,
+   so the whole tile keeps toggling) */
+.cover-info {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
   background: var(--accent);
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
   gap: 10px;
   padding: 20px;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity .3s ease, transform .18s ease, visibility 0s .3s;
+  pointer-events: none;
 }
-.proj-intro-tag {
+.proj--open .cover-info {
+  opacity: 1;
+  visibility: visible;
+  transition: opacity .3s ease, transform .18s ease, visibility 0s 0s;
+}
+.cover-info-tag {
   font-size: 10px;
   letter-spacing: 0.14em;
   color: rgba(255, 255, 255, 0.6);
   margin-bottom: auto;
 }
-.proj-intro-name {
+.cover-info-name {
   font-family: var(--sans);
   font-size: 17px;
   font-weight: 500;
@@ -1022,13 +1091,18 @@ html[data-reveal="go"] .contrib-cell {
   line-height: 1.2;
   color: #fff;
 }
-.proj-intro-sub {
+.cover-info-sub {
   font-family: var(--sans);
   font-size: 13px;
   line-height: 1.5;
   color: rgba(255, 255, 255, 0.72);
   max-width: 38ch;
   text-wrap: pretty;
+}
+
+.proj-close .asset-frame {
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
 }
 
 /* close card — full accent blue, ends the project */
@@ -1131,6 +1205,8 @@ html[data-reveal="go"] .contrib-cell {
 }
 .asset-tile--cover .asset-media { transition: transform .18s ease; }
 .asset-tile--cover:hover .asset-media { transform: translateY(-2px); }
+/* the info overlay rides along with the media's hover lift */
+.asset-tile--cover:hover .cover-info { transform: translateY(-2px); }
 .asset-tile--cover:hover .asset-title { color: var(--ink); text-decoration: underline; text-underline-offset: 3px; }
 figure.asset-tile { cursor: default; }
 
