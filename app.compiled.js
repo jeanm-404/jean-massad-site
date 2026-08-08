@@ -1032,7 +1032,7 @@ function Headline() {
     className: "headline-eyebrow"
   }, C(/*#__PURE__*/React.createElement("span", {
     className: "chip"
-  }, "Jean Massad", /*#__PURE__*/React.createElement("img", {
+  }, "Jean", /*#__PURE__*/React.createElement("img", {
     className: "chip-avatar",
     src: "jean-avatar.png",
     alt: ""
