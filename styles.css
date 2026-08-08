@@ -502,7 +502,9 @@ html[data-reveal="go"] .container::after {
 .headline-eyebrow .chip { margin-right: 6px; }
 .headline {
   margin: 0;
-  font-family: var(--sans);
+  /* Google Sans (variable 400–500) for the big statement only —
+     the rest of the site stays on Inter */
+  font-family: "Google Sans", var(--sans);
   font-size: clamp(34px, 4.6vw, 64px);
   font-weight: 400;
   letter-spacing: -0.02em;
@@ -514,6 +516,23 @@ html[data-reveal="go"] .container::after {
   color: var(--muted-2);
   font-weight: 480;
 }
+/* handwritten kicker — script face, sized for optical parity with
+   Inter; line-height 1 so the bigger em doesn't stretch its line box */
+.headline .hl-hand {
+  font-family: "Gochi Hand", "Bradley Hand", cursive;
+  font-size: 1.08em;
+  font-weight: 400;
+  letter-spacing: 0;
+  line-height: 1;
+}
+/* inline handwritten word anywhere in running text (e.g. "Konpo") */
+.hand-word {
+  font-family: "Gochi Hand", "Bradley Hand", cursive;
+  font-size: 1.15em;
+  line-height: 1;
+}
+.hand-word--konpo { color: #9747ff; }  /* Konpo purple — matches .chip-logo--konpo */
+.hand-word--surge { color: #782396; }  /* Surge purple — matches .chip-logo--surge */
 
 @media (max-width: 720px) {
   .headline { font-size: clamp(28px, 8vw, 34px); }
@@ -891,55 +910,6 @@ html[data-reveal="go"] .contrib-cell {
    cell-multiple margins — no extra off-grid padding */
 .feed-section { padding: 0; }
 
-/* floating "you are here" pill — fixed bottom-center while a project is
-   open; the always-reachable way out (portaled to <body>) */
-.proj-pill {
-  position: fixed;
-  left: 50%;
-  bottom: 20px;
-  transform: translateX(-50%);
-  z-index: 80;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 8px 8px 8px 16px;
-  background: rgba(251, 251, 251, 0.88);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border: 1px solid var(--rule);
-  border-radius: 999px;
-  box-shadow: 0 8px 28px rgba(10, 10, 20, 0.12);
-  white-space: nowrap;
-}
-.proj-pill--in  { animation: pill-in .28s cubic-bezier(.2, .7, .2, 1) both; }
-.proj-pill--out { animation: pill-out .24s ease both; }
-@keyframes pill-in  { from { opacity: 0; transform: translate(-50%, 12px); } to { opacity: 1; transform: translate(-50%, 0); } }
-@keyframes pill-out { to   { opacity: 0; transform: translate(-50%, 12px); } }
-.proj-pill-fig {
-  font-size: 9px;
-  letter-spacing: 0.08em;
-  color: var(--muted-3);
-}
-.proj-pill-name {
-  font-family: var(--sans);
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--ink);
-}
-.proj-pill-close {
-  appearance: none;
-  border: 0;
-  cursor: pointer;
-  padding: 6px 12px;
-  border-radius: 999px;
-  background: var(--accent);
-  color: #fff;
-  font-size: 10px;
-  letter-spacing: 0.1em;
-  transition: filter .16s ease;
-}
-.proj-pill-close:hover { filter: brightness(1.15); }
-
 /* glitch hover link in footer */
 .glitch-link {
   display: inline-block;
@@ -950,10 +920,8 @@ html[data-reveal="go"] .contrib-cell {
   white-space: nowrap;
 }
 .feed-masonry {
-  /* Row-major grid of covers; each row is followed by a full-width
-     expansion band (grid-column 1/-1). Column gap only — row rhythm
-     comes from the tiles' own cell-multiple margins, so a collapsed
-     0-height band adds no phantom gap. `column-count` is unused by
+  /* Row-major grid of tiles. Column gap only — row rhythm comes from
+     the tiles' own cell-multiple margins. `column-count` is unused by
      grid layout but snap() reads it for the whiteboard width math;
      the actual tracks come from an inline style set in JS. */
   display: grid;
@@ -962,173 +930,13 @@ html[data-reveal="go"] .contrib-cell {
   column-count: 2;
 }
 @media (max-width: 480px)  { .feed-masonry { column-count: 1; } }
-/* desktop: covers stagger across the 12-track grid (spans/offsets in JS).
-   Mobile/tablet keep one track per cover — no --cspan/--cmt applied. */
+/* desktop: tiles stagger across the 12-track grid (spans/offsets in JS).
+   Mobile/tablet keep one track per tile — no --cspan/--cmt applied. */
 @media (min-width: 901px) {
   .feed-masonry > .proj {
     grid-column: span var(--cspan, 4);
     margin-top: calc(var(--cmt, 0) * var(--board-cell));
   }
-}
-
-/* ──── project stack — cover + inline fold, no popup ──── */
-.proj-fold {
-  display: grid;
-  grid-template-rows: 0fr;
-  visibility: hidden;
-  transition: grid-template-rows .45s cubic-bezier(.2, .7, .2, 1), visibility 0s .45s;
-}
-.proj-fold--open {
-  grid-template-rows: 1fr;
-  visibility: visible;
-  transition: grid-template-rows .45s cubic-bezier(.2, .7, .2, 1), visibility 0s 0s;
-}
-.proj-fold-inner {
-  min-height: 0;
-  /* clip while folding, but let the frames' corner ticks breathe */
-  overflow: clip;
-  overflow-clip-margin: 6px;
-}
-.proj-fold--open .proj-fold-inner { overflow: visible; }
-/* cards drop in with a small stagger once the fold opens */
-.proj-fold .proj-card {
-  opacity: 0;
-  transform: translateY(-6px);
-  transition: opacity .3s ease, transform .3s ease;
-}
-.proj-fold--open .proj-card {
-  opacity: 1;
-  transform: none;
-  transition-delay: calc(120ms + var(--j, 0) * 70ms);
-}
-.asset-expand {
-  display: inline-block;
-  margin-left: 10px;
-  color: var(--accent);   /* solid Konpo blue, no opacity tier */
-  font-variant-numeric: tabular-nums;
-}
-/* focus mode: while a project is open, one fixed veil backdrop-blurs
-   EVERYTHING beneath it — other covers, hero, footer, scroll nav, the
-   whiteboard grid itself. The open cover + band lift above it (z 61);
-   the floating pill (z 80, body-level) and modal stay above too.
-   pointer-events: none keeps blurred covers clickable through it. */
-.feed-veil {
-  position: fixed;
-  inset: 0;
-  z-index: 60;
-  background: rgba(251, 251, 251, 0.45);
-  -webkit-backdrop-filter: blur(9px);
-  backdrop-filter: blur(9px);
-  opacity: 0;
-  visibility: hidden;
-  pointer-events: none;
-  transition: opacity .45s ease, visibility 0s .45s;
-}
-.feed-masonry--focus > .feed-veil {
-  opacity: 1;
-  visibility: visible;
-  transition: opacity .45s ease, visibility 0s 0s;
-}
-.proj--open { position: relative; z-index: 61; }
-.proj-fold--open { position: relative; z-index: 61; }
-/* the expansion band spans the whole whiteboard; its cards run two
-   across on desktop — roughly half the canvas each */
-.proj-band { grid-column: 1 / -1; }
-.proj-band-grid {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);   /* mobile: single column */
-  column-gap: var(--board-cell);
-  align-items: start;
-}
-@media (min-width: 481px) {
-  .proj-band-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-}
-/* desktop canvas: 12-col grid, cards scatter via --span / --mt (set in JS) */
-@media (min-width: 901px) {
-  .proj-band-grid {
-    grid-template-columns: repeat(12, minmax(0, 1fr));
-  }
-  .proj-band-grid > .proj-card {
-    grid-column: span var(--span, 6);
-    margin-top: calc(var(--mt, 0) * var(--board-cell));
-  }
-}
-
-/* the open cover IS the info card — an accent-blue panel with white
-   technical type fades in over the cover media (under .cover-switch,
-   so the whole tile keeps toggling) */
-.cover-info {
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  background: var(--accent);
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-end;
-  gap: 10px;
-  padding: 20px;
-  opacity: 0;
-  visibility: hidden;
-  transition: opacity .3s ease, transform .18s ease, visibility 0s .3s;
-  pointer-events: none;
-}
-.proj--open .cover-info {
-  opacity: 1;
-  visibility: visible;
-  transition: opacity .3s ease, transform .18s ease, visibility 0s 0s;
-}
-.cover-info-tag {
-  font-size: 10px;
-  letter-spacing: 0.14em;
-  color: rgba(255, 255, 255, 0.6);
-  margin-bottom: auto;
-}
-.cover-info-name {
-  font-family: var(--sans);
-  font-size: 17px;
-  font-weight: 500;
-  letter-spacing: -0.01em;
-  line-height: 1.2;
-  color: #fff;
-}
-.cover-info-sub {
-  font-family: var(--sans);
-  font-size: 13px;
-  line-height: 1.5;
-  color: rgba(255, 255, 255, 0.72);
-  max-width: 38ch;
-  text-wrap: pretty;
-}
-
-.proj-close .asset-frame {
-  aspect-ratio: 4 / 3;
-  overflow: hidden;
-}
-
-/* close card — full accent blue, ends the project */
-.proj-close {
-  appearance: none;
-  border: 0;
-  font: inherit;
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
-}
-.proj-close-inner {
-  width: 100%;
-  height: 100%;
-  background: var(--accent);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 14px;
-  transition: filter .18s ease;
-}
-.proj-close:hover .proj-close-inner { filter: brightness(1.12); }
-.proj-close-label {
-  font-size: 10px;
-  letter-spacing: 0.14em;
-  color: rgba(255, 255, 255, 0.85);
 }
 
 /* rail + masonry layout: rail is 5 cells, gap 1 cell */
@@ -1191,24 +999,9 @@ html[data-reveal="go"] .contrib-cell {
   -webkit-tap-highlight-color: transparent;
 }
 .asset-tile--cover { position: relative; }
-/* the real switch under the finger (same trick as the gate): a tap on
-   the cover toggles an actual switch control → native iOS haptic */
-.cover-switch {
-  position: absolute;
-  inset: 0;
-  z-index: 2;
-  width: 100%;
-  height: 100%;
-  margin: 0;
-  opacity: 0;
-  cursor: pointer;
-}
 .asset-tile--cover .asset-media { transition: transform .18s ease; }
 .asset-tile--cover:hover .asset-media { transform: translateY(-2px); }
-/* the info overlay rides along with the media's hover lift */
-.asset-tile--cover:hover .cover-info { transform: translateY(-2px); }
 .asset-tile--cover:hover .asset-title { color: var(--ink); text-decoration: underline; text-underline-offset: 3px; }
-figure.asset-tile { cursor: default; }
 
 /* ──── expanded view (recent.design-style) ──── */
 .work-modal {
@@ -1262,7 +1055,8 @@ figure.asset-tile { cursor: default; }
   background: var(--surface);
   border-bottom: 1px solid var(--rule);
 }
-.work-modal-media video {
+.work-modal-media video,
+.work-modal-media img {
   display: block;
   width: 100%;
   max-height: 64vh;

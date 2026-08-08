@@ -881,8 +881,10 @@ function BragSlot() {
 // connectors muted. Reveals word-by-word before the intro.
 // ─────────────────────────────────────────────────────────────
 const HEADLINE_SEGMENTS = [
-  ['I lead design teams creating software and experiences from concept into final release.', 'ink'],
+  ['Driving design from napkin concept through production and scale.', 'ink'],
+  ['With style.', 'hand'],   // handwritten kicker — Gochi Hand, muted gray
 ];
+const HEADLINE_TONES = { muted: 'hl-muted', hand: 'hl-muted hl-hand' };
 
 function Headline() {
   const START = 1300;
@@ -914,7 +916,7 @@ function Headline() {
               return (
                 <span
                   key={wi}
-                  className={`reveal-word ${tone === 'muted' ? 'hl-muted' : ''}`}
+                  className={`reveal-word ${HEADLINE_TONES[tone] || ''}`}
                   style={{ '--reveal-delay': `${delay}ms` }}
                 >
                   {word + ' '}
@@ -979,6 +981,16 @@ function Intro() {
         {W("On the grind ever since I could download Photoshop off a sketchy torrent site.")}
         <br /><br />
         {(() => { pause(CHUNK_GAP); return null; })()}
+        {W("A decade of experience through the entire spectrum of design. From foundational branding and websites to product design and scalable systems.")}
+        <br /><br />
+        {(() => { pause(CHUNK_GAP); return null; })()}
+        {W("I'm the founding designer at ")}
+        {I(<span className="hand-word hand-word--surge">Surge AI</span>)}
+        {W(", the world's largest (and best!) frontier lab, and run a nimble but sharp design studio called ")}
+        {I(<span className="hand-word hand-word--konpo">Konpo</span>)}
+        {W(". Through it I've lived a thousand design lives with some amazing people.")}
+        <br /><br />
+        {(() => { pause(CHUNK_GAP); return null; })()}
         {W('My work has been enjoyed by the folks from Awwwards and Webby\'s, survived the crowds at Product Hunt, torn apart in HackerNews, seen in the background of a Tim Cook Keynote, loved by Terry Crews, featured on the cover of Forbes, smiled from the top of the App Store, called "ok" by a President and, mainly, applauded by my parents.')}
         <br /><br />
         {(() => { pause(CHUNK_GAP); return null; })()}
@@ -991,10 +1003,10 @@ function Intro() {
             </span>
           </a>
         )}
-        {W(' and try to not die while ')}
+        {W(' and ')}
         {I(
           <a href="#" className="ulink ulink--media" data-media="surf">
-            surfing
+            surf
             <span className="media-pop">
               <span className="media-pop-img media-pop-img--surf" />
             </span>
@@ -1318,7 +1330,9 @@ function WorkModal({ asset, onClose }) {
       <div className="work-modal-panel" onClick={(e) => e.stopPropagation()}>
         <button type="button" className="work-modal-close mono" onClick={onClose} aria-label="Close">✕ CLOSE</button>
         <div className="work-modal-media">
-          <video src={asset.src} autoPlay muted loop playsInline />
+          {asset.type === 'image'
+            ? <img src={asset.src} alt={asset.title} />
+            : <video src={asset.src} autoPlay muted loop playsInline />}
         </div>
         <div className="work-modal-body">
           <h3 className="work-modal-title">{asset.title}</h3>
@@ -1350,9 +1364,8 @@ function WorkModal({ asset, onClose }) {
   );
 }
 
-// Covers-only masonry. Clicking a cover unfolds that project's cards
-// inline within its own column (JS-distributed flex columns — CSS
-// `column-count` would re-deal every tile across columns on expand).
+// Flat masonry feed of every shot. Clicking a tile opens its project's
+// info overlay (WorkModal) — no inline expansion.
 function feedColCount() {
   // covers per row: 1 on phones, 2 everywhere else
   return window.innerWidth <= 480 ? 1 : 2;
@@ -1394,285 +1407,81 @@ function useTapGuard(threshold = 10) {
   };
 }
 
-function ProjectCover({ project, index, open, onToggle, bandId, slotStyle }) {
-  const fig = `FIG_${String(index + 1).padStart(3, '0')}`;
+// One tile in the flat feed — cover or piece, identical anatomy: FIG
+// label, framed media, meta row. Clicking opens the shot's info overlay
+// (WorkModal) — no inline expansion, the feed itself stays calm.
+function FeedTile({ tile, index, onOpen, slotStyle }) {
   const guard = useTapGuard();
   return (
-    <div className={`proj ${open ? 'proj--open' : ''}`} data-proj={project.key} style={slotStyle || undefined}>
-      <label
+    <div className="proj" style={slotStyle || undefined}>
+      <button
+        type="button"
         className="asset-tile asset-tile--cover reveal"
-        style={{ '--reveal-delay': `${5700 + index * 100}ms` }}
+        style={{ '--reveal-delay': `${5700 + Math.min(index, 8) * 100}ms` }}
+        onClick={onOpen}
+        aria-haspopup="dialog"
+        aria-label={`${tile.asset.title} — details`}
         {...guard}
       >
-        {/* real switch under the finger — native iOS haptic on tap */}
-        <input
-          type="checkbox"
-          switch=""
-          className="cover-switch"
-          checked={open}
-          onChange={onToggle}
-          aria-controls={bandId}
-          aria-label={`${project.title} — ${open ? 'collapse' : 'expand'} project`}
-        />
-        <span className="asset-fig mono">{fig}</span>
+        <span className="asset-fig mono">{tile.fig}</span>
         <div className="asset-frame">
-          <AssetMedia asset={project.cover} />
-          {/* the clicked cover IS the project's info card: open → the
-              media fades under an accent-blue panel with tag/name/sub,
-              and the band below holds only the pieces */}
-          <div className="cover-info" aria-hidden={!open}>
-            <span className="cover-info-tag mono">{(project.tag || project.cat).toUpperCase()}</span>
-            <span className="cover-info-name">{project.title}</span>
-            <span className="cover-info-sub">{project.sub}</span>
-          </div>
+          <AssetMedia asset={tile.asset} />
         </div>
         <div className="asset-meta">
           <span className="asset-meta-left">
-            <span className="asset-title">{project.title}</span>
+            <span className="asset-title">{tile.asset.title}</span>
           </span>
-          <span className="asset-note mono">
-            {(project.tag || project.cat).toUpperCase()}
-            <span className="asset-expand">{open ? '−' : `+${project.cards.length}`}</span>
-          </span>
+          <span className="asset-note mono">{tile.note.toUpperCase()}</span>
         </div>
-      </label>
-    </div>
-  );
-}
-
-// Keeps the previous value around for `ms` after it clears, so a
-// closing band can animate shut with its content still mounted.
-function useLingering(value, ms) {
-  const [kept, setKept] = useState(value);
-  useEffect(() => {
-    if (value) { setKept(value); return; }
-    const t = setTimeout(() => setKept(null), ms);
-    return () => clearTimeout(t);
-  }, [value, ms]);
-  return value || kept;
-}
-
-// Canvas layout: on desktop the band is a 12-col grid and each card
-// gets a varied width (asymmetric pair splits that always sum to 12)
-// plus a staggered vertical offset — so frames land at different sizes
-// and heights, like pinned to a whiteboard rather than stacked in a grid.
-const CANVAS_SPLITS = [[7, 5], [4, 8], [6, 6], [8, 4], [5, 7]];
-// second card of each pair drops a few cells below the first — the same
-// tightened offset the covers use, so open projects scan quickly too
-const CANVAS_MTS = [3, 2, 4, 3, 2];
-function canvasSlot(i) {
-  const pair = Math.floor(i / 2), side = i % 2;
-  const span = CANVAS_SPLITS[pair % CANVAS_SPLITS.length][side];
-  const mt = side === 1 ? CANVAS_MTS[pair % CANVAS_MTS.length] : 0; // always drop the 2nd
-  return { '--span': span, '--mt': mt };
-}
-
-// Full-width expansion band under a row of covers. Covers never change
-// size — only this one element grows — which is what keeps the motion
-// calm. On desktop the cards scatter across a 12-col canvas (see canvasSlot).
-function RowBand({ project, bandId, onClose }) {
-  const shown = useLingering(project, 500);
-  const open = !!project;
-  const idx = shown ? PROJECTS.indexOf(shown) : -1;
-  const fig = idx >= 0 ? `FIG_${String(idx + 1).padStart(3, '0')}` : '';
-  const lastI = shown ? shown.cards.length : 0;
-  const closeGuard = useTapGuard();
-  return (
-    <div className={`proj-fold proj-band ${open ? 'proj-fold--open' : ''}`} id={bandId}>
-      <div className="proj-fold-inner">
-        {shown && (
-          <div className="proj-band-grid">
-            {/* no intro card — the clicked cover itself turns into the
-                blue info panel, so the band holds only the pieces */}
-            {shown.cards.map((a, j) => (
-              <figure className="asset-tile proj-card" style={{ '--j': j, ...canvasSlot(j) }} key={a.title}>
-                <span className="asset-fig mono">{`${fig}.${j + 1}`}</span>
-                <div className="asset-frame">
-                  <AssetMedia asset={a} />
-                </div>
-                <div className="asset-meta">
-                  <span className="asset-meta-left">
-                    <span className="asset-title">{a.title}</span>
-                  </span>
-                  <span className="asset-note mono">{a.cat.toUpperCase()}</span>
-                </div>
-              </figure>
-            ))}
-            {/* close card — full accent blue, tucks the project back in.
-                Only its FIG prints outside, matching the intro card. */}
-            <button
-              type="button"
-              className="asset-tile proj-card proj-close"
-              style={{ '--j': lastI, ...canvasSlot(lastI) }}
-              onClick={onClose}
-              key="close"
-              aria-label={`Close ${shown.title}`}
-              {...closeGuard}
-            >
-              <span className="asset-fig mono">{fig}</span>
-              <div className="asset-frame">
-                <div className="proj-close-inner">
-                  <span className="proj-close-label mono">CLOSE PROJECT</span>
-                </div>
-              </div>
-            </button>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
-// Floating "you are here" pill while a project is open — fixed at the
-// bottom of the screen, so however deep into a band you've scrolled
-// there's always a visible, one-click way out (Escape works too).
-// Portaled to <body>: ancestors animate transforms, which would break fixed.
-function ProjPill({ project, onClose }) {
-  const shown = useLingering(project, 260);
-  if (!shown) return null;
-  const idx = PROJECTS.indexOf(shown);
-  const fig = `FIG_${String(idx + 1).padStart(3, '0')}`;
-  return ReactDOM.createPortal(
-    <div className={`proj-pill ${project ? 'proj-pill--in' : 'proj-pill--out'}`} role="status">
-      <span className="proj-pill-fig mono">{fig}</span>
-      <span className="proj-pill-name">{shown.title}</span>
-      <button type="button" className="proj-pill-close mono" onClick={onClose} aria-label={`Close ${shown.title}`}>
-        ✕ CLOSE
       </button>
-    </div>,
-    document.body
+    </div>
   );
 }
 
 function AssetsFeed() {
   const [cols, setCols] = useState(feedColCount);
   const [desktop, setDesktop] = useState(feedIsDesktop);
-  const [openSet, setOpenSet] = useState(() => new Set());
-  const scrollAtExpand = useRef(0);
+  const [active, setActive] = useState(null);   // the shot open in the info overlay
   useEffect(() => {
     const onResize = () => { setCols(feedColCount()); setDesktop(feedIsDesktop()); };
     window.addEventListener('resize', onResize);
     return () => window.removeEventListener('resize', onResize);
   }, []);
-  const resnap = () => setTimeout(() => window.dispatchEvent(new Event('resize')), 550);
-  // The band expands BELOW the cover, so the cover's position is stable.
-  // Restoring the scroll we had at expand time lands us right back on the
-  // cover we clicked — instead of stranded at the bottom after collapse.
-  // The captured Y is above the band, valid in both layouts, so a plain
-  // synchronous scroll works (no rAF — and it survives the collapse).
-  const restoreScroll = () => window.scrollTo(0, scrollAtExpand.current);
-  // After (un)folding settles, glide the opened cover up near the top of
-  // the viewport so the band's content is actually on screen — and make
-  // that spot the anchor a later close returns to. Opening from rest only
-  // needs a beat (the cover doesn't move); switching waits out the old
-  // band's collapse, which may shift the new cover's position.
-  const nudgeToCover = (key, delay) => setTimeout(() => {
-    const el = document.querySelector(`.proj[data-proj="${key}"]`);
-    if (!el) return;
-    const cell = parseFloat(
-      getComputedStyle(document.documentElement).getPropertyValue('--board-cell')
-    ) || 32;
-    const y = Math.max(0, el.getBoundingClientRect().top + window.scrollY - cell * 2);
-    scrollAtExpand.current = y;
-    if (Math.abs(y - window.scrollY) > 8) window.scrollTo({ top: y, behavior: 'smooth' });
-  }, delay);
-  // One project focused at a time — its band spans the full whiteboard,
-  // so two open at once would stack confusingly. But switching is ONE
-  // click: tapping a different cover while a project is open closes it
-  // and opens the new one in the same gesture — hop, don't double-tap.
-  const toggle = (key) => {
-    const isThisOpen = openSet.has(key);
-    const switching = openSet.size > 0 && !isThisOpen;
-    const opening = !isThisOpen;
-    setOpenSet(opening ? new Set([key]) : new Set());
-    // Closing THIS project (same cover) → return to the click spot.
-    if (isThisOpen) restoreScroll();
-    else nudgeToCover(key, switching ? 480 : 60);
-    playStateChange(opening); // velvet state.change: up on unfold, down on tuck
-    haptic(10);               // Android; iOS ticks natively via the cover switch
-    resnap();
-  };
-  const closeAll = () => {
-    setOpenSet(new Set());
-    playStateChange(false);
-    haptic(10);
-    restoreScroll();          // close card lives at the bottom — jump back up
-    resnap();
-  };
-  // Clicking anywhere outside the open band (and off the covers, which
-  // run their own toggle) collapses it. Escape does the same — a way out
-  // that works from anywhere, however deep into a band you've scrolled.
-  useEffect(() => {
-    if (!openSet.size) return;
-    let down = null;
-    const collapse = () => {
-      setOpenSet(new Set());
-      playStateChange(false);
-      restoreScroll();
-      resnap();
-    };
-    const onDown = (e) => { down = [e.clientX, e.clientY]; };
-    const onDocClick = (e) => {
-      // ignore scroll flicks — only a near-stationary tap counts as "outside"
-      const moved = down && Math.hypot(e.clientX - down[0], e.clientY - down[1]) > 10;
-      down = null;
-      if (moved) return;
-      const t = e.target;
-      if (t.closest && (t.closest('.proj-band') || t.closest('.asset-tile--cover') || t.closest('.proj-pill'))) return;
-      collapse();
-    };
-    const onKey = (e) => { if (e.key === 'Escape') collapse(); };
-    document.addEventListener('pointerdown', onDown, true);
-    document.addEventListener('click', onDocClick);
-    document.addEventListener('keydown', onKey);
-    return () => {
-      document.removeEventListener('pointerdown', onDown, true);
-      document.removeEventListener('click', onDocClick);
-      document.removeEventListener('keydown', onKey);
-    };
-  }, [openSet]);
-  // Row-major grid: after each row of covers sits that row's band.
-  // Desktop subdivides into 12 tracks so covers can take varied spans;
-  // tablet/mobile keep one track per cover.
+  const openShot = (asset) => { setActive(asset); playStateChange(true); haptic(10); };
+  const closeShot = () => { setActive(null); playStateChange(false); };
+  // Flat feed: every project contributes its cover then its pieces, in
+  // order — one continuous scroll, no folding. FIG numbers run straight
+  // through the whole feed (FIG_001, FIG_002, …), no dotted sub-figures.
+  const tiles = [];
+  PROJECTS.forEach((p) => {
+    tiles.push({ asset: p.cover, note: p.tag || p.cat, key: p.key });
+    p.cards.forEach((a, j) => tiles.push({ asset: a, note: a.cat, key: `${p.key}-${j}` }));
+  });
+  tiles.forEach((t, i) => { t.fig = `FIG_${String(i + 1).padStart(3, '0')}`; });
+  // Row-major grid; desktop subdivides into 12 tracks so tiles take
+  // varied spans + offsets (coverSlot), tablet/mobile one track per tile.
   const trackCount = desktop ? 12 : cols;
-  const indexed = PROJECTS.map((p, i) => [p, i]);
   const rows = [];
-  for (let i = 0; i < indexed.length; i += cols) rows.push(indexed.slice(i, i + cols));
-  const openProj = PROJECTS.find((p) => openSet.has(p.key)) || null;
+  for (let i = 0; i < tiles.length; i += cols) rows.push(tiles.slice(i, i + cols));
   return (
     <section className="feed-section" data-screen-label="02 Work">
       <div
-        className={`feed-masonry ${openSet.size ? 'feed-masonry--focus' : ''}`}
+        className="feed-masonry"
         style={{ gridTemplateColumns: `repeat(${trackCount}, minmax(0, 1fr))` }}
       >
-        {/* focus veil — while a project is open this blurs EVERYTHING
-            underneath it (other covers, hero, footer, the whiteboard
-            grid itself); the open cover + band are lifted above it.
-            pointer-events: none, so blurred covers stay one-click
-            switch targets and outside-click-to-close still lands. */}
-        <div className="feed-veil" aria-hidden="true" />
-        {rows.map((row, ri) => (
-          <React.Fragment key={ri}>
-            {row.map(([p, i], ci) => (
-              <ProjectCover
-                project={p}
-                index={i}
-                open={openSet.has(p.key)}
-                onToggle={() => toggle(p.key)}
-                bandId={`proj-band-${ri}`}
-                slotStyle={coverSlot(ri, ci, desktop)}
-                key={p.key}
-              />
-            ))}
-            <RowBand
-              project={(row.find(([p]) => openSet.has(p.key)) || [null])[0]}
-              bandId={`proj-band-${ri}`}
-              onClose={closeAll}
+        {rows.map((row, ri) =>
+          row.map((t, ci) => (
+            <FeedTile
+              tile={t}
+              index={ri * cols + ci}
+              onOpen={() => openShot(t.asset)}
+              slotStyle={coverSlot(ri, ci, desktop)}
+              key={t.key}
             />
-          </React.Fragment>
-        ))}
+          ))
+        )}
       </div>
-      <ProjPill project={openProj} onClose={closeAll} />
+      {active && <WorkModal asset={active} onClose={closeShot} />}
     </section>
   );
 }
