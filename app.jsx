@@ -903,7 +903,7 @@ function Headline() {
   return (
     <section className="headline-block" data-screen-label="00 Headline">
       <p className="headline-eyebrow">
-        {C(<span className="chip">Jean<img className="chip-avatar" src="jean-avatar.png" alt="" /></span>, 'jean', true)}
+        {C(<span className="chip">Jean Massad<img className="chip-avatar" src="jean-avatar.png" alt="" /></span>, 'jean', true)}
         {C(<a href="https://konpo.studio" target="_blank" rel="noreferrer" className="chip">Konpo<KonpoMark className="chip-logo chip-logo--konpo" /></a>, 'konpo', true)}
         {C(<a href="https://surgehq.ai" target="_blank" rel="noreferrer" className="chip">Surge<SurgeMark className="chip-logo chip-logo--surge" /></a>, 'surge')}
       </p>
@@ -1586,7 +1586,7 @@ function Colophon({ onClose }) {
       <FooterToggle onClose={onClose} />
       <div className="colophon-rule" aria-hidden="true" />
       <p className="footer-note">
-        Made on a rainy Basque day.<br />Powered by Yorkshire Tea.
+        Made on a rainy Basque day.<br />Powered by Yorkshire Tea.<br />© 2026 Jean Massad
       </p>
     </div>);
 

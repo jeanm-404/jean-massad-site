@@ -1032,7 +1032,7 @@ function Headline() {
     className: "headline-eyebrow"
   }, C(/*#__PURE__*/React.createElement("span", {
     className: "chip"
-  }, "Jean", /*#__PURE__*/React.createElement("img", {
+  }, "Jean Massad", /*#__PURE__*/React.createElement("img", {
     className: "chip-avatar",
     src: "jean-avatar.png",
     alt: ""
@@ -1901,6 +1901,6 @@ function Colophon({
     "aria-hidden": "true"
   }), /*#__PURE__*/React.createElement("p", {
     className: "footer-note"
-  }, "Made on a rainy Basque day.", /*#__PURE__*/React.createElement("br", null), "Powered by Yorkshire Tea."));
+  }, "Made on a rainy Basque day.", /*#__PURE__*/React.createElement("br", null), "Powered by Yorkshire Tea.", /*#__PURE__*/React.createElement("br", null), "\xA9 2026 Jean Massad"));
 }
 ReactDOM.createRoot(document.getElementById('root')).render(/*#__PURE__*/React.createElement(App, null));
