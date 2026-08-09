@@ -1227,7 +1227,7 @@ function Intro() {
   }, W("I'm Jean Massad"), I(/*#__PURE__*/React.createElement(NamePlay, null))), /*#__PURE__*/React.createElement("span", {
     className: "bio-part",
     "data-bio": "surge"
-  }, W(". The first and only designer at "), I(/*#__PURE__*/React.createElement("a", {
+  }, W(". Designer at "), I(/*#__PURE__*/React.createElement("a", {
     className: "hand-word hand-word--surge",
     href: "https://www.surgehq.ai",
     target: "_blank",
@@ -1240,7 +1240,7 @@ function Intro() {
     href: "https://www.konpo.studio",
     target: "_blank",
     rel: "noreferrer"
-  }, "Konpo")), W(", where we passionately hate traditional agency dynamics. Through it, I've lived a thousand design lives with some amazing people.")), /*#__PURE__*/React.createElement("br", null), /*#__PURE__*/React.createElement("br", null), (() => {
+  }, "Konpo")), W(", where we passionately hate on traditional agency dynamics. Through it, I've lived a thousand design lives with some amazing people.")), /*#__PURE__*/React.createElement("br", null), /*#__PURE__*/React.createElement("br", null), (() => {
     pause(CHUNK_GAP);
     return null;
   })(), /*#__PURE__*/React.createElement("span", {
