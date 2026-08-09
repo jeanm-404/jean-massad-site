@@ -1427,6 +1427,21 @@ html[data-reveal="go"] .contrib-cell {
   flex-shrink: 0;
 }
 
+/* dealt-in entrance — tiles mounted after a Gimmie More (or filter)
+   cascade in one by one, 70ms apart, instead of joining the page-load
+   reveal and its ~6s delay */
+@keyframes tile-deal {
+  from { opacity: 0; filter: blur(6px); transform: translateY(6px); }
+  to   { opacity: 1; filter: blur(0); transform: none; }
+}
+.asset-tile--dealt {
+  animation: tile-deal 460ms cubic-bezier(.2, .7, .2, 1) both;
+  animation-delay: var(--deal-delay, 0ms);
+}
+@media (prefers-reduced-motion: reduce) {
+  .asset-tile--dealt { animation: none; }
+}
+
 /* skeleton shimmer — every media box shimmers until its content has
    actually decoded (.asset-media--ready), so a fresh Gimmie More deal
    reads as "loading" instead of a wall of blank gray */

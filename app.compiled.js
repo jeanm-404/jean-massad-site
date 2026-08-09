@@ -1862,18 +1862,35 @@ function FeedTile({
   tile,
   index,
   onOpen,
-  slotStyle
+  slotStyle,
+  batchStart,
+  initialLoad
 }) {
   const guard = useTapGuard();
+  // Entrance is locked at FIRST mount and never recomputed — otherwise a
+  // later class flip would re-trigger the animation (the page-load reveal
+  // carries a ~6s delay, which is what made Gimmie More deals invisible).
+  const entrance = useRef(null);
+  if (entrance.current === null) {
+    entrance.current = initialLoad ? {
+      cls: 'reveal',
+      style: {
+        '--reveal-delay': `${5700 + Math.min(index, 8) * 100}ms`
+      }
+    } : {
+      cls: 'asset-tile--dealt',
+      style: {
+        '--deal-delay': `${Math.max(0, index - batchStart) * 70}ms`
+      }
+    };
+  }
   return /*#__PURE__*/React.createElement("div", {
     className: "proj",
     style: slotStyle || undefined
   }, /*#__PURE__*/React.createElement("button", _extends({
     type: "button",
-    className: "asset-tile asset-tile--cover reveal",
-    style: {
-      '--reveal-delay': `${5700 + Math.min(index, 8) * 100}ms`
-    },
+    className: `asset-tile asset-tile--cover ${entrance.current.cls}`,
+    style: entrance.current.style,
     onClick: onOpen,
     "aria-haspopup": "dialog",
     "aria-label": `${tile.asset.title} — details`
@@ -1976,6 +1993,11 @@ function AssetsFeed() {
   const [limit, setLimit] = useState(PAGE); // grown by the Gimmie More switch
   const [pastBand, setPastBand] = useState(false); // scrolled beyond the divider band?
   const bandRef = useRef(null);
+  // Entrance bookkeeping: tiles mounted at page load join the big page
+  // reveal; tiles mounted after any interaction (deal/filter) cascade in
+  // one by one from `dealStart` instead.
+  const initialLoad = useRef(true);
+  const [dealStart, setDealStart] = useState(0);
   useEffect(() => {
     const onResize = () => {
       setCols(feedColCount());
@@ -2007,6 +2029,8 @@ function AssetsFeed() {
     playStateChange(false);
   };
   const setFilter = (dim, val) => {
+    initialLoad.current = false;
+    setDealStart(0); // re-deal cascades from the top
     setFilters(f => ({
       ...f,
       [dim]: val
@@ -2110,6 +2134,8 @@ function AssetsFeed() {
     index: ri * cols + ci,
     onOpen: () => openShot(t.asset),
     slotStyle: coverSlot(ri, ci, desktop),
+    batchStart: dealStart,
+    initialLoad: initialLoad.current,
     key: t.key
   })))), visible.length === 0 && /*#__PURE__*/React.createElement("p", {
     className: "feed-empty mono"
@@ -2120,6 +2146,8 @@ function AssetsFeed() {
       // nudge the deal happens off-screen. Glide to the first
       // fresh tile so the reveal is actually seen.
       const prev = dealt.length;
+      initialLoad.current = false;
+      setDealStart(prev); // fresh tiles cascade from here
       setLimit(l => l + PAGE);
       setTimeout(() => {
         window.dispatchEvent(new Event('resize'));
