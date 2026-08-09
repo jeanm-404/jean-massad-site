@@ -1831,6 +1831,8 @@ function GlitchLink({
   return /*#__PURE__*/React.createElement("a", {
     href: href,
     className: "ulink glitch-link",
+    target: "_blank",
+    rel: "noreferrer",
     onMouseEnter: () => startScramble(to),
     onMouseLeave: () => startScramble(from),
     onFocus: () => startScramble(to),
@@ -1842,23 +1844,23 @@ function GlitchLink({
 const ELSEWHERE_LINKS = [{
   from: 'Substack ↗',
   to: 'Stuff I sometimes write ↗',
-  href: '#'
+  href: 'https://konpo.substack.com/'
 }, {
   from: 'LinkedIn ↗',
   to: 'Polished me ↗',
-  href: '#'
+  href: 'https://www.linkedin.com/in/jeanmassad/'
 }, {
   from: 'Insta ↗',
   to: 'Mainly snow and surf ↗',
-  href: '#'
+  href: 'https://www.instagram.com/heychacho/'
 }, {
   from: 'Are.na ↗',
   to: 'Curated work ↗',
-  href: '#'
+  href: 'https://www.are.na/jean-massad-b5kb-hfgjv0/channels'
 }, {
   from: 'Dribbble ↗',
   to: 'I need to update this ↗',
-  href: '#'
+  href: 'https://dribbble.com/jeanmassad'
 }, {
   from: 'GitHub ↗',
   to: 'The lines between design and code have blurred ↗',
@@ -1901,6 +1903,6 @@ function Colophon({
     "aria-hidden": "true"
   }), /*#__PURE__*/React.createElement("p", {
     className: "footer-note"
-  }, "Made on a rainy Basque day.", /*#__PURE__*/React.createElement("br", null), "Powered by Yorkshire Tea.", /*#__PURE__*/React.createElement("br", null), "\xA9 2026 Jean Massad"));
+  }, "Made on a rainy Basque day.", /*#__PURE__*/React.createElement("br", null), "Powered by Yorkshire Tea."));
 }
 ReactDOM.createRoot(document.getElementById('root')).render(/*#__PURE__*/React.createElement(App, null));

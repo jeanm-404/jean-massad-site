@@ -1542,6 +1542,8 @@ function GlitchLink({ from, to, href = '#' }) {
     <a
       href={href}
       className="ulink glitch-link"
+      target="_blank"
+      rel="noreferrer"
       onMouseEnter={() => startScramble(to)}
       onMouseLeave={() => startScramble(from)}
       onFocus={() => startScramble(to)}
@@ -1553,11 +1555,11 @@ function GlitchLink({ from, to, href = '#' }) {
 }
 
 const ELSEWHERE_LINKS = [
-  { from: 'Substack ↗', to: 'Stuff I sometimes write ↗', href: '#' },
-  { from: 'LinkedIn ↗', to: 'Polished me ↗', href: '#' },
-  { from: 'Insta ↗',    to: 'Mainly snow and surf ↗', href: '#' },
-  { from: 'Are.na ↗',   to: 'Curated work ↗', href: '#' },
-  { from: 'Dribbble ↗', to: 'I need to update this ↗', href: '#' },
+  { from: 'Substack ↗', to: 'Stuff I sometimes write ↗', href: 'https://konpo.substack.com/' },
+  { from: 'LinkedIn ↗', to: 'Polished me ↗', href: 'https://www.linkedin.com/in/jeanmassad/' },
+  { from: 'Insta ↗',    to: 'Mainly snow and surf ↗', href: 'https://www.instagram.com/heychacho/' },
+  { from: 'Are.na ↗',   to: 'Curated work ↗', href: 'https://www.are.na/jean-massad-b5kb-hfgjv0/channels' },
+  { from: 'Dribbble ↗', to: 'I need to update this ↗', href: 'https://dribbble.com/jeanmassad' },
   { from: 'GitHub ↗',   to: 'The lines between design and code have blurred ↗', href: 'https://github.com/jeanm-404' },
 ];
 
@@ -1586,7 +1588,7 @@ function Colophon({ onClose }) {
       <FooterToggle onClose={onClose} />
       <div className="colophon-rule" aria-hidden="true" />
       <p className="footer-note">
-        Made on a rainy Basque day.<br />Powered by Yorkshire Tea.<br />© 2026 Jean Massad
+        Made on a rainy Basque day.<br />Powered by Yorkshire Tea.
       </p>
     </div>);
 
