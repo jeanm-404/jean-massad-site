@@ -959,8 +959,9 @@ function Words({ text, start, step, children }) {
 }
 
 // Tiny play button after the name — says "Jean Massad" out loud.
-// Plays uploads/jean-name.mp3 if Jean has recorded one; until then it
-// falls back to speech synthesis with a French voice for the Jean part.
+// Plays uploads/jean-name.mp3 (baked: macOS "Fred", purposely robotic,
+// "Zhawn" so Jean lands the French way); speech-synthesis fallback
+// only if the file ever 404s.
 function NamePlay() {
   const [playing, setPlaying] = useState(false);
   const play = () => {
@@ -972,9 +973,8 @@ function NamePlay() {
       if (fellBack) return;
       fellBack = true;
       try {
-        const u = new SpeechSynthesisUtterance('Jean Massad');
-        const fr = window.speechSynthesis.getVoices().find((v) => v.lang && v.lang.startsWith('fr'));
-        if (fr) u.voice = fr;
+        // "Zhawn" — the French Jean, from a plain English voice
+        const u = new SpeechSynthesisUtterance('Zhawn Massad');
         u.rate = 0.85;
         u.onend = done;
         u.onerror = done;
