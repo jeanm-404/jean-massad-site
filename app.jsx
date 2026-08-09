@@ -1526,52 +1526,36 @@ function WorkModal({ asset, onClose }) {
       document.body.style.overflow = '';
     };
   }, [onClose]);
+  // Bare lightbox: no panel, no info body — the asset expands to the
+  // largest size that fits the viewport (aspect kept, never overflows,
+  // mobile included) over a heavily blurred page.
+  const stop = (e) => e.stopPropagation();
   return ReactDOM.createPortal(
     <div className="work-modal" onClick={onClose} role="dialog" aria-modal="true" aria-label={asset.title}>
-      <div className="work-modal-panel" onClick={(e) => e.stopPropagation()}>
-        <button type="button" className="work-modal-close mono" onClick={onClose} aria-label="Close">✕ CLOSE</button>
-        <div className="work-modal-media">
-          {asset.type === 'image' ? (
-            <img src={asset.src} alt={asset.title} />
-          ) : asset.type === 'component' ? (
-            <div className="work-modal-demo">
-              {React.createElement(DEMOS[asset.demo] || DemoToggle)}
-            </div>
-          ) : asset.type === 'embed' ? (
-            <div className="work-modal-embed" style={{ aspectRatio: asset.aspect || '16 / 9' }}>
-              <iframe src={asset.src} title={asset.title} loading="lazy" allow="fullscreen" />
-            </div>
-          ) : (
-            <video src={asset.src} autoPlay muted loop playsInline />
-          )}
+      <button type="button" className="work-modal-close mono" onClick={onClose} aria-label="Close">✕ CLOSE</button>
+      {asset.type === 'image' ? (
+        <img className="work-lightbox-media" src={asset.src} alt={asset.title} style={{ aspectRatio: asset.aspect }} onClick={stop} />
+      ) : asset.type === 'component' ? (
+        <div className="work-lightbox-demo" onClick={stop}>
+          {React.createElement(DEMOS[asset.demo] || DemoToggle)}
         </div>
-        <div className="work-modal-body">
-          <h3 className="work-modal-title">{asset.title}</h3>
-          <p className="work-modal-desc">{asset.desc}</p>
-          <div className="work-info">
-            <div className="work-info-row">
-              <span className="work-info-label">Category</span>
-              <span className="work-info-value">{asset.cat}</span>
-            </div>
-            {asset.scope && (
-            <div className="work-info-row">
-              <span className="work-info-label">Scope</span>
-              <span className="work-info-value work-info-value--stack">
-                {asset.scope.map((sc) => <span key={sc}>{sc}</span>)}
-              </span>
-            </div>
-            )}
-            {asset.href && (
-              <div className="work-info-row">
-                <span className="work-info-label">Case study</span>
-                <span className="work-info-value">
-                  <a className="ulink" href={asset.href} target="_blank" rel="noreferrer">konpo.studio ↗</a>
-                </span>
-              </div>
-            )}
-          </div>
+      ) : asset.type === 'embed' ? (
+        <div className="work-lightbox-embed" style={{ aspectRatio: asset.aspect || '16 / 9' }} onClick={stop}>
+          <iframe src={asset.src} title={asset.title} loading="lazy" allow="fullscreen" />
         </div>
-      </div>
+      ) : (
+        <video
+          className="work-lightbox-media"
+          src={asset.src}
+          poster={asset.src && asset.src.replace(/\.mp4$/, '-poster.jpg')}
+          style={{ aspectRatio: asset.aspect }}
+          autoPlay
+          muted
+          loop
+          playsInline
+          onClick={stop}
+        />
+      )}
     </div>,
     document.body
   );

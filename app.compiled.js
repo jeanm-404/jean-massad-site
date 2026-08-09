@@ -1755,77 +1755,56 @@ function WorkModal({
       document.body.style.overflow = '';
     };
   }, [onClose]);
+  // Bare lightbox: no panel, no info body — the asset expands to the
+  // largest size that fits the viewport (aspect kept, never overflows,
+  // mobile included) over a heavily blurred page.
+  const stop = e => e.stopPropagation();
   return ReactDOM.createPortal(/*#__PURE__*/React.createElement("div", {
     className: "work-modal",
     onClick: onClose,
     role: "dialog",
     "aria-modal": "true",
     "aria-label": asset.title
-  }, /*#__PURE__*/React.createElement("div", {
-    className: "work-modal-panel",
-    onClick: e => e.stopPropagation()
   }, /*#__PURE__*/React.createElement("button", {
     type: "button",
     className: "work-modal-close mono",
     onClick: onClose,
     "aria-label": "Close"
-  }, "\u2715 CLOSE"), /*#__PURE__*/React.createElement("div", {
-    className: "work-modal-media"
-  }, asset.type === 'image' ? /*#__PURE__*/React.createElement("img", {
+  }, "\u2715 CLOSE"), asset.type === 'image' ? /*#__PURE__*/React.createElement("img", {
+    className: "work-lightbox-media",
     src: asset.src,
-    alt: asset.title
+    alt: asset.title,
+    style: {
+      aspectRatio: asset.aspect
+    },
+    onClick: stop
   }) : asset.type === 'component' ? /*#__PURE__*/React.createElement("div", {
-    className: "work-modal-demo"
+    className: "work-lightbox-demo",
+    onClick: stop
   }, React.createElement(DEMOS[asset.demo] || DemoToggle)) : asset.type === 'embed' ? /*#__PURE__*/React.createElement("div", {
-    className: "work-modal-embed",
+    className: "work-lightbox-embed",
     style: {
       aspectRatio: asset.aspect || '16 / 9'
-    }
+    },
+    onClick: stop
   }, /*#__PURE__*/React.createElement("iframe", {
     src: asset.src,
     title: asset.title,
     loading: "lazy",
     allow: "fullscreen"
   })) : /*#__PURE__*/React.createElement("video", {
+    className: "work-lightbox-media",
     src: asset.src,
+    poster: asset.src && asset.src.replace(/\.mp4$/, '-poster.jpg'),
+    style: {
+      aspectRatio: asset.aspect
+    },
     autoPlay: true,
     muted: true,
     loop: true,
-    playsInline: true
-  })), /*#__PURE__*/React.createElement("div", {
-    className: "work-modal-body"
-  }, /*#__PURE__*/React.createElement("h3", {
-    className: "work-modal-title"
-  }, asset.title), /*#__PURE__*/React.createElement("p", {
-    className: "work-modal-desc"
-  }, asset.desc), /*#__PURE__*/React.createElement("div", {
-    className: "work-info"
-  }, /*#__PURE__*/React.createElement("div", {
-    className: "work-info-row"
-  }, /*#__PURE__*/React.createElement("span", {
-    className: "work-info-label"
-  }, "Category"), /*#__PURE__*/React.createElement("span", {
-    className: "work-info-value"
-  }, asset.cat)), asset.scope && /*#__PURE__*/React.createElement("div", {
-    className: "work-info-row"
-  }, /*#__PURE__*/React.createElement("span", {
-    className: "work-info-label"
-  }, "Scope"), /*#__PURE__*/React.createElement("span", {
-    className: "work-info-value work-info-value--stack"
-  }, asset.scope.map(sc => /*#__PURE__*/React.createElement("span", {
-    key: sc
-  }, sc)))), asset.href && /*#__PURE__*/React.createElement("div", {
-    className: "work-info-row"
-  }, /*#__PURE__*/React.createElement("span", {
-    className: "work-info-label"
-  }, "Case study"), /*#__PURE__*/React.createElement("span", {
-    className: "work-info-value"
-  }, /*#__PURE__*/React.createElement("a", {
-    className: "ulink",
-    href: asset.href,
-    target: "_blank",
-    rel: "noreferrer"
-  }, "konpo.studio \u2197"))))))), document.body);
+    playsInline: true,
+    onClick: stop
+  })), document.body);
 }
 
 // Flat masonry feed of every shot. Clicking a tile opens its project's
