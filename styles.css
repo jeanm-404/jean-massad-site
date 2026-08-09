@@ -538,22 +538,22 @@ html[data-bio-focus="surge"] .intro .bio-part[data-bio="surge"] { opacity: 1; }
 
 /* the lead block — heading AND opening paragraph carry the same
    heavier, larger cut; body resumes at 15px below it */
-.intro-heading {
+.intro-paragraph--lede {
   margin: 0 0 14px;
   font-family: "Google Sans", var(--sans);
   font-size: 19px;
   font-weight: 500;
   letter-spacing: -0.01em;
-  line-height: 1.35;
+  line-height: 1.5;
   color: var(--ink);
 }
-.intro-paragraph--lede {
+.intro-heading {
   margin: 0 0 26px;
   font-family: "Google Sans", var(--sans);
   font-size: 19px;
   font-weight: 500;
   letter-spacing: -0.01em;
-  line-height: 1.5;
+  line-height: 1.35;
   color: var(--ink);
 }
 
@@ -1035,7 +1035,7 @@ html[data-reveal="go"] .contrib-cell {
   transition: transform .16s ease;
 }
 .fselect-wrap--open .fselect-chevron { transform: rotate(225deg) translate(1px, 1px); }
-/* the drawn menu — frosted paper, mono options, no OS chrome */
+/* the drawn menu — solid paper, mono options, no OS chrome */
 .fmenu {
   position: absolute;
   top: calc(100% + 6px);
@@ -1044,9 +1044,7 @@ html[data-reveal="go"] .contrib-cell {
   min-width: 100%;
   width: max-content;
   padding: 4px;
-  background: rgba(251, 251, 251, 0.92);
-  -webkit-backdrop-filter: blur(10px);
-  backdrop-filter: blur(10px);
+  background: var(--paper);  /* fully opaque — content must not ghost through */
   border: 1px solid var(--rule);
   border-radius: 10px;
   box-shadow: 0 10px 30px rgba(10, 10, 20, 0.10);

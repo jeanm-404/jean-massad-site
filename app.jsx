@@ -1037,10 +1037,8 @@ function Intro() {
       {/* Passages are wrapped in .bio-part spans tagged by who they're
           about — hovering an eyebrow chip (Jean/Konpo/Surge) sets
           html[data-bio-focus] and CSS dims every part but that tag. */}
-      {/* lead block — the whole opener carries the heavier, larger cut */}
-      <h3 className="intro-heading bio-part" data-bio="jean">
-        {W("Similar to a .md file but, like, human.")}
-      </h3>
+      {/* lead block — the whole opener carries the heavier, larger cut;
+          the .md line closes it */}
       <p className="intro-paragraph intro-paragraph--lede">
         <span className="bio-part" data-bio="jean">
           {W("On the grind since I could download Photoshop off a sketchy torrent site. ")}
@@ -1048,6 +1046,9 @@ function Intro() {
         <span className="bio-part">
           {W("Over ten years through the design spectrum. Brand. Websites. Product. Systems. F500. Unicorns. Startups. Governments.")}
         </span>
+      </p>
+      <p className="intro-heading bio-part" data-bio="jean">
+        {W("Similar to a well made .md file but, like, human.")}
       </p>
       <p className="intro-paragraph">
         {(() => { pause(CHUNK_GAP); return null; })()}

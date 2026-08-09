@@ -1206,10 +1206,7 @@ function Intro() {
     style: {
       padding: "0px"
     }
-  }, /*#__PURE__*/React.createElement("h3", {
-    className: "intro-heading bio-part",
-    "data-bio": "jean"
-  }, W("Similar to a .md file but, like, human.")), /*#__PURE__*/React.createElement("p", {
+  }, /*#__PURE__*/React.createElement("p", {
     className: "intro-paragraph intro-paragraph--lede"
   }, /*#__PURE__*/React.createElement("span", {
     className: "bio-part",
@@ -1217,6 +1214,9 @@ function Intro() {
   }, W("On the grind since I could download Photoshop off a sketchy torrent site. ")), /*#__PURE__*/React.createElement("span", {
     className: "bio-part"
   }, W("Over ten years through the design spectrum. Brand. Websites. Product. Systems. F500. Unicorns. Startups. Governments."))), /*#__PURE__*/React.createElement("p", {
+    className: "intro-heading bio-part",
+    "data-bio": "jean"
+  }, W("Similar to a well made .md file but, like, human.")), /*#__PURE__*/React.createElement("p", {
     className: "intro-paragraph"
   }, (() => {
     pause(CHUNK_GAP);
