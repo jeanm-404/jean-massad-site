@@ -607,10 +607,14 @@ function App() {
         }
       });
       document.querySelectorAll('.board-divider').forEach(d => {
-        d.style.marginTop = '0px';
+        // the note band keeps a 2-cell base margin (same rhythm as the
+        // gap above `elsewhere`) — snap nudges on TOP of it, instead of
+        // stomping it to zero like the plain dividers
+        const base = d.classList.contains('board-divider--note') ? cell * 2 : 0;
+        d.style.marginTop = `${base}px`;
         const y = d.getBoundingClientRect().top + window.scrollY;
         const rem = (y % cell + cell) % cell;
-        if (rem > 0.5 && rem < cell - 0.5) d.style.marginTop = `${cell - rem}px`;
+        if (rem > 0.5 && rem < cell - 0.5) d.style.marginTop = `${base + cell - rem}px`;
       });
       // Phase-align the full-width grid pattern to the container origin
       const grid = document.querySelector('.board-grid');

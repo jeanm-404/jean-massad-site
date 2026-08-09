@@ -957,9 +957,10 @@ html[data-reveal="go"] .contrib-cell {
   justify-content: space-between;
   gap: 16px 24px;
   flex-wrap: wrap;
-  /* breathing room after the intro (grid-area cancels the container
-     gap, so the band sets its own distance from the hero) */
-  margin-top: calc(var(--board-cell) * 5);
+  /* breathing room after the intro — 2 cells, the same rhythm as the
+     gap above `elsewhere`. NOTE: snap() re-applies this as an inline
+     base margin (plus the grid nudge), so keep the two in step. */
+  margin-top: calc(var(--board-cell) * 2);
   margin-bottom: var(--board-cell);
 }
 .feed-note {
