@@ -536,14 +536,24 @@ html[data-bio-focus="jean"]  .intro .bio-part[data-bio="jean"],
 html[data-bio-focus="konpo"] .intro .bio-part[data-bio="konpo"],
 html[data-bio-focus="surge"] .intro .bio-part[data-bio="surge"] { opacity: 1; }
 
-/* the crosshead itself — Google Sans, one notch up from body */
+/* the lead block — heading AND opening paragraph carry the same
+   heavier, larger cut; body resumes at 15px below it */
 .intro-heading {
-  margin: 0 0 20px;
+  margin: 0 0 14px;
   font-family: "Google Sans", var(--sans);
   font-size: 19px;
   font-weight: 500;
   letter-spacing: -0.01em;
   line-height: 1.35;
+  color: var(--ink);
+}
+.intro-paragraph--lede {
+  margin: 0 0 26px;
+  font-family: "Google Sans", var(--sans);
+  font-size: 19px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  line-height: 1.5;
   color: var(--ink);
 }
 
