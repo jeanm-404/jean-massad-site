@@ -1206,15 +1206,12 @@ function Intro() {
     style: {
       padding: "0px"
     }
-  }, /*#__PURE__*/React.createElement("p", {
+  }, /*#__PURE__*/React.createElement("h3", {
+    className: "intro-heading bio-part",
+    "data-bio": "jean"
+  }, W("Similar to a .md file but, like, human.")), /*#__PURE__*/React.createElement("p", {
     className: "intro-paragraph"
   }, /*#__PURE__*/React.createElement("span", {
-    className: "bio-part",
-    "data-bio": "jean"
-  }, W("Similar to a .md file but, like, human.")), /*#__PURE__*/React.createElement("br", null), /*#__PURE__*/React.createElement("br", null), (() => {
-    pause(CHUNK_GAP);
-    return null;
-  })(), /*#__PURE__*/React.createElement("span", {
     className: "bio-part",
     "data-bio": "jean"
   }, W("On the grind since I could download Photoshop off a sketchy torrent site. ")), /*#__PURE__*/React.createElement("span", {
@@ -1518,7 +1515,7 @@ const PROJECTS = [{
   tag: 'Search Engine',
   sub: 'Brand, marketing site, and product UI for AI-native search.',
   cover: P('fyler', 'image', 'fyler-moodboard-brand.jpg', 'Fyler', 'Brand', '1600 / 1034'),
-  cards: [A('fyler', 'fyler-walkthrough', 'Walkthrough', 'Product', '3 / 2'), A('fyler', 'fyler-hero', 'Hero', 'Websites', '16 / 9'), A('fyler', 'fyler-showcase', 'Showcase', 'Product', '16 / 9'), A('fyler', 'fyler-interface', 'Interface', 'Product', '16 / 9'), P('fyler', 'image', 'fyler-interface-ltr.jpg', 'Interface LTR', 'Product', '16 / 9'), P('fyler', 'image', 'fyler-interface-rtl.jpg', 'Interface RTL', 'Product', '16 / 9'), P('fyler', 'image', 'fyler-inside-search.jpg', 'Inside Search', 'Product', '16 / 9'), P('fyler', 'image', 'fyler-categories.jpg', 'Categories', 'Product', '1583 / 763'), P('fyler', 'image', 'fyler-rich-location.jpg', 'Location', 'Product', '1304 / 1600'), P('fyler', 'image', 'fyler-rich-comparison.jpg', 'Comparison', 'Product', '1361 / 1600'), P('fyler', 'image', 'fyler-rich-weather.jpg', 'Weather', 'Product', '1571 / 2031'), P('fyler', 'image', 'fyler-widget-discovery.png', 'Discovery Widget', 'Product', '1600 / 996'), P('fyler', 'image', 'fyler-widget-graphic.png', 'Graphic Widget', 'Product', '1600 / 996'), P('fyler', 'image', 'fyler-widget-mobile.png', 'Mobile Widget', 'Product', '1600 / 996'), P('fyler', 'image', 'fyler-widget-comparative.png', 'Comparative Widget', 'Product', '1600 / 996'), A('fyler', 'fyler-ds-cards', 'System Cards', 'Systems', '1280 / 828'), P('fyler', 'image', 'fyler-ds-1.jpg', 'Design System I', 'Systems', '1600 / 1034'), P('fyler', 'image', 'fyler-ds-2.jpg', 'Design System II', 'Systems', '1600 / 1033'), P('fyler', 'image', 'fyler-ds-3.jpg', 'Design System III', 'Systems', '1600 / 1034'), P('fyler', 'image', 'fyler-ds-4.jpg', 'Design System IV', 'Systems', '1600 / 1033'), P('fyler', 'image', 'fyler-typography.jpg', 'Typography', 'Systems', '1600 / 930'), A('fyler', 'fyler-insp-type', 'Type Inspiration', 'Brand', '1280 / 826'), A('fyler', 'fyler-insp-icons', 'Icon Inspiration', 'Brand', '1280 / 712'), A('fyler', 'fyler-insp-patterns', 'Pattern Inspiration', 'Brand', '16 / 9'), A('fyler', 'fyler-insp-palettes', 'Palette Inspiration', 'Brand', '16 / 9'), A('fyler', 'fyler-palettes', 'Palettes', 'Systems', '1 / 1'), A('fyler', 'fyler-darklight', 'Dark / Light', 'Product', '3 / 2'), P('fyler', 'image', 'fyler-moodboard-1.jpg', 'Moodboard', 'Brand', '1600 / 1034')]
+  cards: [A('fyler', 'fyler-walkthrough', 'Walkthrough', 'Product', '3 / 2'), A('fyler', 'fyler-hero', 'Hero', 'Websites', '16 / 9'), A('fyler', 'fyler-showcase', 'Showcase', 'Product', '16 / 9'), A('fyler', 'fyler-interface', 'Interface', 'Product', '16 / 9'), P('fyler', 'image', 'fyler-interface-ltr.jpg', 'Interface LTR', 'Product', '16 / 9'), P('fyler', 'image', 'fyler-interface-rtl.jpg', 'Interface RTL', 'Product', '16 / 9'), P('fyler', 'image', 'fyler-inside-search.jpg', 'Inside Search', 'Product', '16 / 9'), P('fyler', 'image', 'fyler-categories.jpg', 'Categories', 'Product', '1583 / 763'), P('fyler', 'image', 'fyler-rich-location.jpg', 'Location', 'Product', '1304 / 1600'), P('fyler', 'image', 'fyler-rich-comparison.jpg', 'Comparison', 'Product', '1361 / 1600'), P('fyler', 'image', 'fyler-rich-weather.jpg', 'Weather', 'Product', '1571 / 2031'), P('fyler', 'image', 'fyler-widget-discovery.jpg', 'Discovery Widget', 'Product', '1600 / 996'), P('fyler', 'image', 'fyler-widget-graphic.jpg', 'Graphic Widget', 'Product', '1600 / 996'), P('fyler', 'image', 'fyler-widget-mobile.jpg', 'Mobile Widget', 'Product', '1600 / 996'), P('fyler', 'image', 'fyler-widget-comparative.jpg', 'Comparative Widget', 'Product', '1600 / 996'), A('fyler', 'fyler-ds-cards', 'System Cards', 'Systems', '1280 / 828'), P('fyler', 'image', 'fyler-ds-1.jpg', 'Design System I', 'Systems', '1600 / 1034'), P('fyler', 'image', 'fyler-ds-2.jpg', 'Design System II', 'Systems', '1600 / 1033'), P('fyler', 'image', 'fyler-ds-3.jpg', 'Design System III', 'Systems', '1600 / 1034'), P('fyler', 'image', 'fyler-ds-4.jpg', 'Design System IV', 'Systems', '1600 / 1033'), P('fyler', 'image', 'fyler-typography.jpg', 'Typography', 'Systems', '1600 / 930'), A('fyler', 'fyler-insp-type', 'Type Inspiration', 'Brand', '1280 / 826'), A('fyler', 'fyler-insp-icons', 'Icon Inspiration', 'Brand', '1280 / 712'), A('fyler', 'fyler-insp-patterns', 'Pattern Inspiration', 'Brand', '16 / 9'), A('fyler', 'fyler-insp-palettes', 'Palette Inspiration', 'Brand', '16 / 9'), A('fyler', 'fyler-palettes', 'Palettes', 'Systems', '1 / 1'), A('fyler', 'fyler-darklight', 'Dark / Light', 'Product', '3 / 2'), P('fyler', 'image', 'fyler-moodboard-1.jpg', 'Moodboard', 'Brand', '1600 / 1034')]
 }, {
   key: 'compsych',
   industry: 'Healthcare',
@@ -1561,7 +1558,7 @@ const PROJECTS = [{
   tag: 'Venture Studio',
   sub: 'The Nexus brand system, from logo to product.',
   cover: N('video', 'hero.mp4', 'ILI.DIGITAL', 'Websites', '16 / 9'),
-  cards: [N('video', 'reveal.mp4', 'Reveal', 'Brand', '21 / 9'), N('video', 'logos-2.mp4', 'Logos', 'Brand', '4 / 3'), N('image', 'type-ii.webp', 'Typography', 'Systems', '3 / 2'), N('image', 'system-color.webp', 'Color', 'Systems', '3 / 2'), N('image', 'button-system.webp', 'Buttons', 'Systems', '2 / 3'), N('image', 'icon-system.webp', 'Icons', 'Systems', '6 / 5'), N('video', 'smile.mp4', 'Smile', 'Brand', '4 / 3'), N('video', 'frames.mp4', 'Frames', 'Brand', '6 / 5'), N('image', 'website-ii.webp', 'Website', 'Websites', '16 / 9'), N('video', 'charts.mp4', 'Charts', 'Product', '3 / 2'), N('image', 'poster.webp', 'Poster', 'Brand', '3 / 4'), N('image', 'book.png', 'Book', 'Brand', '16 / 9'), N('video', 'animation.mp4', 'Animation', 'Brand', '21 / 9')]
+  cards: [N('video', 'reveal.mp4', 'Reveal', 'Brand', '21 / 9'), N('video', 'logos-2.mp4', 'Logos', 'Brand', '4 / 3'), N('image', 'type-ii.webp', 'Typography', 'Systems', '3 / 2'), N('image', 'system-color.webp', 'Color', 'Systems', '3 / 2'), N('image', 'button-system.webp', 'Buttons', 'Systems', '2 / 3'), N('image', 'icon-system.webp', 'Icons', 'Systems', '6 / 5'), N('video', 'smile.mp4', 'Smile', 'Brand', '4 / 3'), N('video', 'frames.mp4', 'Frames', 'Brand', '6 / 5'), N('image', 'website-ii.webp', 'Website', 'Websites', '16 / 9'), N('video', 'charts.mp4', 'Charts', 'Product', '3 / 2'), N('image', 'poster.webp', 'Poster', 'Brand', '3 / 4'), N('image', 'book.jpg', 'Book', 'Brand', '16 / 9'), N('video', 'animation.mp4', 'Animation', 'Brand', '21 / 9')]
 }, {
   key: 'hutte',
   industry: 'DevTools',

@@ -1037,12 +1037,11 @@ function Intro() {
       {/* Passages are wrapped in .bio-part spans tagged by who they're
           about — hovering an eyebrow chip (Jean/Konpo/Surge) sets
           html[data-bio-focus] and CSS dims every part but that tag. */}
+      {/* crosshead — breaks up the paragraph mass */}
+      <h3 className="intro-heading bio-part" data-bio="jean">
+        {W("Similar to a .md file but, like, human.")}
+      </h3>
       <p className="intro-paragraph">
-        <span className="bio-part" data-bio="jean">
-          {W("Similar to a .md file but, like, human.")}
-        </span>
-        <br /><br />
-        {(() => { pause(CHUNK_GAP); return null; })()}
         <span className="bio-part" data-bio="jean">
           {W("On the grind since I could download Photoshop off a sketchy torrent site. ")}
         </span>
@@ -1310,10 +1309,10 @@ const PROJECTS = [
       P('fyler', 'image', 'fyler-rich-location.jpg', 'Location', 'Product', '1304 / 1600'),
       P('fyler', 'image', 'fyler-rich-comparison.jpg', 'Comparison', 'Product', '1361 / 1600'),
       P('fyler', 'image', 'fyler-rich-weather.jpg', 'Weather', 'Product', '1571 / 2031'),
-      P('fyler', 'image', 'fyler-widget-discovery.png', 'Discovery Widget', 'Product', '1600 / 996'),
-      P('fyler', 'image', 'fyler-widget-graphic.png', 'Graphic Widget', 'Product', '1600 / 996'),
-      P('fyler', 'image', 'fyler-widget-mobile.png', 'Mobile Widget', 'Product', '1600 / 996'),
-      P('fyler', 'image', 'fyler-widget-comparative.png', 'Comparative Widget', 'Product', '1600 / 996'),
+      P('fyler', 'image', 'fyler-widget-discovery.jpg', 'Discovery Widget', 'Product', '1600 / 996'),
+      P('fyler', 'image', 'fyler-widget-graphic.jpg', 'Graphic Widget', 'Product', '1600 / 996'),
+      P('fyler', 'image', 'fyler-widget-mobile.jpg', 'Mobile Widget', 'Product', '1600 / 996'),
+      P('fyler', 'image', 'fyler-widget-comparative.jpg', 'Comparative Widget', 'Product', '1600 / 996'),
       A('fyler', 'fyler-ds-cards', 'System Cards', 'Systems', '1280 / 828'),
       P('fyler', 'image', 'fyler-ds-1.jpg', 'Design System I', 'Systems', '1600 / 1034'),
       P('fyler', 'image', 'fyler-ds-2.jpg', 'Design System II', 'Systems', '1600 / 1033'),
@@ -1387,7 +1386,7 @@ const PROJECTS = [
       N('image', 'website-ii.webp', 'Website', 'Websites', '16 / 9'),
       N('video', 'charts.mp4', 'Charts', 'Product', '3 / 2'),
       N('image', 'poster.webp', 'Poster', 'Brand', '3 / 4'),
-      N('image', 'book.png', 'Book', 'Brand', '16 / 9'),
+      N('image', 'book.jpg', 'Book', 'Brand', '16 / 9'),
       N('video', 'animation.mp4', 'Animation', 'Brand', '21 / 9'),
     ] },
   { key: 'hutte', industry: 'DevTools', org: 'Startup', title: 'Hutte', cat: 'Brand', tag: 'Salesforce DevOps', sub: 'Identity and product for the home of Salesforce DevOps.',
