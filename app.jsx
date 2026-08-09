@@ -1047,10 +1047,13 @@ function Intro() {
           html[data-bio-focus] and CSS dims every part but that tag. */}
       <p className="intro-paragraph">
         <span className="bio-part" data-bio="jean">
-          {W("On the grind since I could download Photoshop off a sketchy torrent site. Similar to a .md file but, like, human.")}
+          {W("Similar to a .md file but, like, human.")}
         </span>
         <br /><br />
         {(() => { pause(CHUNK_GAP); return null; })()}
+        <span className="bio-part" data-bio="jean">
+          {W("On the grind since I could download Photoshop off a sketchy torrent site. ")}
+        </span>
         <span className="bio-part">
           {W("Over ten years through the design spectrum. Brand. Websites. Product. Systems. F500. Unicorns. Startups. Governments.")}
         </span>

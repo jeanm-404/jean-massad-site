@@ -1219,10 +1219,13 @@ function Intro() {
   }, /*#__PURE__*/React.createElement("span", {
     className: "bio-part",
     "data-bio": "jean"
-  }, W("On the grind since I could download Photoshop off a sketchy torrent site. Similar to a .md file but, like, human.")), /*#__PURE__*/React.createElement("br", null), /*#__PURE__*/React.createElement("br", null), (() => {
+  }, W("Similar to a .md file but, like, human.")), /*#__PURE__*/React.createElement("br", null), /*#__PURE__*/React.createElement("br", null), (() => {
     pause(CHUNK_GAP);
     return null;
   })(), /*#__PURE__*/React.createElement("span", {
+    className: "bio-part",
+    "data-bio": "jean"
+  }, W("On the grind since I could download Photoshop off a sketchy torrent site. ")), /*#__PURE__*/React.createElement("span", {
     className: "bio-part"
   }, W("Over ten years through the design spectrum. Brand. Websites. Product. Systems. F500. Unicorns. Startups. Governments.")), /*#__PURE__*/React.createElement("br", null), /*#__PURE__*/React.createElement("br", null), (() => {
     pause(CHUNK_GAP);
