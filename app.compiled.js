@@ -1495,7 +1495,7 @@ const PROJECTS = [{
   tag: 'Frontier Data',
   sub: 'Brand and website for the data engine behind frontier AI.',
   cover: A('surge', 'surge-website', 'Surge AI', 'Websites', '16 / 9'),
-  cards: [P('surge', 'image', 'surge-about.webp', 'About', 'Brand', '1920 / 1080'), A('surge', 'surge-logo', 'Logo', 'Brand', '16 / 9'), P('surge', 'image', 'surge-pair-left.webp', 'Duo I', 'Brand', '1900 / 2160'), P('surge', 'image', 'surge-pair-right.webp', 'Duo II', 'Brand', '1900 / 2160'), P('surge', 'image', 'surge-font-use.webp', 'Font in Use', 'Systems', '16 / 9'), P('surge', 'image', 'surge-research.webp', 'Research', 'Brand', '3840 / 2266'), P('surge', 'image', 'surge-chart.webp', 'Charts', 'Product', '16 / 9'), P('surge', 'image', 'surge-web-overview.webp', 'Web Overview', 'Websites', '16 / 9'), P('surge', 'image', 'surge-screens.webp', 'Screens', 'Websites', '16 / 9'), P('surge', 'image', 'surge-footer.webp', 'Footer', 'Websites', '16 / 9'), P('surge', 'image', 'surge-poster-left.webp', 'Poster I', 'Brand', '1900 / 2160'), P('surge', 'image', 'surge-poster-right.webp', 'Poster II', 'Brand', '1900 / 2160'), P('surge', 'image', 'surge-product.webp', 'Product', 'Product', '16 / 9'), P('surge', 'image', 'surge-typography.webp', 'Typography', 'Systems', '16 / 9'), P('surge', 'image', 'surge-palette-16.webp', 'Palette', 'Systems', '16 / 9'), A('surge', 'surge-palette', 'Color', 'Systems', '16 / 9'), P('surge', 'image', 'surge-palette-sheet.webp', 'Palette Sheet', 'Systems', '16 / 9'), P('surge', 'image', 'surge-primary.webp', 'Primary', 'Systems', '16 / 9'), P('surge', 'image', 'surge-icon-examples.webp', 'Icon Examples', 'Systems', '1900 / 2160'), P('surge', 'image', 'surge-icon-corner.webp', 'Icon Corner', 'Systems', '16 / 9'), A('surge', 'surge-icons', 'Icons', 'Systems', '16 / 9'), P('surge', 'image', 'surge-spacing.png', 'Spacing', 'Systems', '16 / 9'), P('surge', 'image', 'surge-grid.webp', 'Grid', 'Systems', '16 / 9'), P('surge', 'image', 'surge-menu.webp', 'Menu', 'Websites', '16 / 9'), P('surge', 'image', 'surge-animation.webp', 'Motion', 'Systems', '16 / 9'), P('surge', 'image', 'surge-shot.webp', 'Shot', 'Brand', '3268 / 1839'), P('surge', 'image', 'surge-grid-radial.webp', 'Radial Grid', 'Product', '16 / 9'), {
+  cards: [A('surge', 'surge-logo', 'Logo', 'Brand', '16 / 9'), P('surge', 'image', 'surge-pair-left.webp', 'Duo I', 'Brand', '1900 / 2160'), P('surge', 'image', 'surge-font-use.webp', 'Font in Use', 'Systems', '16 / 9'), P('surge', 'image', 'surge-research.webp', 'Research', 'Brand', '3840 / 2266'), P('surge', 'image', 'surge-chart.webp', 'Charts', 'Product', '16 / 9'), P('surge', 'image', 'surge-web-overview.webp', 'Web Overview', 'Websites', '16 / 9'), P('surge', 'image', 'surge-screens.webp', 'Screens', 'Websites', '16 / 9'), P('surge', 'image', 'surge-poster-right.webp', 'Poster II', 'Brand', '1900 / 2160'), P('surge', 'image', 'surge-product.webp', 'Product', 'Product', '16 / 9'), P('surge', 'image', 'surge-typography.webp', 'Typography', 'Systems', '16 / 9'), P('surge', 'image', 'surge-palette-16.webp', 'Palette', 'Systems', '16 / 9'), A('surge', 'surge-palette', 'Color', 'Systems', '16 / 9'), P('surge', 'image', 'surge-primary.webp', 'Primary', 'Systems', '16 / 9'), P('surge', 'image', 'surge-icon-examples.webp', 'Icon Examples', 'Systems', '1900 / 2160'), P('surge', 'image', 'surge-icon-corner.webp', 'Icon Corner', 'Systems', '16 / 9'), A('surge', 'surge-icons', 'Icons', 'Systems', '16 / 9'), P('surge', 'image', 'surge-spacing.png', 'Spacing', 'Systems', '16 / 9'), P('surge', 'image', 'surge-grid.webp', 'Grid', 'Systems', '16 / 9'), {
     type: 'embed',
     title: 'Frontier Skyline',
     src: 'https://surge-mirror.vercel.app/frontier-minimal.html?view=scores&revision=dark-toggle&theme=dark',
@@ -1591,19 +1591,11 @@ const DEMOS = {
 // `at` slots the artifact in at that tile index (omit → appended).
 // Artifacts carry scope 'IDK' and no industry/org, so they show under
 // All + Scope:IDK and step back when a client filter is active.
-const ARTIFACTS = [{
-  title: 'Switch',
-  type: 'component',
-  demo: 'toggle',
-  aspect: '4 / 3',
-  at: 5,
-  desc: 'The site’s entry gate, isolated — a real native switch, velvet chime and all.',
-  cat: 'IDK',
-  scope: ['Craft']
-}
-// The Surge live-prototype embeds (Frontier Skyline, Radial Horizon)
-// moved into the Surge AI project's cards — they travel with it now.
-];
+// Standalone artifacts (rauno.me/craft-style) — currently empty: the
+// Surge embeds live in the Surge project's cards, and the Switch demo
+// was cut. Drop entries here to interleave pieces into the feed
+// ({ title, type, src|demo|preview, aspect, desc, at }).
+const ARTIFACTS = [];
 
 // Video that only downloads + plays while it's near the viewport. This
 // keeps us from decoding a dozen clips at once (the smoothness killer)
