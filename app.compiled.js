@@ -1489,8 +1489,8 @@ const PROJECTS = [{
   cat: 'Brand',
   tag: 'Frontier Data',
   sub: 'Brand and website for the data engine behind frontier AI.',
-  cover: A('surge', 'surge-website', 'Surge AI', 'Websites', '16 / 9'),
-  cards: [A('surge', 'surge-logo', 'Logo', 'Brand', '16 / 9'), P('surge', 'image', 'surge-pair-left.webp', 'Duo I', 'Brand', '1900 / 2160'), P('surge', 'image', 'surge-font-use.webp', 'Font in Use', 'Systems', '16 / 9'), P('surge', 'image', 'surge-research.webp', 'Research', 'Brand', '3840 / 2266'), P('surge', 'image', 'surge-chart.webp', 'Charts', 'Product', '16 / 9'), P('surge', 'image', 'surge-web-overview.webp', 'Web Overview', 'Websites', '16 / 9'), P('surge', 'image', 'surge-screens.webp', 'Screens', 'Websites', '16 / 9'), P('surge', 'image', 'surge-poster-right.webp', 'Poster II', 'Brand', '1900 / 2160'), P('surge', 'image', 'surge-product.webp', 'Product', 'Product', '16 / 9'), P('surge', 'image', 'surge-typography.webp', 'Typography', 'Systems', '16 / 9'), P('surge', 'image', 'surge-palette-16.webp', 'Palette', 'Systems', '16 / 9'), A('surge', 'surge-palette', 'Color', 'Systems', '16 / 9'), P('surge', 'image', 'surge-primary.webp', 'Primary', 'Systems', '16 / 9'), P('surge', 'image', 'surge-icon-examples.webp', 'Icon Examples', 'Systems', '1900 / 2160'), P('surge', 'image', 'surge-icon-corner.webp', 'Icon Corner', 'Systems', '16 / 9'), A('surge', 'surge-icons', 'Icons', 'Systems', '16 / 9'), P('surge', 'image', 'surge-spacing.png', 'Spacing', 'Systems', '16 / 9'), P('surge', 'image', 'surge-grid.webp', 'Grid', 'Systems', '16 / 9'), {
+  cover: A('surge', 'surge-logo', 'Surge AI', 'Brand', '16 / 9'),
+  cards: [A('surge', 'surge-website', 'Website', 'Websites', '16 / 9'), P('surge', 'image', 'surge-pair-left.webp', 'Duo I', 'Brand', '1900 / 2160'), P('surge', 'image', 'surge-font-use.webp', 'Font in Use', 'Systems', '16 / 9'), P('surge', 'image', 'surge-research.webp', 'Research', 'Brand', '3840 / 2266'), P('surge', 'image', 'surge-chart.webp', 'Charts', 'Product', '16 / 9'), P('surge', 'image', 'surge-web-overview.webp', 'Web Overview', 'Websites', '16 / 9'), P('surge', 'image', 'surge-screens.webp', 'Screens', 'Websites', '16 / 9'), P('surge', 'image', 'surge-poster-right.webp', 'Poster II', 'Brand', '1900 / 2160'), P('surge', 'image', 'surge-product.webp', 'Product', 'Product', '16 / 9'), P('surge', 'image', 'surge-typography.webp', 'Typography', 'Systems', '16 / 9'), P('surge', 'image', 'surge-palette-16.webp', 'Palette', 'Systems', '16 / 9'), A('surge', 'surge-palette', 'Color', 'Systems', '16 / 9'), P('surge', 'image', 'surge-primary.webp', 'Primary', 'Systems', '16 / 9'), P('surge', 'image', 'surge-icon-examples.webp', 'Icon Examples', 'Systems', '1900 / 2160'), P('surge', 'image', 'surge-icon-corner.webp', 'Icon Corner', 'Systems', '16 / 9'), A('surge', 'surge-icons', 'Icons', 'Systems', '16 / 9'), P('surge', 'image', 'surge-spacing.png', 'Spacing', 'Systems', '16 / 9'), P('surge', 'image', 'surge-grid.webp', 'Grid', 'Systems', '16 / 9'), {
     type: 'embed',
     title: 'Frontier Skyline',
     src: 'https://surge-mirror.vercel.app/frontier-minimal.html?view=scores&revision=dark-toggle&theme=dark',
@@ -2319,6 +2319,6 @@ function Colophon() {
     "aria-hidden": "true"
   }), /*#__PURE__*/React.createElement("p", {
     className: "footer-note"
-  }, "Powered by Yorkshire Tea."));
+  }, "Powered by Yorkshire Tea and Claude."));
 }
 ReactDOM.createRoot(document.getElementById('root')).render(/*#__PURE__*/React.createElement(App, null));

@@ -1105,6 +1105,12 @@ html[data-reveal="go"] .contrib-cell {
   transition: color .14s ease;
 }
 .more-row:hover .more-label { color: var(--ink); }
+/* the Gimmie More switch wears the accent at rest — always blue,
+   knob slides across it on each pull */
+.more-row .gate-toggle--mini,
+.more-row .gate-toggle--mini:hover,
+.more-row .gate-toggle--mini.gate-toggle--on { background: var(--accent); }
+.more-row:hover .gate-toggle--mini { filter: brightness(1.12); }
 
 /* weather sign-off — meteocon + big type, centered above the footer
    divider; fades in when the line lands, absent if it can't */

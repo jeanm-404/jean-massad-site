@@ -1265,9 +1265,9 @@ const P = (proj, type, file, title, cat, aspect) => ({
 // inline, in the same column — no popup, the scroll just keeps going.
 const PROJECTS = [
   { key: 'surge', industry: 'AI', org: 'Unicorn', title: 'Surge AI', cat: 'Brand', tag: 'Frontier Data', sub: 'Brand and website for the data engine behind frontier AI.',
-    cover: A('surge', 'surge-website', 'Surge AI', 'Websites', '16 / 9'),
+    cover: A('surge', 'surge-logo', 'Surge AI', 'Brand', '16 / 9'),
     cards: [
-      A('surge', 'surge-logo', 'Logo', 'Brand', '16 / 9'),
+      A('surge', 'surge-website', 'Website', 'Websites', '16 / 9'),
       P('surge', 'image', 'surge-pair-left.webp', 'Duo I', 'Brand', '1900 / 2160'),
       P('surge', 'image', 'surge-font-use.webp', 'Font in Use', 'Systems', '16 / 9'),
       P('surge', 'image', 'surge-research.webp', 'Research', 'Brand', '3840 / 2266'),
@@ -1995,7 +1995,7 @@ function Colophon() {
       {/* the visitor's sky — quiet sign-off under the divider */}
       <WeatherLine />
       <div className="colophon-rule" aria-hidden="true" />
-      <p className="footer-note">Powered by Yorkshire Tea.</p>
+      <p className="footer-note">Powered by Yorkshire Tea and Claude.</p>
     </div>);
 
 }
