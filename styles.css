@@ -538,25 +538,6 @@ html[data-bio-focus="surge"] .intro .bio-part[data-bio="surge"] { opacity: 1; }
 
 /* the lead block — heading AND opening paragraph carry the same
    heavier, larger cut; body resumes at 15px below it */
-.intro-paragraph--lede {
-  margin: 0 0 14px;
-  font-family: "Google Sans", var(--sans);
-  font-size: 19px;
-  font-weight: 500;
-  letter-spacing: -0.01em;
-  line-height: 1.5;
-  color: var(--ink);
-}
-.intro-heading {
-  margin: 0 0 26px;
-  font-family: "Google Sans", var(--sans);
-  font-size: 19px;
-  font-weight: 500;
-  letter-spacing: -0.01em;
-  line-height: 1.35;
-  color: var(--ink);
-}
-
 /* inline handwritten word anywhere in running text (e.g. "Konpo") */
 .hand-word {
   font-family: "Gochi Hand", "Bradley Hand", cursive;
@@ -632,6 +613,20 @@ a.hand-word:hover { text-decoration: underline; text-underline-offset: 3px; }
 }
 
 .intro-paragraph .ulink { border-bottom-color: var(--muted-2); }
+
+/* lead block — heading + opening paragraph in a heavier, larger cut
+   (declared AFTER .intro-paragraph: same specificity, cascade wins) */
+.intro-paragraph--lede,
+.intro-heading {
+  font-family: "Google Sans", var(--sans);
+  font-size: 22px;
+  font-weight: 500;
+  letter-spacing: -0.012em;
+  line-height: 1.45;
+  color: var(--ink);
+}
+.intro-paragraph--lede { margin: 0 0 14px; }
+.intro-heading { margin: 0 0 30px; }
 
 /* ──── github contribution map — accent blue, quiet ──── */
 .contrib { margin: 34px 0 0; }
