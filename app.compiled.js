@@ -1099,10 +1099,10 @@ function Words({
   return /*#__PURE__*/React.createElement(React.Fragment, null, out, children);
 }
 
-// Tiny play button after the name — says "Jean Massad" out loud.
-// Plays uploads/jean-name.mp3 (baked: macOS "Fred", purposely robotic,
-// "Zhawn" so Jean lands the French way); speech-synthesis fallback
-// only if the file ever 404s.
+// Tiny play button after the name. Plays uploads/jean-name.mp3 —
+// baked with macOS "Fred" (purposely robotic): the pronunciation PSA,
+// Zhawn (French way) vs Jean (pair of pants), blame the parents.
+// Speech-synthesis fallback only if the file ever 404s.
 function NamePlay() {
   const [playing, setPlaying] = useState(false);
   const play = () => {
@@ -1115,8 +1115,8 @@ function NamePlay() {
       fellBack = true;
       try {
         // "Zhawn" — the French Jean, from a plain English voice
-        const u = new SpeechSynthesisUtterance('Zhawn Massad');
-        u.rate = 0.85;
+        const u = new SpeechSynthesisUtterance("My name is pronounced Zhawn. The French way, even though I'm not French. Not Jean, like a pair of pants. You can blame my parents for complicating things.");
+        u.rate = 0.95;
         u.onend = done;
         u.onerror = done;
         window.speechSynthesis.speak(u);
@@ -1234,12 +1234,12 @@ function Intro() {
   }, "Surge AI")), W(", the data engine behind the world's leading frontier labs")), /*#__PURE__*/React.createElement("span", {
     className: "bio-part",
     "data-bio": "konpo"
-  }, W(", and I run a sharp little design studio called "), I(/*#__PURE__*/React.createElement("a", {
+  }, W(", and I run a nimble design studio called "), I(/*#__PURE__*/React.createElement("a", {
     className: "hand-word hand-word--konpo",
     href: "https://www.konpo.studio",
     target: "_blank",
     rel: "noreferrer"
-  }, "Konpo")), W(". Through the studio, I've lived a thousand design lives with some amazing people.")), /*#__PURE__*/React.createElement("br", null), /*#__PURE__*/React.createElement("br", null), (() => {
+  }, "Konpo")), W(", where we passionately hate traditional agency dynamics. Through it, I've lived a thousand design lives with some amazing people.")), /*#__PURE__*/React.createElement("br", null), /*#__PURE__*/React.createElement("br", null), (() => {
     pause(CHUNK_GAP);
     return null;
   })(), /*#__PURE__*/React.createElement("span", {
