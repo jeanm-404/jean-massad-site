@@ -995,6 +995,7 @@ html[data-reveal="go"] .contrib-cell {
   font-size: 10px;
   letter-spacing: 0.06em;
   text-transform: uppercase;
+  white-space: nowrap;  /* "ORG TYPE" must never stack inside its pill */
   color: var(--muted-2);
   cursor: pointer;
   transition: color .14s ease, border-color .14s ease;
@@ -1104,10 +1105,36 @@ html[data-reveal="go"] .contrib-cell {
 }
 .more-row:hover .more-label { color: var(--ink); }
 
-/* weather callout — fades in when the line lands; absent if it can't */
-.wx { opacity: 0; transition: opacity .6s ease; }
-.wx-in { opacity: 1; }
-@media (prefers-reduced-motion: reduce) { .wx { transition: none; } }
+/* weather sign-off — meteocon + big type, centered above the footer
+   divider; fades in when the line lands, absent if it can't */
+.wx-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  margin: calc(var(--board-cell) * 2) 0 var(--board-cell);
+  text-align: center;
+  opacity: 0;
+  transition: opacity .6s ease;
+}
+.wx-block.wx-in { opacity: 1; }
+.wx-icon {
+  display: block;
+  width: 44px;
+  height: 44px;
+}
+.wx-line {
+  margin: 0;
+  font-family: "Google Sans", var(--sans);
+  font-size: clamp(15px, 1.6vw, 20px);
+  font-weight: 400;
+  letter-spacing: -0.005em;
+  line-height: 1.35;
+  color: var(--ink);
+  max-width: 34ch;
+  text-wrap: balance;
+}
+@media (prefers-reduced-motion: reduce) { .wx-block { transition: none; } }
 
 /* empty filter result */
 .feed-empty {

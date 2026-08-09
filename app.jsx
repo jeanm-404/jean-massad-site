@@ -1801,8 +1801,23 @@ function AssetsFeed() {
       {hasMore && (
         <MoreToggle
           onMore={() => {
+            // The new tiles land ABOVE the toggle, and scroll anchoring
+            // keeps the toggle pinned under the cursor — so without a
+            // nudge the deal happens off-screen. Glide to the first
+            // fresh tile so the reveal is actually seen.
+            const prev = dealt.length;
             setLimit((l) => l + PAGE);
-            setTimeout(() => window.dispatchEvent(new Event('resize')), 80);
+            setTimeout(() => {
+              window.dispatchEvent(new Event('resize'));
+              const first = document.querySelectorAll('.feed-masonry .asset-tile')[prev];
+              if (first) {
+                const cell = parseFloat(
+                  getComputedStyle(document.documentElement).getPropertyValue('--board-cell')
+                ) || 32;
+                const y = first.getBoundingClientRect().top + window.scrollY - cell * 2;
+                window.scrollTo({ top: y, behavior: 'smooth' });
+              }
+            }, 120);
           }}
         />
       )}
@@ -1927,41 +1942,55 @@ function Footer() {
 // prompt, no spinner; if everything fails the line simply never shows.
 // Preview states with ?wx=rain, ?wx=vpn, ?wx=down, …
 function WeatherLine() {
-  const [line, setLine] = useState(null);
+  const [wx, setWx] = useState(null);          // { line, icon }
   const [entered, setEntered] = useState(false);
   useEffect(() => {
     const force = new URLSearchParams(window.location.search).get('wx');
-    const cached = !force && sessionStorage.getItem('wx-line');
-    if (cached) { setLine(cached); return; }
+    const cached = !force && sessionStorage.getItem('wx-v2');
+    if (cached) {
+      try { setWx(JSON.parse(cached)); return; } catch (e) { /* refetch */ }
+    }
     const params = new URLSearchParams({
       tz: (Intl.DateTimeFormat().resolvedOptions().timeZone) || '',
     });
     if (force) params.set('force', force);
     fetch('/api/weather?' + params.toString())
       .then((r) => r.json())
-      .then(({ line: l }) => {
-        if (!l) return;
-        if (!force) sessionStorage.setItem('wx-line', l);
-        setLine(l);
+      .then((data) => {
+        if (!data || !data.line) return;
+        if (!force) sessionStorage.setItem('wx-v2', JSON.stringify(data));
+        setWx(data);
       })
       .catch(() => { /* no line beats a broken line */ });
   }, []);
   useEffect(() => {
-    if (!line) return;
+    if (!wx) return;
     const raf = requestAnimationFrame(() => setEntered(true));
     return () => cancelAnimationFrame(raf);
-  }, [line]);
-  if (!line) return null;
+  }, [wx]);
+  if (!wx) return null;
   return (
-    <p className={`footer-note wx ${entered ? 'wx-in' : ''}`} role="status">{line}</p>
+    <div className={`wx-block ${entered ? 'wx-in' : ''}`} role="status">
+      {wx.icon && (
+        <img
+          className="wx-icon"
+          src={`uploads/weather/${wx.icon}.svg`}
+          alt=""
+          width="72"
+          height="72"
+        />
+      )}
+      <p className="wx-line">{wx.line}</p>
+    </div>
   );
 }
 
 function Colophon() {
   return (
     <div className="colophon" data-screen-label="04 Colophon">
-      <div className="colophon-rule" aria-hidden="true" />
+      {/* the visitor's sky — quiet sign-off under the divider */}
       <WeatherLine />
+      <div className="colophon-rule" aria-hidden="true" />
       <p className="footer-note">Powered by Yorkshire Tea.</p>
     </div>);
 

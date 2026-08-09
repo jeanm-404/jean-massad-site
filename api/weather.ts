@@ -55,6 +55,29 @@ const HOME_STATUS = {
 const DOWN =
   "Couldn't read any weather, yours or mine. Assume it's nice. Act accordingly.";
 
+// Meteocon filenames (uploads/weather/<icon>.svg) per bucket/status.
+const ICONS: Record<string, string> = {
+  extreme: "thermometer-warmer",
+  hot: "clear-day",
+  mild: "clear-day",
+  coldclear: "thermometer-colder",
+  overcast: "overcast",
+  drizzle: "drizzle",
+  rain: "rain",
+  storm: "thunderstorms-rain",
+  snow: "snow",
+  fog: "fog",
+  night: "clear-night",
+};
+const HOME_ICONS: Record<keyof typeof HOME_STATUS, string> = {
+  offshore: "wind",
+  clear: "clear-day",
+  rain: "rain",
+  grey: "overcast",
+  night: "clear-night",
+};
+const DOWN_ICON = "not-available";
+
 // ---------------------------------------------------------------------------
 // Config
 // ---------------------------------------------------------------------------
@@ -69,18 +92,20 @@ const OFFSHORE = { from: 140, to: 220, minSpeed: 4 }; // degrees, km/h
 // Handler
 // ---------------------------------------------------------------------------
 
+type Payload = { line: string; icon: string };
+
 export default async function handler(req: Request): Promise<Response> {
   const url = new URL(req.url);
   const force = url.searchParams.get("force");
 
-  let line: string;
+  let out: Payload;
   try {
-    line = force ? await forced(force) : await live(req, url);
+    out = force ? await forced(force) : await live(req, url);
   } catch {
-    line = DOWN;
+    out = { line: DOWN, icon: DOWN_ICON };
   }
 
-  return new Response(JSON.stringify({ line }), {
+  return new Response(JSON.stringify(out), {
     headers: {
       "content-type": "application/json; charset=utf-8",
       // Per-visitor content: never share via CDN cache.
@@ -93,7 +118,7 @@ export default async function handler(req: Request): Promise<Response> {
 // Modes
 // ---------------------------------------------------------------------------
 
-async function live(req: Request, url: URL): Promise<string> {
+async function live(req: Request, url: URL): Promise<Payload> {
   const h = req.headers;
   const lat = h.get("x-vercel-ip-latitude");
   const lon = h.get("x-vercel-ip-longitude");
@@ -114,14 +139,20 @@ async function live(req: Request, url: URL): Promise<string> {
   }
 }
 
-function visitorLine(cur: Current, useF: boolean): string {
+function visitorLine(cur: Current, useF: boolean): Payload {
   const key = bucket(cur.weather_code, cur.temperature_2m, cur.is_day === 1);
-  return fill(pick(VISITOR[key]), cur.temperature_2m, useF);
+  return {
+    line: fill(pick(VISITOR[key]), cur.temperature_2m, useF),
+    icon: ICONS[key] ?? DOWN_ICON,
+  };
 }
 
-async function homeLine(reason: keyof typeof OPENER): Promise<string> {
+async function homeLine(reason: keyof typeof OPENER): Promise<Payload> {
   const status = homeStatus(await meteo(HOME.lat, HOME.lon));
-  return `${OPENER[reason]} ${HOME_STATUS[status]}`;
+  return {
+    line: `${OPENER[reason]} ${HOME_STATUS[status]}`,
+    icon: HOME_ICONS[status],
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -214,14 +245,15 @@ function pick<T>(arr: T[]): T {
 //   Home mode:       vpn | blocked            (live Donostia status)
 //                    vpn-offshore, blocked-rain, vpn-night, ...  (pinned status)
 //   Static:          down
-async function forced(key: string): Promise<string> {
-  if (key === "down") return DOWN;
+async function forced(key: string): Promise<Payload> {
+  if (key === "down") return { line: DOWN, icon: DOWN_ICON };
 
   const [mode, status] = key.split("-");
   if (mode === "vpn" || mode === "blocked") {
     const reason = mode === "vpn" ? "vpn" : "unknown";
     if (status && status in HOME_STATUS) {
-      return `${OPENER[reason]} ${HOME_STATUS[status as keyof typeof HOME_STATUS]}`;
+      const s = status as keyof typeof HOME_STATUS;
+      return { line: `${OPENER[reason]} ${HOME_STATUS[s]}`, icon: HOME_ICONS[s] };
     }
     return homeLine(reason);
   }
@@ -234,8 +266,11 @@ async function forced(key: string): Promise<string> {
       coldclear: 5,
       night: 16,
     };
-    return fill(pick(VISITOR[key]), sampleTemp[key] ?? 20, false);
+    return {
+      line: fill(pick(VISITOR[key]), sampleTemp[key] ?? 20, false),
+      icon: ICONS[key] ?? DOWN_ICON,
+    };
   }
 
-  return DOWN;
+  return { line: DOWN, icon: DOWN_ICON };
 }
