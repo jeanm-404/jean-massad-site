@@ -626,7 +626,8 @@ a.hand-word:hover { text-decoration: underline; text-underline-offset: 3px; }
   color: var(--ink);
 }
 .intro-paragraph--lede { margin: 0 0 14px; }
-.intro-heading { margin: 0 0 30px; }
+/* gap below the lead block = the headline→lead gap (2-cell rhythm) */
+.intro-heading { margin: 0 0 calc(var(--board-cell) * 2); }
 
 /* ──── github contribution map — accent blue, quiet ──── */
 .contrib { margin: 34px 0 0; }
