@@ -1551,6 +1551,33 @@ const ARTIFACTS = [{
   desc: 'The site’s entry gate, isolated — a real native switch, velvet chime and all.',
   cat: 'IDK',
   scope: ['Craft']
+},
+// Surge craft pieces — live prototypes embedded from surge-mirror;
+// tiles show a captured preview, the overlay loads the real thing.
+{
+  title: 'Frontier Skyline',
+  type: 'embed',
+  at: 8,
+  src: 'https://surge-mirror.vercel.app/frontier-minimal.html?view=scores&revision=dark-toggle&theme=dark',
+  preview: 'uploads/artifacts/surge-skyline.png',
+  aspect: '16 / 9',
+  desc: 'Benchmark skylines for the Surge Intelligence Index — every model on every board, one glance. Live prototype, embedded.',
+  cat: 'IDK',
+  scope: ['Craft', 'Data viz'],
+  industry: 'AI',
+  org: 'Unicorn'
+}, {
+  title: 'Radial Horizon',
+  type: 'embed',
+  at: 18,
+  src: 'https://surge-mirror.vercel.app/compare.html?prototype=frontier&models=fable-5%2Cgpt-5.6-sol%2Cgemini-3.5-flash%2Ckimi-k3&view=all&theme=dark#tw=theme:dark',
+  preview: 'uploads/artifacts/surge-radial.png',
+  aspect: '16 / 9',
+  desc: 'A cross-board radial horizon comparing four frontier models across nine Surge benches. Live prototype, embedded.',
+  cat: 'IDK',
+  scope: ['Craft', 'Data viz'],
+  industry: 'AI',
+  org: 'Unicorn'
 }];
 
 // Video that only downloads + plays while it's near the viewport. This
@@ -1611,6 +1638,21 @@ function AssetMedia({
       } : undefined
     }, /*#__PURE__*/React.createElement("img", {
       src: asset.src,
+      alt: asset.title,
+      loading: "lazy",
+      decoding: "async"
+    }));
+  }
+  if (asset.type === 'embed') {
+    // live-prototype artifact: the tile shows a captured preview — the
+    // real page loads as an iframe in the shot overlay
+    return /*#__PURE__*/React.createElement("div", {
+      className: "asset-media asset-media--img asset-media--fixed",
+      style: {
+        aspectRatio: asset.aspect
+      }
+    }, /*#__PURE__*/React.createElement("img", {
+      src: asset.preview,
       alt: asset.title,
       loading: "lazy",
       decoding: "async"
@@ -1700,7 +1742,17 @@ function WorkModal({
     alt: asset.title
   }) : asset.type === 'component' ? /*#__PURE__*/React.createElement("div", {
     className: "work-modal-demo"
-  }, React.createElement(DEMOS[asset.demo] || DemoToggle)) : /*#__PURE__*/React.createElement("video", {
+  }, React.createElement(DEMOS[asset.demo] || DemoToggle)) : asset.type === 'embed' ? /*#__PURE__*/React.createElement("div", {
+    className: "work-modal-embed",
+    style: {
+      aspectRatio: asset.aspect || '16 / 9'
+    }
+  }, /*#__PURE__*/React.createElement("iframe", {
+    src: asset.src,
+    title: asset.title,
+    loading: "lazy",
+    allow: "fullscreen"
+  })) : /*#__PURE__*/React.createElement("video", {
     src: asset.src,
     autoPlay: true,
     muted: true,
@@ -1831,8 +1883,10 @@ function FeedTile({
 
 // Display names for the scope filter (data keeps the original cats)
 const SCOPE_LABELS = {
-  Websites: 'Web'
+  Websites: 'Website'
 };
+// Fixed menu order for scope; anything untagged lands after these
+const SCOPE_ORDER = ['IDK', 'Brand', 'Website', 'Product', 'Systems'];
 const FILTER_GROUPS = [['industry', 'Industry'], ['org', 'Org Type'], ['scope', 'Scope']];
 
 // Custom dropdown — a drawn menu instead of the OS <select> popup.
@@ -1970,11 +2024,15 @@ function AssetsFeed() {
     }));
   });
   ARTIFACTS.forEach((a, i) => {
+    // artifacts may carry industry/org (e.g. Surge pieces file under
+    // AI / Unicorn); scope is always IDK
     const tile = {
       asset: a,
       note: 'Artifact',
       key: `artifact-${i}`,
-      scope: 'IDK'
+      scope: 'IDK',
+      industry: a.industry,
+      org: a.org
     };
     if (a.at != null && a.at <= tiles.length) tiles.splice(a.at, 0, tile);else tiles.push(tile);
   });
@@ -1987,8 +2045,11 @@ function AssetsFeed() {
   const values = {
     industry: uniq(tiles.map(t => t.industry)),
     org: uniq(tiles.map(t => t.org)),
-    // IDK (the artifacts) leads the scope list, right below All
-    scope: uniq(tiles.map(t => t.scope)).sort((a, b) => a === 'IDK' ? -1 : b === 'IDK' ? 1 : 0)
+    scope: uniq(tiles.map(t => t.scope)).sort((a, b) => {
+      const ia = SCOPE_ORDER.indexOf(a),
+        ib = SCOPE_ORDER.indexOf(b);
+      return (ia === -1 ? 99 : ia) - (ib === -1 ? 99 : ib);
+    })
   };
   const visible = tiles.filter(t => FILTER_GROUPS.every(([dim]) => !filters[dim] || t[dim] === filters[dim]));
   // Row-major grid; desktop subdivides into 12 tracks so tiles take
