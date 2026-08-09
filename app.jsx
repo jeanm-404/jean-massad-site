@@ -1048,7 +1048,7 @@ function Intro() {
         </span>
       </p>
       <p className="intro-heading bio-part" data-bio="jean">
-        {W("Similar to a well made .md file but, like, human.")}
+        {W("Think of me as a well made .md file but, like, human.")}
       </p>
       <p className="intro-paragraph">
         {(() => { pause(CHUNK_GAP); return null; })()}
@@ -1269,23 +1269,23 @@ const PROJECTS = [
     cover: A('surge', 'surge-logo', 'Surge AI', 'Brand', '16 / 9'),
     cards: [
       A('surge', 'surge-website', 'Website', 'Websites', '16 / 9'),
-      P('surge', 'image', 'surge-pair-left.webp', 'Duo I', 'Brand', '1900 / 2160'),
-      P('surge', 'image', 'surge-font-use.webp', 'Font in Use', 'Systems', '16 / 9'),
-      P('surge', 'image', 'surge-research.webp', 'Research', 'Brand', '3840 / 2266'),
-      P('surge', 'image', 'surge-chart.webp', 'Charts', 'Product', '16 / 9'),
-      P('surge', 'image', 'surge-web-overview.webp', 'Web Overview', 'Websites', '16 / 9'),
-      P('surge', 'image', 'surge-screens.webp', 'Screens', 'Websites', '16 / 9'),
-      P('surge', 'image', 'surge-poster-right.webp', 'Poster II', 'Brand', '1900 / 2160'),
-      P('surge', 'image', 'surge-product.webp', 'Product', 'Product', '16 / 9'),
-      P('surge', 'image', 'surge-typography.webp', 'Typography', 'Systems', '16 / 9'),
-      P('surge', 'image', 'surge-palette-16.webp', 'Palette', 'Systems', '16 / 9'),
+      P('surge', 'image', 'surge-pair-left.jpg', 'Duo I', 'Brand', '1900 / 2160'),
+      P('surge', 'image', 'surge-font-use.jpg', 'Font in Use', 'Systems', '16 / 9'),
+      P('surge', 'image', 'surge-research.jpg', 'Research', 'Brand', '3840 / 2266'),
+      P('surge', 'image', 'surge-chart.jpg', 'Charts', 'Product', '16 / 9'),
+      P('surge', 'image', 'surge-web-overview.jpg', 'Web Overview', 'Websites', '16 / 9'),
+      P('surge', 'image', 'surge-screens.jpg', 'Screens', 'Websites', '16 / 9'),
+      P('surge', 'image', 'surge-poster-right.jpg', 'Poster II', 'Brand', '1900 / 2160'),
+      P('surge', 'image', 'surge-product.jpg', 'Product', 'Product', '16 / 9'),
+      P('surge', 'image', 'surge-typography.jpg', 'Typography', 'Systems', '16 / 9'),
+      P('surge', 'image', 'surge-palette-16.jpg', 'Palette', 'Systems', '16 / 9'),
       A('surge', 'surge-palette', 'Color', 'Systems', '16 / 9'),
-      P('surge', 'image', 'surge-primary.webp', 'Primary', 'Systems', '16 / 9'),
-      P('surge', 'image', 'surge-icon-examples.webp', 'Icon Examples', 'Systems', '1900 / 2160'),
-      P('surge', 'image', 'surge-icon-corner.webp', 'Icon Corner', 'Systems', '16 / 9'),
+      P('surge', 'image', 'surge-primary.jpg', 'Primary', 'Systems', '16 / 9'),
+      P('surge', 'image', 'surge-icon-examples.jpg', 'Icon Examples', 'Systems', '1900 / 2160'),
+      P('surge', 'image', 'surge-icon-corner.jpg', 'Icon Corner', 'Systems', '16 / 9'),
       A('surge', 'surge-icons', 'Icons', 'Systems', '16 / 9'),
       P('surge', 'image', 'surge-spacing.png', 'Spacing', 'Systems', '16 / 9'),
-      P('surge', 'image', 'surge-grid.webp', 'Grid', 'Systems', '16 / 9'),
+      P('surge', 'image', 'surge-grid.jpg', 'Grid', 'Systems', '16 / 9'),
       { type: 'embed', title: 'Frontier Skyline',
         src: 'https://surge-mirror.vercel.app/frontier-minimal.html?view=scores&revision=dark-toggle&theme=dark',
         preview: 'uploads/artifacts/surge-skyline.png', aspect: '16 / 9',
@@ -1337,27 +1337,27 @@ const PROJECTS = [
       A('compsych', 'compsych-moodboard', 'Moodboard', 'Brand', '4 / 3'),
       A('compsych', 'compsych-positioning', 'Positioning', 'Brand', '16 / 9'),
       A('compsych', 'compsych-messaging', 'Messaging', 'Brand', '16 / 9'),
-      P('compsych', 'image', 'compsych-pillars.webp', 'Pillars', 'Brand', '16 / 9'),
-      P('compsych', 'image', 'compsych-model.webp', 'Brand Model', 'Brand', '16 / 9'),
+      P('compsych', 'image', 'compsych-pillars.jpg', 'Pillars', 'Brand', '16 / 9'),
+      P('compsych', 'image', 'compsych-model.jpg', 'Brand Model', 'Brand', '16 / 9'),
       A('compsych', 'compsych-kerning', 'Kerning', 'Brand', '4 / 3'),
       A('compsych', 'compsych-wordmark-details', 'Wordmark Details', 'Brand', '600 / 700'),
-      P('compsych', 'image', 'compsych-identity.webp', 'Identity', 'Brand', '3200 / 1870'),
+      P('compsych', 'image', 'compsych-identity.jpg', 'Identity', 'Brand', '3200 / 1870'),
       P('compsych', 'image', 'compsych-wordmark-a.webp', 'Wordmark', 'Brand', '1000 / 701'),
       A('compsych', 'compsych-graphics', 'Graphics', 'Brand', '1 / 1'),
       A('compsych', 'compsych-palette-font', 'Palette & Font', 'Systems', '20 / 13'),
-      P('compsych', 'image', 'compsych-font-use.webp', 'Font in Use', 'Systems', '16 / 9'),
-      P('compsych', 'image', 'compsych-percentage.webp', 'Data', 'Systems', '3727 / 2096'),
+      P('compsych', 'image', 'compsych-font-use.jpg', 'Font in Use', 'Systems', '16 / 9'),
+      P('compsych', 'image', 'compsych-percentage.jpg', 'Data', 'Systems', '3727 / 2096'),
       A('compsych', 'compsych-guidelines', 'Guidelines', 'Systems', '4 / 3'),
       A('compsych', 'compsych-brand-hub', 'Brand Hub', 'Systems', '960 / 538'),
       A('compsych', 'compsych-button', 'Buttons', 'Systems', '16 / 9'),
       P('compsych', 'image', 'compsych-posters.webp', 'Posters I', 'Brand', '800 / 891'),
       P('compsych', 'image', 'compsych-posters-b.webp', 'Posters II', 'Brand', '800 / 891'),
-      P('compsych', 'image', 'compsych-print.webp', 'Print', 'Brand', '16 / 9'),
+      P('compsych', 'image', 'compsych-print.jpg', 'Print', 'Brand', '16 / 9'),
       A('compsych', 'compsych-website', 'Website', 'Websites', '4 / 3'),
       A('compsych', 'compsych-web-preview', 'Web Preview', 'Websites', '16 / 9'),
       A('compsych', 'compsych-loading', 'Loading', 'Websites', '16 / 9'),
       A('compsych', 'compsych-elements', 'Elements', 'Websites', '10 / 7'),
-      P('compsych', 'image', 'compsych-awards.webp', 'Awards', 'Brand', '2110 / 1406'),
+      P('compsych', 'image', 'compsych-awards.jpg', 'Awards', 'Brand', '2110 / 1406'),
     ] },
   { key: 'coachable', industry: 'Coaching', org: 'Startup', title: 'Coachable', cat: 'Brand', tag: 'Career Coaching', sub: 'Identity and website for career-changing coaching.',
     cover: A('coachable', 'coachable-hero', 'Coachable', 'Brand', '4 / 3'),
@@ -1420,13 +1420,19 @@ const ARTIFACTS = [];
 // and defers below-the-fold bytes until they're actually scrolled to.
 function LazyVideo({ src, aspect }) {
   const ref = useRef(null);
-  const [ready, setReady] = useState(false); // first frame decoded → drop skeleton
+  const [ready, setReady] = useState(false); // poster painted or first frame decoded
+  // every clip ships a "<name>-poster.jpg" first frame — ~40KB, so the
+  // tile paints in one round-trip instead of waiting on megabytes of video
+  const poster = src.replace(/\.mp4$/, '-poster.jpg');
   useEffect(() => {
+    const im = new Image();
+    im.onload = () => setReady(true); // poster visible → shimmer off
+    im.src = poster;
     const el = ref.current;
     if (!el) return;
     el.muted = true; // belt-and-suspenders for autoplay policies
     let loaded = false;
-    const onData = () => setReady(true);
+    const onData = () => setReady(true); // fallback if the poster 404s
     el.addEventListener('loadeddata', onData);
     const io = new IntersectionObserver(
       (entries) => {
@@ -1446,7 +1452,7 @@ function LazyVideo({ src, aspect }) {
   }, [src]);
   return (
     <div className={`asset-media asset-media--video ${ready ? 'asset-media--ready' : ''}`} style={{ aspectRatio: aspect }}>
-      <video ref={ref} muted loop playsInline preload="none" />
+      <video ref={ref} muted loop playsInline preload="none" poster={poster} />
     </div>
   );
 }

@@ -23,7 +23,7 @@ export const config = { runtime: "edge" };
 const VISITOR: Record<string, string[]> = {
   extreme: ["{t}°. You should probably drink some water."],
   hot: ["{t}° and sunny. Even I think you should close this tab."],
-  mild: ["Clear and {t}°. You've reached the end of this site. Good outside."],
+  mild: ["Clear and {t}°. You've reached the end of this site. Go outside."],
   coldclear: ["Cold and bright. Coffee-walk weather. Take the long way."],
   overcast: ["Grey out. The sky is one big softbox."],
   drizzle: ["Drizzle. Even the sky won't commit today."],
