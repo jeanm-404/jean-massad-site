@@ -674,12 +674,18 @@ function App() {
       '--reveal-delay': '4900ms'
     }
   }, /*#__PURE__*/React.createElement(Footer, null))), /*#__PURE__*/React.createElement("div", {
-    className: "board-divider reveal",
+    className: "board-divider board-divider--note reveal",
     style: {
       '--reveal-delay': '5300ms'
-    },
-    "aria-hidden": "true"
-  }), /*#__PURE__*/React.createElement("section", {
+    }
+  }, /*#__PURE__*/React.createElement("p", {
+    className: "feed-note"
+  }, "The work below is technically ", /*#__PURE__*/React.createElement("a", {
+    className: "hand-word hand-word--konpo",
+    href: "https://www.konpo.studio",
+    target: "_blank",
+    rel: "noreferrer"
+  }, "Konpo\u2019s"), ". Which is, on most days, a trench coat with me inside it. Plus some designers I call when a project deserves better than my average motion skills.")), /*#__PURE__*/React.createElement("section", {
     className: "grid-area"
   }, /*#__PURE__*/React.createElement(AssetsFeed, null)), /*#__PURE__*/React.createElement("div", {
     className: "board-divider reveal",
@@ -1828,8 +1834,8 @@ function AssetsFeed() {
   const setFilter = (dim, val) => {
     setFilters(f => ({
       ...f,
-      [dim]: f[dim] === val ? null : val
-    })); // tap again = off
+      [dim]: val
+    }));
     haptic(8);
     // relayout snapped heights + dividers after the grid re-deals
     setTimeout(() => window.dispatchEvent(new Event('resize')), 60);
@@ -1886,36 +1892,23 @@ function AssetsFeed() {
   return /*#__PURE__*/React.createElement("section", {
     className: "feed-section",
     "data-screen-label": "02 Work"
-  }, /*#__PURE__*/React.createElement("p", {
-    className: "feed-note reveal",
-    style: {
-      '--reveal-delay': '5300ms'
-    }
-  }, "The work below is ", /*#__PURE__*/React.createElement("a", {
-    className: "hand-word hand-word--konpo",
-    href: "https://www.konpo.studio",
-    target: "_blank",
-    rel: "noreferrer"
-  }, "Konpo\u2019s"), ". Which is, on many days, a trench coat with me inside it. Plus a few brilliant designers I call when a project deserves better than my average motion skills."), /*#__PURE__*/React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     className: "feed-filters reveal",
     style: {
       '--reveal-delay': '5450ms'
     }
-  }, FILTER_GROUPS.map(([dim, label]) => /*#__PURE__*/React.createElement("div", {
-    className: "filter-row",
+  }, FILTER_GROUPS.map(([dim, label]) => /*#__PURE__*/React.createElement("span", {
+    className: "fselect-wrap",
     key: dim
-  }, /*#__PURE__*/React.createElement("span", {
-    className: "filter-label mono"
-  }, label), /*#__PURE__*/React.createElement("div", {
-    className: "filter-chips"
-  }, /*#__PURE__*/React.createElement("button", {
-    type: "button",
-    className: `fchip mono ${filters[dim] == null ? 'fchip--on' : ''}`,
-    onClick: () => setFilter(dim, null)
-  }, "All"), values[dim].map(v => /*#__PURE__*/React.createElement("button", {
-    type: "button",
-    className: `fchip mono ${filters[dim] === v ? 'fchip--on' : ''}`,
-    onClick: () => setFilter(dim, v),
+  }, /*#__PURE__*/React.createElement("select", {
+    className: `fselect mono ${filters[dim] ? 'fselect--on' : ''}`,
+    value: filters[dim] || '',
+    onChange: e => setFilter(dim, e.target.value || null),
+    "aria-label": `Filter by ${label.toLowerCase()}`
+  }, /*#__PURE__*/React.createElement("option", {
+    value: ""
+  }, label), values[dim].map(v => /*#__PURE__*/React.createElement("option", {
+    value: v,
     key: v
   }, v)))))), /*#__PURE__*/React.createElement("div", {
     className: "feed-masonry",

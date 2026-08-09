@@ -536,7 +536,14 @@ function App() {
           </div>
         </header>
 
-        <div className="board-divider reveal" style={{ '--reveal-delay': '5300ms' }} aria-hidden="true" />
+        {/* the hero/work divider carries the note — text ON the band */}
+        <div className="board-divider board-divider--note reveal" style={{ '--reveal-delay': '5300ms' }}>
+          <p className="feed-note">
+            The work below is technically <a className="hand-word hand-word--konpo" href="https://www.konpo.studio" target="_blank" rel="noreferrer">Konpo’s</a>.
+            Which is, on most days, a trench coat with me inside it. Plus some designers
+            I call when a project deserves better than my average motion skills.
+          </p>
+        </div>
 
         <section className="grid-area">
           <AssetsFeed />
@@ -1525,7 +1532,7 @@ function AssetsFeed() {
   const openShot = (asset) => { setActive(asset); playStateChange(true); haptic(10); };
   const closeShot = () => { setActive(null); playStateChange(false); };
   const setFilter = (dim, val) => {
-    setFilters((f) => ({ ...f, [dim]: f[dim] === val ? null : val })); // tap again = off
+    setFilters((f) => ({ ...f, [dim]: val }));
     haptic(8);
     // relayout snapped heights + dividers after the grid re-deals
     setTimeout(() => window.dispatchEvent(new Event('resize')), 60);
@@ -1564,36 +1571,23 @@ function AssetsFeed() {
   for (let i = 0; i < visible.length; i += cols) rows.push(visible.slice(i, i + cols));
   return (
     <section className="feed-section" data-screen-label="02 Work">
-      {/* a quiet word on whose work this is — right under the divider */}
-      <p className="feed-note reveal" style={{ '--reveal-delay': '5300ms' }}>
-        The work below is <a className="hand-word hand-word--konpo" href="https://www.konpo.studio" target="_blank" rel="noreferrer">Konpo’s</a>.
-        Which is, on many days, a trench coat with me inside it. Plus a few brilliant
-        designers I call when a project deserves better than my average motion skills.
-      </p>
+      {/* filter dropdowns, one quiet row — each select reads as its
+          dimension name until a value is picked (picking the name = All) */}
       <div className="feed-filters reveal" style={{ '--reveal-delay': '5450ms' }}>
         {FILTER_GROUPS.map(([dim, label]) => (
-          <div className="filter-row" key={dim}>
-            <span className="filter-label mono">{label}</span>
-            <div className="filter-chips">
-              <button
-                type="button"
-                className={`fchip mono ${filters[dim] == null ? 'fchip--on' : ''}`}
-                onClick={() => setFilter(dim, null)}
-              >
-                All
-              </button>
+          <span className="fselect-wrap" key={dim}>
+            <select
+              className={`fselect mono ${filters[dim] ? 'fselect--on' : ''}`}
+              value={filters[dim] || ''}
+              onChange={(e) => setFilter(dim, e.target.value || null)}
+              aria-label={`Filter by ${label.toLowerCase()}`}
+            >
+              <option value="">{label}</option>
               {values[dim].map((v) => (
-                <button
-                  type="button"
-                  className={`fchip mono ${filters[dim] === v ? 'fchip--on' : ''}`}
-                  onClick={() => setFilter(dim, v)}
-                  key={v}
-                >
-                  {v}
-                </button>
+                <option value={v} key={v}>{v}</option>
               ))}
-            </div>
-          </div>
+            </select>
+          </span>
         ))}
       </div>
       <div

@@ -935,46 +935,44 @@ html[data-reveal="go"] .contrib-cell {
    cell-multiple margins — no extra off-grid padding */
 .feed-section { padding: 0; }
 
-/* note above the work — whose work this is */
+/* the divider that carries the work note — the band grows to fit and
+   the note sits on a paper plate over the hatch */
+.board-divider--note {
+  height: auto;
+  min-height: calc(var(--board-cell) + 1px);
+  padding: calc(var(--board-cell) * 0.5) var(--pad-x);
+  display: flex;
+  align-items: center;
+}
 .feed-note {
-  margin: 0 2px var(--board-cell);
+  margin: 0;
   max-width: 62ch;
+  padding: 10px 16px;
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  font-size: 14px;
+  line-height: 1.55;
   color: var(--muted);
   text-wrap: pretty;
 }
 
-/* filter rail — quiet mono chips; values derive from the data, so new
-   tags (gov, unicorn, fun…) grow chips the moment work carries them */
+/* filter dropdowns, one row — options derive from the data, so new
+   tags (gov, unicorn, fun…) appear the moment work carries them */
 .feed-filters {
   display: flex;
-  flex-direction: column;
+  flex-wrap: wrap;
   gap: 8px;
   margin: 0 2px calc(var(--board-cell) * 1.5);
 }
-.filter-row {
-  display: flex;
-  align-items: baseline;
-  gap: 16px;
-}
-.filter-label {
-  width: 96px;
-  flex-shrink: 0;
-  font-size: 9px;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--muted-3);
-}
-.filter-chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-.fchip {
+.fselect-wrap { position: relative; display: inline-flex; }
+.fselect {
   appearance: none;
+  -webkit-appearance: none;
   border: 1px solid var(--rule);
   background: none;
   border-radius: 999px;
-  padding: 4px 11px;
+  padding: 5px 28px 5px 13px;
   font-size: 10px;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -982,11 +980,19 @@ html[data-reveal="go"] .contrib-cell {
   cursor: pointer;
   transition: color .14s ease, border-color .14s ease;
 }
-.fchip:hover { color: var(--ink); border-color: var(--muted-3); }
-.fchip--on { color: var(--accent); border-color: currentColor; }
-@media (max-width: 640px) {
-  .filter-row { flex-direction: column; gap: 6px; }
-  .filter-label { width: auto; }
+.fselect:hover { color: var(--ink); border-color: var(--muted-3); }
+.fselect--on { color: var(--accent); border-color: currentColor; }
+.fselect-wrap::after {
+  content: '';
+  position: absolute;
+  right: 13px;
+  top: 50%;
+  width: 5px;
+  height: 5px;
+  border-right: 1px solid var(--muted-3);
+  border-bottom: 1px solid var(--muted-3);
+  transform: translateY(-70%) rotate(45deg);
+  pointer-events: none;
 }
 
 /* empty filter result */
