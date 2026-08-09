@@ -1458,6 +1458,34 @@ html[data-reveal="go"] .contrib-cell {
   flex-shrink: 0;
 }
 
+/* skeleton shimmer — every media box shimmers until its content has
+   actually decoded (.asset-media--ready), so a fresh Gimmie More deal
+   reads as "loading" instead of a wall of blank gray */
+.asset-media--img::after,
+.asset-media--video::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(100deg, transparent 32%, rgba(255, 255, 255, 0.6) 50%, transparent 68%);
+  background-size: 220% 100%;
+  animation: media-shimmer 1.3s ease-in-out infinite;
+  opacity: 1;
+  transition: opacity .35s ease;
+  pointer-events: none;
+}
+.asset-media--ready::after {
+  opacity: 0;
+  animation: none;
+}
+@keyframes media-shimmer {
+  from { background-position: 210% 0; }
+  to   { background-position: -110% 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .asset-media--img::after,
+  .asset-media--video::after { animation: none; opacity: 0; }
+}
+
 /* video placeholder — quiet play affordance */
 .asset-play {
   display: inline-flex;

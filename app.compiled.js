@@ -1518,7 +1518,7 @@ const PROJECTS = [{
   tag: 'Search Engine',
   sub: 'Brand, marketing site, and product UI for AI-native search.',
   cover: P('fyler', 'image', 'fyler-moodboard-brand.jpg', 'Fyler', 'Brand', '1600 / 1034'),
-  cards: [A('fyler', 'fyler-hero', 'Hero', 'Websites', '16 / 9'), A('fyler', 'fyler-showcase', 'Showcase', 'Product', '16 / 9'), A('fyler', 'fyler-walkthrough', 'Walkthrough', 'Product', '3 / 2'), A('fyler', 'fyler-interface', 'Interface', 'Product', '16 / 9'), P('fyler', 'image', 'fyler-interface-ltr.jpg', 'Interface LTR', 'Product', '16 / 9'), P('fyler', 'image', 'fyler-interface-rtl.jpg', 'Interface RTL', 'Product', '16 / 9'), P('fyler', 'image', 'fyler-inside-search.jpg', 'Inside Search', 'Product', '16 / 9'), P('fyler', 'image', 'fyler-categories.jpg', 'Categories', 'Product', '1583 / 763'), P('fyler', 'image', 'fyler-rich-location.jpg', 'Location', 'Product', '1304 / 1600'), P('fyler', 'image', 'fyler-rich-comparison.jpg', 'Comparison', 'Product', '1361 / 1600'), P('fyler', 'image', 'fyler-rich-weather.jpg', 'Weather', 'Product', '1571 / 2031'), P('fyler', 'image', 'fyler-widget-discovery.png', 'Discovery Widget', 'Product', '1600 / 996'), P('fyler', 'image', 'fyler-widget-graphic.png', 'Graphic Widget', 'Product', '1600 / 996'), P('fyler', 'image', 'fyler-widget-mobile.png', 'Mobile Widget', 'Product', '1600 / 996'), P('fyler', 'image', 'fyler-widget-comparative.png', 'Comparative Widget', 'Product', '1600 / 996'), A('fyler', 'fyler-ds-cards', 'System Cards', 'Systems', '1280 / 828'), P('fyler', 'image', 'fyler-ds-1.jpg', 'Design System I', 'Systems', '1600 / 1034'), P('fyler', 'image', 'fyler-ds-2.jpg', 'Design System II', 'Systems', '1600 / 1033'), P('fyler', 'image', 'fyler-ds-3.jpg', 'Design System III', 'Systems', '1600 / 1034'), P('fyler', 'image', 'fyler-ds-4.jpg', 'Design System IV', 'Systems', '1600 / 1033'), P('fyler', 'image', 'fyler-typography.jpg', 'Typography', 'Systems', '1600 / 930'), A('fyler', 'fyler-insp-type', 'Type Inspiration', 'Brand', '1280 / 826'), A('fyler', 'fyler-insp-icons', 'Icon Inspiration', 'Brand', '1280 / 712'), A('fyler', 'fyler-insp-patterns', 'Pattern Inspiration', 'Brand', '16 / 9'), A('fyler', 'fyler-insp-palettes', 'Palette Inspiration', 'Brand', '16 / 9'), A('fyler', 'fyler-palettes', 'Palettes', 'Systems', '1 / 1'), A('fyler', 'fyler-darklight', 'Dark / Light', 'Product', '3 / 2'), P('fyler', 'image', 'fyler-moodboard-1.jpg', 'Moodboard', 'Brand', '1600 / 1034')]
+  cards: [A('fyler', 'fyler-walkthrough', 'Walkthrough', 'Product', '3 / 2'), A('fyler', 'fyler-hero', 'Hero', 'Websites', '16 / 9'), A('fyler', 'fyler-showcase', 'Showcase', 'Product', '16 / 9'), A('fyler', 'fyler-interface', 'Interface', 'Product', '16 / 9'), P('fyler', 'image', 'fyler-interface-ltr.jpg', 'Interface LTR', 'Product', '16 / 9'), P('fyler', 'image', 'fyler-interface-rtl.jpg', 'Interface RTL', 'Product', '16 / 9'), P('fyler', 'image', 'fyler-inside-search.jpg', 'Inside Search', 'Product', '16 / 9'), P('fyler', 'image', 'fyler-categories.jpg', 'Categories', 'Product', '1583 / 763'), P('fyler', 'image', 'fyler-rich-location.jpg', 'Location', 'Product', '1304 / 1600'), P('fyler', 'image', 'fyler-rich-comparison.jpg', 'Comparison', 'Product', '1361 / 1600'), P('fyler', 'image', 'fyler-rich-weather.jpg', 'Weather', 'Product', '1571 / 2031'), P('fyler', 'image', 'fyler-widget-discovery.png', 'Discovery Widget', 'Product', '1600 / 996'), P('fyler', 'image', 'fyler-widget-graphic.png', 'Graphic Widget', 'Product', '1600 / 996'), P('fyler', 'image', 'fyler-widget-mobile.png', 'Mobile Widget', 'Product', '1600 / 996'), P('fyler', 'image', 'fyler-widget-comparative.png', 'Comparative Widget', 'Product', '1600 / 996'), A('fyler', 'fyler-ds-cards', 'System Cards', 'Systems', '1280 / 828'), P('fyler', 'image', 'fyler-ds-1.jpg', 'Design System I', 'Systems', '1600 / 1034'), P('fyler', 'image', 'fyler-ds-2.jpg', 'Design System II', 'Systems', '1600 / 1033'), P('fyler', 'image', 'fyler-ds-3.jpg', 'Design System III', 'Systems', '1600 / 1034'), P('fyler', 'image', 'fyler-ds-4.jpg', 'Design System IV', 'Systems', '1600 / 1033'), P('fyler', 'image', 'fyler-typography.jpg', 'Typography', 'Systems', '1600 / 930'), A('fyler', 'fyler-insp-type', 'Type Inspiration', 'Brand', '1280 / 826'), A('fyler', 'fyler-insp-icons', 'Icon Inspiration', 'Brand', '1280 / 712'), A('fyler', 'fyler-insp-patterns', 'Pattern Inspiration', 'Brand', '16 / 9'), A('fyler', 'fyler-insp-palettes', 'Palette Inspiration', 'Brand', '16 / 9'), A('fyler', 'fyler-palettes', 'Palettes', 'Systems', '1 / 1'), A('fyler', 'fyler-darklight', 'Dark / Light', 'Product', '3 / 2'), P('fyler', 'image', 'fyler-moodboard-1.jpg', 'Moodboard', 'Brand', '1600 / 1034')]
 }, {
   key: 'compsych',
   industry: 'Healthcare',
@@ -1600,11 +1600,14 @@ function LazyVideo({
   aspect
 }) {
   const ref = useRef(null);
+  const [ready, setReady] = useState(false); // first frame decoded → drop skeleton
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
     el.muted = true; // belt-and-suspenders for autoplay policies
     let loaded = false;
+    const onData = () => setReady(true);
+    el.addEventListener('loadeddata', onData);
     const io = new IntersectionObserver(entries => {
       const vis = entries[0].isIntersecting;
       if (vis) {
@@ -1622,10 +1625,13 @@ function LazyVideo({
       threshold: 0.01
     });
     io.observe(el);
-    return () => io.disconnect();
+    return () => {
+      io.disconnect();
+      el.removeEventListener('loadeddata', onData);
+    };
   }, [src]);
   return /*#__PURE__*/React.createElement("div", {
-    className: "asset-media asset-media--video",
+    className: `asset-media asset-media--video ${ready ? 'asset-media--ready' : ''}`,
     style: {
       aspectRatio: aspect
     }
@@ -1640,34 +1646,44 @@ function LazyVideo({
 function AssetMedia({
   asset
 }) {
+  // skeleton control for the image branches — cleared on load (or
+  // immediately when the image is already in cache)
+  const [ready, setReady] = useState(false);
+  const imgRef = el => {
+    if (el && el.complete && el.naturalWidth > 0 && !ready) setReady(true);
+  };
   if (asset.type === 'image') {
     // with an explicit aspect the image cover-fills immediately — lazy
     // loads inside folds land after snap() has already run
     return /*#__PURE__*/React.createElement("div", {
-      className: `asset-media asset-media--img${asset.aspect ? ' asset-media--fixed' : ''}`,
+      className: `asset-media asset-media--img${asset.aspect ? ' asset-media--fixed' : ''} ${ready ? 'asset-media--ready' : ''}`,
       style: asset.aspect ? {
         aspectRatio: asset.aspect
       } : undefined
     }, /*#__PURE__*/React.createElement("img", {
+      ref: imgRef,
       src: asset.src,
       alt: asset.title,
       loading: "lazy",
-      decoding: "async"
+      decoding: "async",
+      onLoad: () => setReady(true)
     }));
   }
   if (asset.type === 'embed') {
     // live-prototype artifact: the tile shows a captured preview — the
     // real page loads as an iframe in the shot overlay
     return /*#__PURE__*/React.createElement("div", {
-      className: "asset-media asset-media--img asset-media--fixed",
+      className: `asset-media asset-media--img asset-media--fixed ${ready ? 'asset-media--ready' : ''}`,
       style: {
         aspectRatio: asset.aspect
       }
     }, /*#__PURE__*/React.createElement("img", {
+      ref: imgRef,
       src: asset.preview,
       alt: asset.title,
       loading: "lazy",
-      decoding: "async"
+      decoding: "async",
+      onLoad: () => setReady(true)
     }));
   }
   if (asset.type === 'video') {

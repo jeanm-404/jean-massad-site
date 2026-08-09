@@ -1299,9 +1299,9 @@ const PROJECTS = [
   { key: 'fyler', industry: 'AI', org: 'Startup', title: 'Fyler', cat: 'Websites', tag: 'Search Engine', sub: 'Brand, marketing site, and product UI for AI-native search.',
     cover: P('fyler', 'image', 'fyler-moodboard-brand.jpg', 'Fyler', 'Brand', '1600 / 1034'),
     cards: [
+      A('fyler', 'fyler-walkthrough', 'Walkthrough', 'Product', '3 / 2'),
       A('fyler', 'fyler-hero', 'Hero', 'Websites', '16 / 9'),
       A('fyler', 'fyler-showcase', 'Showcase', 'Product', '16 / 9'),
-      A('fyler', 'fyler-walkthrough', 'Walkthrough', 'Product', '3 / 2'),
       A('fyler', 'fyler-interface', 'Interface', 'Product', '16 / 9'),
       P('fyler', 'image', 'fyler-interface-ltr.jpg', 'Interface LTR', 'Product', '16 / 9'),
       P('fyler', 'image', 'fyler-interface-rtl.jpg', 'Interface RTL', 'Product', '16 / 9'),
@@ -1419,11 +1419,14 @@ const ARTIFACTS = [];
 // and defers below-the-fold bytes until they're actually scrolled to.
 function LazyVideo({ src, aspect }) {
   const ref = useRef(null);
+  const [ready, setReady] = useState(false); // first frame decoded → drop skeleton
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
     el.muted = true; // belt-and-suspenders for autoplay policies
     let loaded = false;
+    const onData = () => setReady(true);
+    el.addEventListener('loadeddata', onData);
     const io = new IntersectionObserver(
       (entries) => {
         const vis = entries[0].isIntersecting;
@@ -1438,25 +1441,29 @@ function LazyVideo({ src, aspect }) {
       { rootMargin: '150px 0px', threshold: 0.01 }
     );
     io.observe(el);
-    return () => io.disconnect();
+    return () => { io.disconnect(); el.removeEventListener('loadeddata', onData); };
   }, [src]);
   return (
-    <div className="asset-media asset-media--video" style={{ aspectRatio: aspect }}>
+    <div className={`asset-media asset-media--video ${ready ? 'asset-media--ready' : ''}`} style={{ aspectRatio: aspect }}>
       <video ref={ref} muted loop playsInline preload="none" />
     </div>
   );
 }
 
 function AssetMedia({ asset }) {
+  // skeleton control for the image branches — cleared on load (or
+  // immediately when the image is already in cache)
+  const [ready, setReady] = useState(false);
+  const imgRef = (el) => { if (el && el.complete && el.naturalWidth > 0 && !ready) setReady(true); };
   if (asset.type === 'image') {
     // with an explicit aspect the image cover-fills immediately — lazy
     // loads inside folds land after snap() has already run
     return (
       <div
-        className={`asset-media asset-media--img${asset.aspect ? ' asset-media--fixed' : ''}`}
+        className={`asset-media asset-media--img${asset.aspect ? ' asset-media--fixed' : ''} ${ready ? 'asset-media--ready' : ''}`}
         style={asset.aspect ? { aspectRatio: asset.aspect } : undefined}
       >
-        <img src={asset.src} alt={asset.title} loading="lazy" decoding="async" />
+        <img ref={imgRef} src={asset.src} alt={asset.title} loading="lazy" decoding="async" onLoad={() => setReady(true)} />
       </div>
     );
   }
@@ -1464,8 +1471,8 @@ function AssetMedia({ asset }) {
     // live-prototype artifact: the tile shows a captured preview — the
     // real page loads as an iframe in the shot overlay
     return (
-      <div className="asset-media asset-media--img asset-media--fixed" style={{ aspectRatio: asset.aspect }}>
-        <img src={asset.preview} alt={asset.title} loading="lazy" decoding="async" />
+      <div className={`asset-media asset-media--img asset-media--fixed ${ready ? 'asset-media--ready' : ''}`} style={{ aspectRatio: asset.aspect }}>
+        <img ref={imgRef} src={asset.preview} alt={asset.title} loading="lazy" decoding="async" onLoad={() => setReady(true)} />
       </div>
     );
   }
