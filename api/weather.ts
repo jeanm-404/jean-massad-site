@@ -21,17 +21,17 @@ export const config = { runtime: "edge" };
 // ---------------------------------------------------------------------------
 
 const VISITOR: Record<string, string[]> = {
-  extreme: ["{t}°. Forget everything I said about going outside. Hydrate."],
+  extreme: ["{t}°. You should probably drink some water."],
   hot: ["{t}° and sunny. Even I think you should close this tab."],
-  mild: ["Clear and {t}°. You've reached the end of this site anyway. Go."],
+  mild: ["Clear and {t}°. You've reached the end of this site. Good outside."],
   coldclear: ["Cold and bright. Coffee-walk weather. Take the long way."],
-  overcast: ["Grey out. The sky is one big softbox. Go shoot something."],
+  overcast: ["Grey out. The sky is one big softbox."],
   drizzle: ["Drizzle. Even the sky won't commit today."],
   rain: [
     "Raining. Perfect weather to finally finish that thing. You know the one.",
     "Raining. Go out anyway. There's no bad weather, only bad jackets.",
   ],
-  storm: ["Storm outside. Free lighting design. Watch it from indoors."],
+  storm: ["Storm outside. Free lighting design."],
   snow: ["Snowing? I'd already be gone."],
   fog: ["Fog. The world's at 20% opacity. Wait for it to load."],
   night: ["{t}° and dark. Nothing here can't wait till morning."],
