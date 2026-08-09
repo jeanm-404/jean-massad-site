@@ -419,6 +419,13 @@ function App() {
   // Park the iOS haptic switch in the DOM before the first tap ever lands.
   useEffect(() => { ensureHapticEl(); }, []);
 
+  // A reload always starts at the top — the gate is the front door, so
+  // the browser's scroll restoration would strand you mid-feed behind it.
+  useEffect(() => {
+    if ('scrollRestoration' in window.history) window.history.scrollRestoration = 'manual';
+    window.scrollTo(0, 0);
+  }, []);
+
   const enter = () => {
     document.documentElement.setAttribute('data-reveal', 'go');
   };
@@ -1233,6 +1240,8 @@ function DemoSegment() {
 // desc/scope feed the expanded view. href opens the full case study.
 const WORK_CATS = ['All', 'Brand', 'Websites', 'Product', 'Systems'];
 const CASE = {
+  surge: { href: 'https://www.konpo.studio/?news=surge-ai',
+    desc: 'Brand and website for Surge AI — the data engine behind the world’s leading frontier labs.', scope: ['Brand', 'Website'] },
   fyler: { href: 'https://www.konpo.studio/work/fyler-search-engine',
     desc: 'A search engine with taste — brand, marketing site, and product UI for an AI-native search startup.', scope: ['Website', 'Product', 'Brand'] },
   compsych: { href: 'https://www.konpo.studio/work/compsych',
@@ -1256,6 +1265,14 @@ const N = (type, file, title, cat, aspect) => ({
 // One cover per project; clicking it unfolds the project's other cards
 // inline, in the same column — no popup, the scroll just keeps going.
 const PROJECTS = [
+  { key: 'surge', industry: 'AI', org: 'Unicorn', title: 'Surge AI', cat: 'Brand', tag: 'Frontier Data', sub: 'Brand and website for the data engine behind frontier AI.',
+    cover: A('surge', 'surge-website', 'Surge AI', 'Websites', '16 / 9'),
+    cards: [
+      A('surge', 'surge-hero', 'Hero', 'Brand', '16 / 9'),
+      A('surge', 'surge-logo', 'Logo', 'Brand', '16 / 9'),
+      A('surge', 'surge-palette', 'Color', 'Systems', '16 / 9'),
+      A('surge', 'surge-icons', 'Icons', 'Systems', '16 / 9'),
+    ] },
   { key: 'fyler', industry: 'AI', org: 'Startup', title: 'Fyler', cat: 'Websites', tag: 'Search Engine', sub: 'Brand, marketing site, and product UI for AI-native search.',
     cover: A('fyler', 'fyler-hero', 'Fyler', 'Websites', '16 / 9'),
     cards: [
@@ -1267,8 +1284,16 @@ const PROJECTS = [
     cover: A('compsych', 'compsych-moodboard', 'ComPsych', 'Brand', '4 / 3'),
     cards: [
       A('compsych', 'compsych-logo', 'Logo', 'Brand', '16 / 9'),
+      A('compsych', 'compsych-hero', 'Hero', 'Brand', '4 / 3'),
+      A('compsych', 'compsych-positioning', 'Positioning', 'Brand', '16 / 9'),
+      A('compsych', 'compsych-messaging', 'Messaging', 'Brand', '16 / 9'),
+      A('compsych', 'compsych-kerning', 'Kerning', 'Brand', '4 / 3'),
       A('compsych', 'compsych-graphics', 'Graphics', 'Brand', '1 / 1'),
+      A('compsych', 'compsych-palette-font', 'Palette & Font', 'Systems', '20 / 13'),
+      A('compsych', 'compsych-guidelines', 'Guidelines', 'Systems', '4 / 3'),
       A('compsych', 'compsych-website', 'Website', 'Websites', '4 / 3'),
+      A('compsych', 'compsych-loading', 'Loading', 'Websites', '16 / 9'),
+      A('compsych', 'compsych-elements', 'Elements', 'Websites', '10 / 7'),
     ] },
   { key: 'coachable', industry: 'Coaching', org: 'Startup', title: 'Coachable', cat: 'Brand', tag: 'Career Coaching', sub: 'Identity and website for career-changing coaching.',
     cover: A('coachable', 'coachable-hero', 'Coachable', 'Brand', '4 / 3'),
