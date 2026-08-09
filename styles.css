@@ -1084,6 +1084,31 @@ html[data-reveal="go"] .contrib-cell {
   .feed-filters-sticky .fselect { padding: 4px 8px; font-size: 9px; gap: 5px; }
 }
 
+/* "Gimmie More" — repurposed footer switch, centered under the feed;
+   stacked: switch on top, label underneath */
+.more-row {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin: var(--board-cell) 0 calc(var(--board-cell) * 2);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.more-label {
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  color: var(--muted-2);
+  transition: color .14s ease;
+}
+.more-row:hover .more-label { color: var(--ink); }
+
+/* weather callout — fades in when the line lands; absent if it can't */
+.wx { opacity: 0; transition: opacity .6s ease; }
+.wx-in { opacity: 1; }
+@media (prefers-reduced-motion: reduce) { .wx { transition: none; } }
+
 /* empty filter result */
 .feed-empty {
   min-height: var(--board-cell);

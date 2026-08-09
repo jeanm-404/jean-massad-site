@@ -501,36 +501,43 @@ function Gate({
 }
 
 // Mini toggle in the footer — flips the site back off.
-function FooterToggle({
-  onClose
+// "Gimmie More" — the footer light-switch, repurposed: flip it and the
+// feed deals another hand of shots. The knob slides on, then springs
+// back off, ready for the next pull. Hidden once everything's dealt.
+function MoreToggle({
+  onMore
 }) {
-  const [on, setOn] = useState(true);
+  const [on, setOn] = useState(false);
   const knobRef = useRef(null);
-  // Set the ON position once, imperatively — keeping it out of the
-  // style prop means React re-renders never fight anime mid-slide.
-  useEffect(() => {
-    if (knobRef.current) knobRef.current.style.transform = 'translateX(26px)';
-  }, []);
-  const flip = () => {
-    if (!on) return;
-    setOn(false);
-    playToggleOff(); // press haptic comes from the native switch itself
+  const slide = (x, d) => {
     const knob = knobRef.current;
-    if (knob) {
-      if (window.__anime) {
-        window.__anime.animate(knob, {
-          x: 0,
-          duration: 340,
-          ease: 'outQuad'
-        });
-      } else {
-        knob.style.transition = 'transform .3s ease';
-        knob.style.transform = 'translateX(0px)';
-      }
+    if (!knob) return;
+    if (window.__anime) {
+      window.__anime.animate(knob, {
+        x,
+        duration: d,
+        ease: 'outQuad'
+      });
+    } else {
+      knob.style.transition = 'transform .3s ease';
+      knob.style.transform = `translateX(${x}px)`;
     }
-    setTimeout(onClose, 420);
+  };
+  const flip = () => {
+    if (on) return;
+    setOn(true);
+    playStateChange(true); // velvet up-chirp: more is coming
+    haptic(10);
+    slide(26, 300);
+    onMore();
+    setTimeout(() => {
+      slide(0, 340);
+      setOn(false);
+    }, 650);
   };
   return /*#__PURE__*/React.createElement("label", {
+    className: "more-row"
+  }, /*#__PURE__*/React.createElement("span", {
     className: `gate-toggle gate-toggle--mini ${on ? 'gate-toggle--on' : ''}`
   }, /*#__PURE__*/React.createElement("input", {
     type: "checkbox",
@@ -538,16 +545,15 @@ function FooterToggle({
     className: "gate-toggle-input",
     checked: on,
     onChange: flip,
-    "aria-label": "Turn off the lights"
+    "aria-label": "Gimmie more \u2014 load more work"
   }), /*#__PURE__*/React.createElement("span", {
     className: "gate-toggle-knob",
     ref: knobRef
-  }));
+  })), /*#__PURE__*/React.createElement("span", {
+    className: "more-label mono"
+  }, "GIMMIE MORE"));
 }
 function App() {
-  const [gateKey, setGateKey] = useState(0);
-  const [sessionKey, setSessionKey] = useState(0); // resets the footer toggle
-
   // Park the iOS haptic switch in the DOM before the first tap ever lands.
   useEffect(() => {
     ensureHapticEl();
@@ -561,20 +567,6 @@ function App() {
   }, []);
   const enter = () => {
     document.documentElement.setAttribute('data-reveal', 'go');
-  };
-
-  // Footer toggle: lights out — the dark gate fades in OVER the live
-  // page, then the reset (hide content, scroll top) happens unseen
-  // behind the opaque overlay. No flash, just a fade back to start.
-  const close = () => {
-    setGateKey(k => k + 1); // fresh Gate fades in (gate--fadein)
-    // Everything else resets ONLY once the gate is fully opaque —
-    // including the footer toggle, so it never visibly snaps back ON.
-    setTimeout(() => {
-      document.documentElement.setAttribute('data-reveal', 'pending');
-      window.scrollTo(0, 0);
-      setSessionKey(k => k + 1);
-    }, 700);
   };
 
   // Snap divider bands to the whiteboard grid: nudge each one down so
@@ -654,8 +646,7 @@ function App() {
   return /*#__PURE__*/React.createElement("div", {
     className: "page"
   }, /*#__PURE__*/React.createElement(Gate, {
-    key: gateKey,
-    entering: gateKey > 0,
+    entering: false,
     onEnter: enter
   }), /*#__PURE__*/React.createElement("main", {
     className: "container"
@@ -693,10 +684,7 @@ function App() {
     style: {
       '--reveal-delay': '7800ms'
     }
-  }, /*#__PURE__*/React.createElement(Colophon, {
-    key: sessionKey,
-    onClose: close
-  }))));
+  }, /*#__PURE__*/React.createElement(Colophon, null))));
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -1526,7 +1514,7 @@ const PROJECTS = [{
   tag: 'Search Engine',
   sub: 'Brand, marketing site, and product UI for AI-native search.',
   cover: A('fyler', 'fyler-hero', 'Fyler', 'Websites', '16 / 9'),
-  cards: [A('fyler', 'fyler-interface', 'Interface', 'Product', '16 / 9'), A('fyler', 'fyler-palettes', 'Palettes', 'Systems', '1 / 1'), A('fyler', 'fyler-darklight', 'Dark / Light', 'Product', '3 / 2')]
+  cards: [A('fyler', 'fyler-interface', 'Interface', 'Product', '16 / 9'), A('fyler', 'fyler-walkthrough', 'Walkthrough', 'Product', '3 / 2'), A('fyler', 'fyler-palettes', 'Palettes', 'Systems', '1 / 1'), A('fyler', 'fyler-darklight', 'Dark / Light', 'Product', '3 / 2')]
 }, {
   key: 'compsych',
   industry: 'Healthcare',
@@ -1971,6 +1959,7 @@ function FilterSelect({
   }, v))));
 }
 function AssetsFeed() {
+  const PAGE = 14; // tiles per deal — keeps the page from scrolling forever
   const [cols, setCols] = useState(feedColCount);
   const [desktop, setDesktop] = useState(feedIsDesktop);
   const [active, setActive] = useState(null); // the shot open in the info overlay
@@ -1979,6 +1968,7 @@ function AssetsFeed() {
     org: null,
     scope: null
   });
+  const [limit, setLimit] = useState(PAGE); // grown by the Gimmie More switch
   const [pastBand, setPastBand] = useState(false); // scrolled beyond the divider band?
   const bandRef = useRef(null);
   useEffect(() => {
@@ -2016,6 +2006,7 @@ function AssetsFeed() {
       ...f,
       [dim]: val
     }));
+    setLimit(PAGE); // a fresh filter re-deals from the top
     haptic(8);
     // relayout snapped heights + dividers after the grid re-deals
     setTimeout(() => window.dispatchEvent(new Event('resize')), 60);
@@ -2072,11 +2063,14 @@ function AssetsFeed() {
     })
   };
   const visible = tiles.filter(t => FILTER_GROUPS.every(([dim]) => !filters[dim] || t[dim] === filters[dim]));
+  // Deal only `limit` tiles; the Gimmie More switch below grows it.
+  const dealt = visible.slice(0, limit);
+  const hasMore = visible.length > dealt.length;
   // Row-major grid; desktop subdivides into 12 tracks so tiles take
   // varied spans + offsets (coverSlot), tablet/mobile one track per tile.
   const trackCount = desktop ? 12 : cols;
   const rows = [];
-  for (let i = 0; i < visible.length; i += cols) rows.push(visible.slice(i, i + cols));
+  for (let i = 0; i < dealt.length; i += cols) rows.push(dealt.slice(i, i + cols));
   return /*#__PURE__*/React.createElement("section", {
     className: "feed-section",
     "data-screen-label": "02 Work"
@@ -2114,7 +2108,12 @@ function AssetsFeed() {
     key: t.key
   })))), visible.length === 0 && /*#__PURE__*/React.createElement("p", {
     className: "feed-empty mono"
-  }, "NOTHING HERE YET \u2014 LOOSEN A FILTER"), pastBand && /*#__PURE__*/React.createElement("div", {
+  }, "NOTHING HERE YET \u2014 LOOSEN A FILTER"), hasMore && /*#__PURE__*/React.createElement(MoreToggle, {
+    onMore: () => {
+      setLimit(l => l + PAGE);
+      setTimeout(() => window.dispatchEvent(new Event('resize')), 80);
+    }
+  }), pastBand && /*#__PURE__*/React.createElement("div", {
     className: "feed-filters-sticky"
   }, FILTER_GROUPS.map(([dim, label]) => /*#__PURE__*/React.createElement(FilterSelect, {
     key: dim,
@@ -2245,19 +2244,53 @@ function Footer() {
     href: l.href
   })))))));
 }
-function Colophon({
-  onClose
-}) {
+
+// Weather callout — the visitor's sky, or mine as an availability
+// status (api/weather.ts; ported from the Astro handoff). No location
+// prompt, no spinner; if everything fails the line simply never shows.
+// Preview states with ?wx=rain, ?wx=vpn, ?wx=down, …
+function WeatherLine() {
+  const [line, setLine] = useState(null);
+  const [entered, setEntered] = useState(false);
+  useEffect(() => {
+    const force = new URLSearchParams(window.location.search).get('wx');
+    const cached = !force && sessionStorage.getItem('wx-line');
+    if (cached) {
+      setLine(cached);
+      return;
+    }
+    const params = new URLSearchParams({
+      tz: Intl.DateTimeFormat().resolvedOptions().timeZone || ''
+    });
+    if (force) params.set('force', force);
+    fetch('/api/weather?' + params.toString()).then(r => r.json()).then(({
+      line: l
+    }) => {
+      if (!l) return;
+      if (!force) sessionStorage.setItem('wx-line', l);
+      setLine(l);
+    }).catch(() => {/* no line beats a broken line */});
+  }, []);
+  useEffect(() => {
+    if (!line) return;
+    const raf = requestAnimationFrame(() => setEntered(true));
+    return () => cancelAnimationFrame(raf);
+  }, [line]);
+  if (!line) return null;
+  return /*#__PURE__*/React.createElement("p", {
+    className: `footer-note wx ${entered ? 'wx-in' : ''}`,
+    role: "status"
+  }, line);
+}
+function Colophon() {
   return /*#__PURE__*/React.createElement("div", {
     className: "colophon",
     "data-screen-label": "04 Colophon"
-  }, /*#__PURE__*/React.createElement(FooterToggle, {
-    onClose: onClose
-  }), /*#__PURE__*/React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     className: "colophon-rule",
     "aria-hidden": "true"
-  }), /*#__PURE__*/React.createElement("p", {
+  }), /*#__PURE__*/React.createElement(WeatherLine, null), /*#__PURE__*/React.createElement("p", {
     className: "footer-note"
-  }, "Made on a rainy Basque day.", /*#__PURE__*/React.createElement("br", null), "Powered by Yorkshire Tea."));
+  }, "Powered by Yorkshire Tea."));
 }
 ReactDOM.createRoot(document.getElementById('root')).render(/*#__PURE__*/React.createElement(App, null));
