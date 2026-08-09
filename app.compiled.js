@@ -1100,9 +1100,9 @@ function Words({
 }
 
 // Tiny play button after the name. Plays uploads/jean-name.mp3 —
-// baked with macOS "Fred" (purposely robotic): the pronunciation PSA,
-// Zhawn (French way) vs Jean (pair of pants), blame the parents.
-// Speech-synthesis fallback only if the file ever 404s.
+// baked with macOS "Fred" (purposely robotic): "My name is pronounced
+// Zhawn. The French way, even though I'm not French." Speech-synthesis
+// fallback only if the file ever 404s.
 function NamePlay() {
   const [playing, setPlaying] = useState(false);
   const play = () => {
@@ -1115,7 +1115,7 @@ function NamePlay() {
       fellBack = true;
       try {
         // "Zhawn" — the French Jean, from a plain English voice
-        const u = new SpeechSynthesisUtterance("My name is pronounced Zhawn. The French way, even though I'm not French. Not Jean, like a pair of pants. You can blame my parents for complicating things.");
+        const u = new SpeechSynthesisUtterance("My name is pronounced Zhawn. The French way, even though I'm not French.");
         u.rate = 0.95;
         u.onend = done;
         u.onerror = done;
@@ -1833,7 +1833,7 @@ function FeedTile({
 const SCOPE_LABELS = {
   Websites: 'Web'
 };
-const FILTER_GROUPS = [['industry', 'Industry'], ['org', 'Organization'], ['scope', 'Scope']];
+const FILTER_GROUPS = [['industry', 'Industry'], ['org', 'Org Type'], ['scope', 'Scope']];
 
 // Custom dropdown — a drawn menu instead of the OS <select> popup.
 // Trigger reads as its dimension name until a value is picked; the
