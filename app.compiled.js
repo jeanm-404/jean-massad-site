@@ -1905,6 +1905,8 @@ function AssetsFeed() {
     org: null,
     scope: null
   });
+  const [pastBand, setPastBand] = useState(false); // scrolled beyond the divider band?
+  const bandRef = useRef(null);
   useEffect(() => {
     const onResize = () => {
       setCols(feedColCount());
@@ -1912,6 +1914,19 @@ function AssetsFeed() {
     };
     window.addEventListener('resize', onResize);
     return () => window.removeEventListener('resize', onResize);
+  }, []);
+  // Sticky filters: once the band scrolls above the viewport, a fixed
+  // capsule with the same dropdowns fades in at the top.
+  useEffect(() => {
+    const el = bandRef.current;
+    if (!el) return;
+    const io = new IntersectionObserver(([e]) => {
+      setPastBand(!e.isIntersecting && e.boundingClientRect.bottom < 0);
+    }, {
+      threshold: 0
+    });
+    io.observe(el);
+    return () => io.disconnect();
   }, []);
   const openShot = asset => {
     setActive(asset);
@@ -1972,7 +1987,8 @@ function AssetsFeed() {
   const values = {
     industry: uniq(tiles.map(t => t.industry)),
     org: uniq(tiles.map(t => t.org)),
-    scope: uniq(tiles.map(t => t.scope))
+    // IDK (the artifacts) leads the scope list, right below All
+    scope: uniq(tiles.map(t => t.scope)).sort((a, b) => a === 'IDK' ? -1 : b === 'IDK' ? 1 : 0)
   };
   const visible = tiles.filter(t => FILTER_GROUPS.every(([dim]) => !filters[dim] || t[dim] === filters[dim]));
   // Row-major grid; desktop subdivides into 12 tracks so tiles take
@@ -1987,7 +2003,8 @@ function AssetsFeed() {
     className: "board-divider board-divider--note reveal",
     style: {
       '--reveal-delay': '5300ms'
-    }
+    },
+    ref: bandRef
   }, /*#__PURE__*/React.createElement("p", {
     className: "feed-note"
   }, "A collection of ", /*#__PURE__*/React.createElement("a", {
@@ -2016,7 +2033,15 @@ function AssetsFeed() {
     key: t.key
   })))), visible.length === 0 && /*#__PURE__*/React.createElement("p", {
     className: "feed-empty mono"
-  }, "NOTHING HERE YET \u2014 LOOSEN A FILTER"), active && /*#__PURE__*/React.createElement(WorkModal, {
+  }, "NOTHING HERE YET \u2014 LOOSEN A FILTER"), pastBand && /*#__PURE__*/React.createElement("div", {
+    className: "feed-filters-sticky"
+  }, FILTER_GROUPS.map(([dim, label]) => /*#__PURE__*/React.createElement(FilterSelect, {
+    key: dim,
+    label: label,
+    value: filters[dim],
+    options: values[dim],
+    onChange: v => setFilter(dim, v)
+  }))), active && /*#__PURE__*/React.createElement(WorkModal, {
     asset: active,
     onClose: closeShot
   }));

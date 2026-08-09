@@ -1053,6 +1053,32 @@ html[data-reveal="go"] .contrib-cell {
 .fmenu-item:hover { background: rgba(0, 0, 0, 0.05); color: var(--ink); }
 .fmenu-item--on { color: var(--accent); }
 
+/* sticky filter capsule — fixed at the top once the band scrolls away */
+.feed-filters-sticky {
+  position: fixed;
+  top: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 45;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  max-width: calc(100vw - 32px);
+  padding: 8px;
+  background: rgba(251, 251, 251, 0.85);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  box-shadow: 0 8px 28px rgba(10, 10, 20, 0.10);
+  animation: sticky-in .22s cubic-bezier(.2, .7, .2, 1) both;
+}
+@keyframes sticky-in {
+  from { opacity: 0; transform: translate(-50%, -8px); }
+  to   { opacity: 1; transform: translate(-50%, 0); }
+}
+
 /* empty filter result */
 .feed-empty {
   min-height: var(--board-cell);

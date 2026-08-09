@@ -1609,10 +1609,23 @@ function AssetsFeed() {
   const [desktop, setDesktop] = useState(feedIsDesktop);
   const [active, setActive] = useState(null);   // the shot open in the info overlay
   const [filters, setFilters] = useState({ industry: null, org: null, scope: null });
+  const [pastBand, setPastBand] = useState(false); // scrolled beyond the divider band?
+  const bandRef = useRef(null);
   useEffect(() => {
     const onResize = () => { setCols(feedColCount()); setDesktop(feedIsDesktop()); };
     window.addEventListener('resize', onResize);
     return () => window.removeEventListener('resize', onResize);
+  }, []);
+  // Sticky filters: once the band scrolls above the viewport, a fixed
+  // capsule with the same dropdowns fades in at the top.
+  useEffect(() => {
+    const el = bandRef.current;
+    if (!el) return;
+    const io = new IntersectionObserver(([e]) => {
+      setPastBand(!e.isIntersecting && e.boundingClientRect.bottom < 0);
+    }, { threshold: 0 });
+    io.observe(el);
+    return () => io.disconnect();
   }, []);
   const openShot = (asset) => { setActive(asset); playStateChange(true); haptic(10); };
   const closeShot = () => { setActive(null); playStateChange(false); };
@@ -1645,7 +1658,9 @@ function AssetsFeed() {
   const values = {
     industry: uniq(tiles.map((t) => t.industry)),
     org: uniq(tiles.map((t) => t.org)),
-    scope: uniq(tiles.map((t) => t.scope)),
+    // IDK (the artifacts) leads the scope list, right below All
+    scope: uniq(tiles.map((t) => t.scope)).sort((a, b) =>
+      a === 'IDK' ? -1 : b === 'IDK' ? 1 : 0),
   };
   const visible = tiles.filter((t) =>
     FILTER_GROUPS.every(([dim]) => !filters[dim] || t[dim] === filters[dim]));
@@ -1660,7 +1675,7 @@ function AssetsFeed() {
           dropdowns — one hatched band, note left, filters right.
           Each select reads as its dimension name until a value is
           picked (picking the name again = All). */}
-      <div className="board-divider board-divider--note reveal" style={{ '--reveal-delay': '5300ms' }}>
+      <div className="board-divider board-divider--note reveal" style={{ '--reveal-delay': '5300ms' }} ref={bandRef}>
         <p className="feed-note">
           A collection of <a className="hand-word" href="https://www.konpo.studio" target="_blank" rel="noreferrer">Konpo</a> snippets
           and personal work.
@@ -1695,6 +1710,21 @@ function AssetsFeed() {
       </div>
       {visible.length === 0 && (
         <p className="feed-empty mono">NOTHING HERE YET — LOOSEN A FILTER</p>
+      )}
+      {/* sticky filter capsule — same dropdowns, same state, appears
+          once you've scrolled past the band */}
+      {pastBand && (
+        <div className="feed-filters-sticky">
+          {FILTER_GROUPS.map(([dim, label]) => (
+            <FilterSelect
+              key={dim}
+              label={label}
+              value={filters[dim]}
+              options={values[dim]}
+              onChange={(v) => setFilter(dim, v)}
+            />
+          ))}
+        </div>
       )}
       {active && <WorkModal asset={active} onClose={closeShot} />}
     </section>
