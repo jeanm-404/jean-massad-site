@@ -1096,6 +1096,53 @@ function Words({
   });
   return /*#__PURE__*/React.createElement(React.Fragment, null, out, children);
 }
+
+// Tiny play button after the name — says "Jean Massad" out loud.
+// Plays uploads/jean-name.mp3 if Jean has recorded one; until then it
+// falls back to speech synthesis with a French voice for the Jean part.
+function NamePlay() {
+  const [playing, setPlaying] = useState(false);
+  const play = () => {
+    if (playing) return;
+    setPlaying(true);
+    const done = () => setPlaying(false);
+    let fellBack = false;
+    const fallback = () => {
+      if (fellBack) return;
+      fellBack = true;
+      try {
+        const u = new SpeechSynthesisUtterance('Jean Massad');
+        const fr = window.speechSynthesis.getVoices().find(v => v.lang && v.lang.startsWith('fr'));
+        if (fr) u.voice = fr;
+        u.rate = 0.85;
+        u.onend = done;
+        u.onerror = done;
+        window.speechSynthesis.speak(u);
+      } catch (e) {
+        done();
+      }
+    };
+    const audio = new Audio('uploads/jean-name.mp3');
+    audio.onended = done;
+    audio.onerror = fallback;
+    audio.play().catch(fallback);
+  };
+  return /*#__PURE__*/React.createElement("button", {
+    type: "button",
+    className: `name-play ${playing ? 'name-play--on' : ''}`,
+    onClick: play,
+    "aria-label": "Hear my name",
+    title: "Hear my name"
+  }, /*#__PURE__*/React.createElement("svg", {
+    viewBox: "0 0 10 10",
+    width: "7",
+    height: "7",
+    "aria-hidden": "true"
+  }, /*#__PURE__*/React.createElement("path", {
+    d: "M2 1.2v7.6L8.4 5 2 1.2z",
+    fill: "currentColor"
+  })));
+}
 function Intro() {
   // Each chunk fades in with its own delay so the bio reads in like it's being typed-but-not.
   const D = ms => ({
@@ -1152,10 +1199,16 @@ function Intro() {
   })(), W("Over ten years through the design spectrum. Brand. Websites. Product. Systems. F500. Unicorns. Startups. Governments."), /*#__PURE__*/React.createElement("br", null), /*#__PURE__*/React.createElement("br", null), (() => {
     pause(CHUNK_GAP);
     return null;
-  })(), W("I'm Jean Massad. The first and only designer at "), I(/*#__PURE__*/React.createElement("span", {
-    className: "hand-word hand-word--surge"
-  }, "Surge AI")), W(", the data engine behind the world's frontier labs, and I run a sharp little design studio called "), I(/*#__PURE__*/React.createElement("span", {
-    className: "hand-word hand-word--konpo"
+  })(), W("I'm Jean Massad"), I(/*#__PURE__*/React.createElement(NamePlay, null)), W(". The first and only designer at "), I(/*#__PURE__*/React.createElement("a", {
+    className: "hand-word hand-word--surge",
+    href: "https://www.surgehq.ai",
+    target: "_blank",
+    rel: "noreferrer"
+  }, "Surge AI")), W(", the data engine behind the world's frontier labs, and I run a sharp little design studio called "), I(/*#__PURE__*/React.createElement("a", {
+    className: "hand-word hand-word--konpo",
+    href: "https://www.konpo.studio",
+    target: "_blank",
+    rel: "noreferrer"
   }, "Konpo")), W(". Through the studio, I've lived a thousand design lives with some amazing people."), /*#__PURE__*/React.createElement("br", null), /*#__PURE__*/React.createElement("br", null), (() => {
     pause(CHUNK_GAP);
     return null;
@@ -1379,6 +1432,8 @@ const N = (type, file, title, cat, aspect) => ({
 // inline, in the same column — no popup, the scroll just keeps going.
 const PROJECTS = [{
   key: 'fyler',
+  industry: 'AI',
+  org: 'Startup',
   title: 'Fyler',
   cat: 'Websites',
   tag: 'Search Engine',
@@ -1387,6 +1442,8 @@ const PROJECTS = [{
   cards: [A('fyler', 'fyler-interface', 'Interface', 'Product', '16 / 9'), A('fyler', 'fyler-palettes', 'Palettes', 'Systems', '1 / 1'), A('fyler', 'fyler-darklight', 'Dark / Light', 'Product', '3 / 2')]
 }, {
   key: 'compsych',
+  industry: 'Healthcare',
+  org: 'Enterprise',
   title: 'ComPsych',
   cat: 'Brand',
   tag: 'Mental Health',
@@ -1395,6 +1452,8 @@ const PROJECTS = [{
   cards: [A('compsych', 'compsych-logo', 'Logo', 'Brand', '16 / 9'), A('compsych', 'compsych-graphics', 'Graphics', 'Brand', '1 / 1'), A('compsych', 'compsych-website', 'Website', 'Websites', '4 / 3')]
 }, {
   key: 'coachable',
+  industry: 'Coaching',
+  org: 'Startup',
   title: 'Coachable',
   cat: 'Brand',
   tag: 'Career Coaching',
@@ -1403,6 +1462,8 @@ const PROJECTS = [{
   cards: [A('coachable', 'coachable-proposals', 'Proposals', 'Brand', '8 / 5'), A('coachable', 'coachable-color', 'Color', 'Systems', '16 / 9'), A('coachable', 'coachable-phone', 'Mobile', 'Product', '4 / 5')]
 }, {
   key: 'systemone',
+  industry: 'Entertainment',
+  org: 'Startup',
   title: 'System One',
   cat: 'Websites',
   tag: 'Entertainment',
@@ -1414,6 +1475,8 @@ const PROJECTS = [{
 // image/video stack that stress-tests the inline-expand pattern.
 {
   key: 'ili',
+  industry: 'Venture',
+  org: 'Enterprise',
   title: 'ILI.DIGITAL',
   cat: 'Websites',
   tag: 'Venture Studio',
@@ -1422,6 +1485,8 @@ const PROJECTS = [{
   cards: [N('video', 'reveal.mp4', 'Reveal', 'Brand', '21 / 9'), N('video', 'logos-2.mp4', 'Logos', 'Brand', '4 / 3'), N('image', 'type-ii.webp', 'Typography', 'Systems', '3 / 2'), N('image', 'system-color.webp', 'Color', 'Systems', '3 / 2'), N('image', 'button-system.webp', 'Buttons', 'Systems', '2 / 3'), N('image', 'icon-system.webp', 'Icons', 'Systems', '6 / 5'), N('video', 'smile.mp4', 'Smile', 'Brand', '4 / 3'), N('video', 'frames.mp4', 'Frames', 'Brand', '6 / 5'), N('image', 'website-ii.webp', 'Website', 'Websites', '16 / 9'), N('video', 'charts.mp4', 'Charts', 'Product', '3 / 2'), N('image', 'poster.webp', 'Poster', 'Brand', '3 / 4'), N('image', 'book.png', 'Book', 'Brand', '16 / 9'), N('video', 'animation.mp4', 'Animation', 'Brand', '21 / 9')]
 }, {
   key: 'hutte',
+  industry: 'DevTools',
+  org: 'Startup',
   title: 'Hutte',
   cat: 'Brand',
   tag: 'Salesforce DevOps',
@@ -1434,6 +1499,24 @@ const DEMOS = {
   book: DemoBook,
   segment: DemoSegment
 };
+
+// ARTIFACTS — small self-initiated craft pieces (often AI-assisted)
+// that blend into the client work, rauno.me/craft-style. Shape:
+//   { title, type: 'video'|'image'|'component', src|demo, aspect,
+//     desc, href?, at? }
+// `at` slots the artifact in at that tile index (omit → appended).
+// Artifacts carry scope 'Fun' and no industry/org, so they show under
+// All + Scope:Fun and step back when a client filter is active.
+const ARTIFACTS = [{
+  title: 'Switch',
+  type: 'component',
+  demo: 'toggle',
+  aspect: '4 / 3',
+  at: 5,
+  desc: 'The site’s entry gate, isolated — a real native switch, velvet chime and all.',
+  cat: 'Fun',
+  scope: ['Craft']
+}];
 
 // Video that only downloads + plays while it's near the viewport. This
 // keeps us from decoding a dozen clips at once (the smoothness killer)
@@ -1580,7 +1663,9 @@ function WorkModal({
   }, asset.type === 'image' ? /*#__PURE__*/React.createElement("img", {
     src: asset.src,
     alt: asset.title
-  }) : /*#__PURE__*/React.createElement("video", {
+  }) : asset.type === 'component' ? /*#__PURE__*/React.createElement("div", {
+    className: "work-modal-demo"
+  }, React.createElement(DEMOS[asset.demo] || DemoToggle)) : /*#__PURE__*/React.createElement("video", {
     src: asset.src,
     autoPlay: true,
     muted: true,
@@ -1600,7 +1685,7 @@ function WorkModal({
     className: "work-info-label"
   }, "Category"), /*#__PURE__*/React.createElement("span", {
     className: "work-info-value"
-  }, asset.cat)), /*#__PURE__*/React.createElement("div", {
+  }, asset.cat)), asset.scope && /*#__PURE__*/React.createElement("div", {
     className: "work-info-row"
   }, /*#__PURE__*/React.createElement("span", {
     className: "work-info-label"
@@ -1708,10 +1793,21 @@ function FeedTile({
     className: "asset-note mono"
   }, tile.note.toUpperCase()))));
 }
+
+// Display names for the scope filter (data keeps the original cats)
+const SCOPE_LABELS = {
+  Websites: 'Web'
+};
+const FILTER_GROUPS = [['industry', 'Industry'], ['org', 'Organization'], ['scope', 'Scope']];
 function AssetsFeed() {
   const [cols, setCols] = useState(feedColCount);
   const [desktop, setDesktop] = useState(feedIsDesktop);
   const [active, setActive] = useState(null); // the shot open in the info overlay
+  const [filters, setFilters] = useState({
+    industry: null,
+    org: null,
+    scope: null
+  });
   useEffect(() => {
     const onResize = () => {
       setCols(feedColCount());
@@ -1729,34 +1825,99 @@ function AssetsFeed() {
     setActive(null);
     playStateChange(false);
   };
+  const setFilter = (dim, val) => {
+    setFilters(f => ({
+      ...f,
+      [dim]: f[dim] === val ? null : val
+    })); // tap again = off
+    haptic(8);
+    // relayout snapped heights + dividers after the grid re-deals
+    setTimeout(() => window.dispatchEvent(new Event('resize')), 60);
+  };
   // Flat feed: every project contributes its cover then its pieces, in
-  // order — one continuous scroll, no folding. FIG numbers run straight
-  // through the whole feed (FIG_001, FIG_002, …), no dotted sub-figures.
+  // order — one continuous scroll, no folding. Artifacts slot in where
+  // their `at` says. FIG numbers run straight through the FULL feed and
+  // stay stable under filtering — figures are identity, not position.
   const tiles = [];
   PROJECTS.forEach(p => {
     tiles.push({
       asset: p.cover,
       note: p.tag || p.cat,
-      key: p.key
+      key: p.key,
+      industry: p.industry,
+      org: p.org,
+      scope: SCOPE_LABELS[p.cover.cat] || p.cover.cat
     });
     p.cards.forEach((a, j) => tiles.push({
       asset: a,
       note: a.cat,
-      key: `${p.key}-${j}`
+      key: `${p.key}-${j}`,
+      industry: p.industry,
+      org: p.org,
+      scope: SCOPE_LABELS[a.cat] || a.cat
     }));
+  });
+  ARTIFACTS.forEach((a, i) => {
+    const tile = {
+      asset: a,
+      note: 'Artifact',
+      key: `artifact-${i}`,
+      scope: 'Fun'
+    };
+    if (a.at != null && a.at <= tiles.length) tiles.splice(a.at, 0, tile);else tiles.push(tile);
   });
   tiles.forEach((t, i) => {
     t.fig = `FIG_${String(i + 1).padStart(3, '0')}`;
   });
+  // Chip values derive from the data — tag a project gov/unicorn (or an
+  // artifact Fun) and its chip appears here on its own.
+  const uniq = xs => Array.from(new Set(xs.filter(Boolean)));
+  const values = {
+    industry: uniq(tiles.map(t => t.industry)),
+    org: uniq(tiles.map(t => t.org)),
+    scope: uniq(tiles.map(t => t.scope))
+  };
+  const visible = tiles.filter(t => FILTER_GROUPS.every(([dim]) => !filters[dim] || t[dim] === filters[dim]));
   // Row-major grid; desktop subdivides into 12 tracks so tiles take
   // varied spans + offsets (coverSlot), tablet/mobile one track per tile.
   const trackCount = desktop ? 12 : cols;
   const rows = [];
-  for (let i = 0; i < tiles.length; i += cols) rows.push(tiles.slice(i, i + cols));
+  for (let i = 0; i < visible.length; i += cols) rows.push(visible.slice(i, i + cols));
   return /*#__PURE__*/React.createElement("section", {
     className: "feed-section",
     "data-screen-label": "02 Work"
-  }, /*#__PURE__*/React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("p", {
+    className: "feed-note reveal",
+    style: {
+      '--reveal-delay': '5300ms'
+    }
+  }, "The work below is ", /*#__PURE__*/React.createElement("a", {
+    className: "hand-word hand-word--konpo",
+    href: "https://www.konpo.studio",
+    target: "_blank",
+    rel: "noreferrer"
+  }, "Konpo\u2019s"), ". Which is, on many days, a trench coat with me inside it. Plus a few brilliant designers I call when a project deserves better than my average motion skills."), /*#__PURE__*/React.createElement("div", {
+    className: "feed-filters reveal",
+    style: {
+      '--reveal-delay': '5450ms'
+    }
+  }, FILTER_GROUPS.map(([dim, label]) => /*#__PURE__*/React.createElement("div", {
+    className: "filter-row",
+    key: dim
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "filter-label mono"
+  }, label), /*#__PURE__*/React.createElement("div", {
+    className: "filter-chips"
+  }, /*#__PURE__*/React.createElement("button", {
+    type: "button",
+    className: `fchip mono ${filters[dim] == null ? 'fchip--on' : ''}`,
+    onClick: () => setFilter(dim, null)
+  }, "All"), values[dim].map(v => /*#__PURE__*/React.createElement("button", {
+    type: "button",
+    className: `fchip mono ${filters[dim] === v ? 'fchip--on' : ''}`,
+    onClick: () => setFilter(dim, v),
+    key: v
+  }, v)))))), /*#__PURE__*/React.createElement("div", {
     className: "feed-masonry",
     style: {
       gridTemplateColumns: `repeat(${trackCount}, minmax(0, 1fr))`
@@ -1767,7 +1928,9 @@ function AssetsFeed() {
     onOpen: () => openShot(t.asset),
     slotStyle: coverSlot(ri, ci, desktop),
     key: t.key
-  })))), active && /*#__PURE__*/React.createElement(WorkModal, {
+  })))), visible.length === 0 && /*#__PURE__*/React.createElement("p", {
+    className: "feed-empty mono"
+  }, "NOTHING HERE YET \u2014 LOOSEN A FILTER"), active && /*#__PURE__*/React.createElement(WorkModal, {
     asset: active,
     onClose: closeShot
   }));

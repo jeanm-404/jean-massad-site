@@ -533,6 +533,31 @@ html[data-reveal="go"] .container::after {
 }
 .hand-word--konpo { color: #9747ff; }  /* Konpo purple — matches .chip-logo--konpo */
 .hand-word--surge { color: #782396; }  /* Surge purple — matches .chip-logo--surge */
+/* hand-words that are links stay quiet until hovered */
+a.hand-word { text-decoration: none; border-bottom: 0; }
+a.hand-word:hover { text-decoration: underline; text-underline-offset: 3px; }
+
+/* tiny "hear my name" play button, inline after the name */
+.name-play {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 17px;
+  height: 17px;
+  margin: 0 1px 0 5px;
+  padding: 0;
+  border: 1px solid var(--muted-3);
+  border-radius: 50%;
+  background: none;
+  color: var(--muted);
+  cursor: pointer;
+  vertical-align: -2px;
+  transition: color .14s ease, border-color .14s ease, background-color .14s ease;
+}
+.name-play:hover { color: var(--accent); border-color: var(--accent); }
+.name-play--on { background: var(--accent); border-color: var(--accent); color: #fff; }
+.name-play svg { margin-left: 1px; }
 
 @media (max-width: 720px) {
   .headline { font-size: clamp(28px, 8vw, 34px); }
@@ -909,6 +934,77 @@ html[data-reveal="go"] .contrib-cell {
 /* section rhythm comes from the container gap + the tiles' own
    cell-multiple margins — no extra off-grid padding */
 .feed-section { padding: 0; }
+
+/* note above the work — whose work this is */
+.feed-note {
+  margin: 0 2px var(--board-cell);
+  max-width: 62ch;
+  color: var(--muted);
+  text-wrap: pretty;
+}
+
+/* filter rail — quiet mono chips; values derive from the data, so new
+   tags (gov, unicorn, fun…) grow chips the moment work carries them */
+.feed-filters {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0 2px calc(var(--board-cell) * 1.5);
+}
+.filter-row {
+  display: flex;
+  align-items: baseline;
+  gap: 16px;
+}
+.filter-label {
+  width: 96px;
+  flex-shrink: 0;
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted-3);
+}
+.filter-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.fchip {
+  appearance: none;
+  border: 1px solid var(--rule);
+  background: none;
+  border-radius: 999px;
+  padding: 4px 11px;
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted-2);
+  cursor: pointer;
+  transition: color .14s ease, border-color .14s ease;
+}
+.fchip:hover { color: var(--ink); border-color: var(--muted-3); }
+.fchip--on { color: var(--accent); border-color: currentColor; }
+@media (max-width: 640px) {
+  .filter-row { flex-direction: column; gap: 6px; }
+  .filter-label { width: auto; }
+}
+
+/* empty filter result */
+.feed-empty {
+  min-height: var(--board-cell);
+  margin: 0 2px;
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  color: var(--muted-3);
+}
+
+/* live component demo inside the shot overlay */
+.work-modal-demo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 300px;
+}
 
 /* glitch hover link in footer */
 .glitch-link {
