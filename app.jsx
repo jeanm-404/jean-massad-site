@@ -881,7 +881,7 @@ function BragSlot() {
 // connectors muted. Reveals word-by-word before the intro.
 // ─────────────────────────────────────────────────────────────
 const HEADLINE_SEGMENTS = [
-  ['Driving design from napkin concept through production and scale.', 'ink'],
+  ['Design from napkin sketch through production and scale.', 'ink'],
   ['With style.', 'hand'],   // handwritten kicker — Gochi Hand, muted gray
 ];
 const HEADLINE_TONES = { muted: 'hl-muted', hand: 'hl-muted hl-hand' };
@@ -978,26 +978,26 @@ function Intro() {
   return (
     <section className="intro" data-screen-label="01 Intro" style={{ padding: "0px" }}>
       <p className="intro-paragraph">
-        {W("On the grind ever since I could download Photoshop off a sketchy torrent site.")}
+        {W("On the grind since I could download Photoshop off a sketchy torrent site.")}
         <br /><br />
         {(() => { pause(CHUNK_GAP); return null; })()}
-        {W("A decade of experience through the entire spectrum of design. From foundational branding and websites to product design and scalable systems.")}
+        {W("Over ten years through the design spectrum. Brand. Websites. Product. Systems. F500. Unicorns. Startups. Governments.")}
         <br /><br />
         {(() => { pause(CHUNK_GAP); return null; })()}
-        {W("I'm the founding designer at ")}
+        {W("I'm Jean Massad. The first and only designer at ")}
         {I(<span className="hand-word hand-word--surge">Surge AI</span>)}
-        {W(", the world's largest (and best!) frontier lab, and run a nimble but sharp design studio called ")}
+        {W(", the data engine behind the world's frontier labs, and I run a sharp little design studio called ")}
         {I(<span className="hand-word hand-word--konpo">Konpo</span>)}
-        {W(". Through it I've lived a thousand design lives with some amazing people.")}
+        {W(". Through the studio, I've lived a thousand design lives with some amazing people.")}
         <br /><br />
         {(() => { pause(CHUNK_GAP); return null; })()}
-        {W('My work has been enjoyed by the folks from Awwwards and Webby\'s, survived the crowds at Product Hunt, torn apart in HackerNews, seen in the background of a Tim Cook Keynote, loved by Terry Crews, featured on the cover of Forbes, smiled from the top of the App Store, called "ok" by a President and, mainly, applauded by my parents.')}
+        {W('My work has won over Awwwards and the Webbys, survived Product Hunt, been torn apart on Hacker News, shown up behind Tim Cook in a keynote, been loved by Terry Crews, made the cover of Forbes, smiled from the top of the App Store, been called "ok" by a President and, mainly, applauded by my parents.')}
         <br /><br />
         {(() => { pause(CHUNK_GAP); return null; })()}
-        {W("When I'm not panicking about AI replacing me, I chase ")}
+        {W("When I'm not busy training my AI replacement, I chase ")}
         {I(
           <a href="#" className="ulink ulink--media" data-media="snow">
-            snow
+            ski
             <span className="media-pop">
               <span className="media-pop-img media-pop-img--snow" />
             </span>
