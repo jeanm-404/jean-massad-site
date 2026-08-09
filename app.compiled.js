@@ -1019,30 +1019,38 @@ function Headline() {
     className: "reveal-word",
     style: T()
   }, node, trail ? ' ' : '');
+  // Hovering (or focusing) a chip spotlights its bio passages: stamp
+  // html[data-bio-focus] and let CSS dim every .bio-part but that tag.
+  const bio = key => ({
+    onMouseEnter: () => document.documentElement.setAttribute('data-bio-focus', key),
+    onMouseLeave: () => document.documentElement.removeAttribute('data-bio-focus'),
+    onFocus: () => document.documentElement.setAttribute('data-bio-focus', key),
+    onBlur: () => document.documentElement.removeAttribute('data-bio-focus')
+  });
   return /*#__PURE__*/React.createElement("section", {
     className: "headline-block",
     "data-screen-label": "00 Headline"
   }, /*#__PURE__*/React.createElement("p", {
     className: "headline-eyebrow"
-  }, C(/*#__PURE__*/React.createElement("span", {
+  }, C(/*#__PURE__*/React.createElement("span", _extends({
     className: "chip"
-  }, "Jean", /*#__PURE__*/React.createElement("img", {
+  }, bio('jean')), "Jean", /*#__PURE__*/React.createElement("img", {
     className: "chip-avatar",
     src: "jean-avatar.png",
     alt: ""
-  })), 'jean', true), C(/*#__PURE__*/React.createElement("a", {
+  })), 'jean', true), C(/*#__PURE__*/React.createElement("a", _extends({
     href: "https://konpo.studio",
     target: "_blank",
     rel: "noreferrer",
     className: "chip"
-  }, "Konpo", /*#__PURE__*/React.createElement(KonpoMark, {
+  }, bio('konpo')), "Konpo", /*#__PURE__*/React.createElement(KonpoMark, {
     className: "chip-logo chip-logo--konpo"
-  })), 'konpo', true), C(/*#__PURE__*/React.createElement("a", {
+  })), 'konpo', true), C(/*#__PURE__*/React.createElement("a", _extends({
     href: "https://surgehq.ai",
     target: "_blank",
     rel: "noreferrer",
     className: "chip"
-  }, "Surge", /*#__PURE__*/React.createElement(SurgeMark, {
+  }, bio('surge')), "Surge", /*#__PURE__*/React.createElement(SurgeMark, {
     className: "chip-logo chip-logo--surge"
   })), 'surge')), /*#__PURE__*/React.createElement("h1", {
     className: "headline"
@@ -1128,13 +1136,27 @@ function NamePlay() {
     "aria-label": "Hear my name",
     title: "Hear my name"
   }, /*#__PURE__*/React.createElement("svg", {
-    viewBox: "0 0 10 10",
-    width: "7",
-    height: "7",
+    viewBox: "0 0 24 24",
+    width: "15",
+    height: "15",
+    fill: "none",
+    stroke: "currentColor",
+    strokeWidth: "2",
+    strokeLinecap: "round",
+    strokeLinejoin: "round",
     "aria-hidden": "true"
   }, /*#__PURE__*/React.createElement("path", {
-    d: "M2 1.2v7.6L8.4 5 2 1.2z",
-    fill: "currentColor"
+    d: "M2 10v3"
+  }), /*#__PURE__*/React.createElement("path", {
+    d: "M6 6v11"
+  }), /*#__PURE__*/React.createElement("path", {
+    d: "M10 3v18"
+  }), /*#__PURE__*/React.createElement("path", {
+    d: "M14 8v7"
+  }), /*#__PURE__*/React.createElement("path", {
+    d: "M18 5v13"
+  }), /*#__PURE__*/React.createElement("path", {
+    d: "M22 10v3"
   })));
 }
 function Intro() {
@@ -1187,29 +1209,48 @@ function Intro() {
     }
   }, /*#__PURE__*/React.createElement("p", {
     className: "intro-paragraph"
-  }, W("On the grind since I could download Photoshop off a sketchy torrent site."), /*#__PURE__*/React.createElement("br", null), /*#__PURE__*/React.createElement("br", null), (() => {
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "bio-part",
+    "data-bio": "jean"
+  }, W("On the grind since I could download Photoshop off a sketchy torrent site.")), /*#__PURE__*/React.createElement("br", null), /*#__PURE__*/React.createElement("br", null), (() => {
     pause(CHUNK_GAP);
     return null;
-  })(), W("Over ten years through the design spectrum. Brand. Websites. Product. Systems. F500. Unicorns. Startups. Governments."), /*#__PURE__*/React.createElement("br", null), /*#__PURE__*/React.createElement("br", null), (() => {
+  })(), /*#__PURE__*/React.createElement("span", {
+    className: "bio-part"
+  }, W("Over ten years through the design spectrum. Brand. Websites. Product. Systems. F500. Unicorns. Startups. Governments.")), /*#__PURE__*/React.createElement("br", null), /*#__PURE__*/React.createElement("br", null), (() => {
     pause(CHUNK_GAP);
     return null;
-  })(), W("I'm Jean Massad"), I(/*#__PURE__*/React.createElement(NamePlay, null)), W(". The first and only designer at "), I(/*#__PURE__*/React.createElement("a", {
+  })(), /*#__PURE__*/React.createElement("span", {
+    className: "bio-part",
+    "data-bio": "jean"
+  }, W("I'm Jean Massad"), I(/*#__PURE__*/React.createElement(NamePlay, null))), /*#__PURE__*/React.createElement("span", {
+    className: "bio-part",
+    "data-bio": "surge"
+  }, W(". The first and only designer at "), I(/*#__PURE__*/React.createElement("a", {
     className: "hand-word hand-word--surge",
     href: "https://www.surgehq.ai",
     target: "_blank",
     rel: "noreferrer"
-  }, "Surge AI")), W(", the data engine behind the world's frontier labs, and I run a sharp little design studio called "), I(/*#__PURE__*/React.createElement("a", {
+  }, "Surge AI")), W(", the data engine behind the world's leading frontier labs")), /*#__PURE__*/React.createElement("span", {
+    className: "bio-part",
+    "data-bio": "konpo"
+  }, W(", and I run a sharp little design studio called "), I(/*#__PURE__*/React.createElement("a", {
     className: "hand-word hand-word--konpo",
     href: "https://www.konpo.studio",
     target: "_blank",
     rel: "noreferrer"
-  }, "Konpo")), W(". Through the studio, I've lived a thousand design lives with some amazing people."), /*#__PURE__*/React.createElement("br", null), /*#__PURE__*/React.createElement("br", null), (() => {
+  }, "Konpo")), W(". Through the studio, I've lived a thousand design lives with some amazing people.")), /*#__PURE__*/React.createElement("br", null), /*#__PURE__*/React.createElement("br", null), (() => {
     pause(CHUNK_GAP);
     return null;
-  })(), W('My work has won over Awwwards and the Webbys, survived Product Hunt, been torn apart on Hacker News, shown up behind Tim Cook in a keynote, been loved by Terry Crews, made the cover of Forbes, smiled from the top of the App Store, been called "ok" by a President and, mainly, applauded by my parents.'), /*#__PURE__*/React.createElement("br", null), /*#__PURE__*/React.createElement("br", null), (() => {
+  })(), /*#__PURE__*/React.createElement("span", {
+    className: "bio-part"
+  }, W('My work has won over Awwwards and the Webbys, survived Product Hunt, been torn apart on Hacker News, shown up behind Tim Cook in a keynote, been loved by Terry Crews, made the cover of Forbes, smiled from the top of the App Store, been called "ok" by a President and, mainly, applauded by my parents.')), /*#__PURE__*/React.createElement("br", null), /*#__PURE__*/React.createElement("br", null), (() => {
     pause(CHUNK_GAP);
     return null;
-  })(), W("When I'm not busy training my AI replacement, I chase "), I(/*#__PURE__*/React.createElement("a", {
+  })(), /*#__PURE__*/React.createElement("span", {
+    className: "bio-part",
+    "data-bio": "jean"
+  }, W("When I'm not busy training my AI replacement, I chase "), I(/*#__PURE__*/React.createElement("a", {
     href: "#",
     className: "ulink ulink--media",
     "data-media": "snow"
@@ -1225,7 +1266,7 @@ function Intro() {
     className: "media-pop"
   }, /*#__PURE__*/React.createElement("span", {
     className: "media-pop-img media-pop-img--surf"
-  })))), W('.')));
+  })))), W('.'))));
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -1793,6 +1834,68 @@ const SCOPE_LABELS = {
   Websites: 'Web'
 };
 const FILTER_GROUPS = [['industry', 'Industry'], ['org', 'Organization'], ['scope', 'Scope']];
+
+// Custom dropdown — a drawn menu instead of the OS <select> popup.
+// Trigger reads as its dimension name until a value is picked; the
+// panel is frosted paper with mono options, outside-click/Esc closes.
+function FilterSelect({
+  label,
+  value,
+  options,
+  onChange
+}) {
+  const [open, setOpen] = useState(false);
+  const rootRef = useRef(null);
+  useEffect(() => {
+    if (!open) return;
+    const onDown = e => {
+      if (rootRef.current && !rootRef.current.contains(e.target)) setOpen(false);
+    };
+    const onKey = e => {
+      if (e.key === 'Escape') setOpen(false);
+    };
+    document.addEventListener('pointerdown', onDown);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('pointerdown', onDown);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [open]);
+  const pick = v => {
+    onChange(v);
+    setOpen(false);
+  };
+  return /*#__PURE__*/React.createElement("span", {
+    className: `fselect-wrap ${open ? 'fselect-wrap--open' : ''}`,
+    ref: rootRef
+  }, /*#__PURE__*/React.createElement("button", {
+    type: "button",
+    className: `fselect mono ${value ? 'fselect--on' : ''}`,
+    onClick: () => setOpen(o => !o),
+    "aria-haspopup": "listbox",
+    "aria-expanded": open
+  }, value || label, /*#__PURE__*/React.createElement("span", {
+    className: "fselect-chevron",
+    "aria-hidden": "true"
+  })), open && /*#__PURE__*/React.createElement("div", {
+    className: "fmenu",
+    role: "listbox",
+    "aria-label": label
+  }, /*#__PURE__*/React.createElement("button", {
+    type: "button",
+    role: "option",
+    "aria-selected": !value,
+    className: `fmenu-item mono ${!value ? 'fmenu-item--on' : ''}`,
+    onClick: () => pick(null)
+  }, "All"), options.map(v => /*#__PURE__*/React.createElement("button", {
+    type: "button",
+    role: "option",
+    "aria-selected": value === v,
+    className: `fmenu-item mono ${value === v ? 'fmenu-item--on' : ''}`,
+    onClick: () => pick(v),
+    key: v
+  }, v))));
+}
 function AssetsFeed() {
   const [cols, setCols] = useState(feedColCount);
   const [desktop, setDesktop] = useState(feedIsDesktop);
@@ -1888,26 +1991,19 @@ function AssetsFeed() {
   }, /*#__PURE__*/React.createElement("p", {
     className: "feed-note"
   }, "A collection of ", /*#__PURE__*/React.createElement("a", {
-    className: "hand-word hand-word--konpo",
+    className: "hand-word",
     href: "https://www.konpo.studio",
     target: "_blank",
     rel: "noreferrer"
   }, "Konpo"), " snippets and personal work."), /*#__PURE__*/React.createElement("div", {
     className: "feed-filters"
-  }, FILTER_GROUPS.map(([dim, label]) => /*#__PURE__*/React.createElement("span", {
-    className: "fselect-wrap",
-    key: dim
-  }, /*#__PURE__*/React.createElement("select", {
-    className: `fselect mono ${filters[dim] ? 'fselect--on' : ''}`,
-    value: filters[dim] || '',
-    onChange: e => setFilter(dim, e.target.value || null),
-    "aria-label": `Filter by ${label.toLowerCase()}`
-  }, /*#__PURE__*/React.createElement("option", {
-    value: ""
-  }, label), values[dim].map(v => /*#__PURE__*/React.createElement("option", {
-    value: v,
-    key: v
-  }, v))))))), /*#__PURE__*/React.createElement("div", {
+  }, FILTER_GROUPS.map(([dim, label]) => /*#__PURE__*/React.createElement(FilterSelect, {
+    key: dim,
+    label: label,
+    value: filters[dim],
+    options: values[dim],
+    onChange: v => setFilter(dim, v)
+  })))), /*#__PURE__*/React.createElement("div", {
     className: "feed-masonry",
     style: {
       gridTemplateColumns: `repeat(${trackCount}, minmax(0, 1fr))`
@@ -2016,7 +2112,7 @@ const ELSEWHERE_LINKS = [{
   href: 'https://dribbble.com/jeanmassad'
 }, {
   from: 'GitHub ↗',
-  to: 'The lines between design and code have blurred ↗',
+  to: 'AI has turned me into a coding monkey with fire ↗',
   href: 'https://github.com/jeanm-404'
 }];
 function Footer() {

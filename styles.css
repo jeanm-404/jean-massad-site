@@ -526,6 +526,15 @@ html[data-reveal="go"] .container::after {
   letter-spacing: 0;
   line-height: 1;
 }
+/* chip-hover spotlight: hovering an eyebrow chip dims every bio
+   passage except the ones tagged for it (html[data-bio-focus] is
+   stamped by the chips' hover/focus handlers) */
+.intro-paragraph .bio-part { transition: opacity .25s ease; }
+html[data-bio-focus] .intro-paragraph .bio-part { opacity: 0.22; }
+html[data-bio-focus="jean"]  .intro-paragraph .bio-part[data-bio="jean"],
+html[data-bio-focus="konpo"] .intro-paragraph .bio-part[data-bio="konpo"],
+html[data-bio-focus="surge"] .intro-paragraph .bio-part[data-bio="surge"] { opacity: 1; }
+
 /* inline handwritten word anywhere in running text (e.g. "Konpo") */
 .hand-word {
   font-family: "Gochi Hand", "Bradley Hand", cursive;
@@ -538,27 +547,28 @@ html[data-reveal="go"] .container::after {
 a.hand-word { text-decoration: none; border-bottom: 0; }
 a.hand-word:hover { text-decoration: underline; text-underline-offset: 3px; }
 
-/* tiny "hear my name" play button, inline after the name */
+/* tiny "hear my name" button, inline after the name — lucide
+   audio-lines in accent blue, bars pulse while speaking */
 .name-play {
   appearance: none;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 17px;
-  height: 17px;
-  margin: 0 1px 0 5px;
+  margin: 0 2px 0 6px;
   padding: 0;
-  border: 1px solid var(--muted-3);
-  border-radius: 50%;
+  border: 0;
   background: none;
-  color: var(--muted);
+  color: var(--accent);
   cursor: pointer;
   vertical-align: -2px;
-  transition: color .14s ease, border-color .14s ease, background-color .14s ease;
+  transition: transform .14s ease, opacity .14s ease;
 }
-.name-play:hover { color: var(--accent); border-color: var(--accent); }
-.name-play--on { background: var(--accent); border-color: var(--accent); color: #fff; }
-.name-play svg { margin-left: 1px; }
+.name-play:hover { transform: scale(1.15); }
+.name-play--on svg { animation: name-pulse 0.9s ease-in-out infinite; }
+@keyframes name-pulse {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.4; }
+}
 
 @media (max-width: 720px) {
   .headline { font-size: clamp(28px, 8vw, 34px); }
@@ -947,6 +957,9 @@ html[data-reveal="go"] .contrib-cell {
   justify-content: space-between;
   gap: 16px 24px;
   flex-wrap: wrap;
+  /* breathing room after the intro (grid-area cancels the container
+     gap, so the band sets its own distance from the hero) */
+  margin-top: calc(var(--board-cell) * 3);
   margin-bottom: var(--board-cell);
 }
 .feed-note {
@@ -955,7 +968,6 @@ html[data-reveal="go"] .contrib-cell {
   padding: 10px 16px;
   background: var(--paper);
   border: 1px solid var(--rule);
-  border-radius: var(--radius);
   font-size: 14px;
   line-height: 1.55;
   color: var(--muted);
@@ -973,10 +985,13 @@ html[data-reveal="go"] .contrib-cell {
 .fselect {
   appearance: none;
   -webkit-appearance: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   border: 1px solid var(--rule);
   background: var(--paper);  /* readable over the divider hatch */
   border-radius: 999px;
-  padding: 5px 28px 5px 13px;
+  padding: 5px 12px 5px 13px;
   font-size: 10px;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -986,18 +1001,57 @@ html[data-reveal="go"] .contrib-cell {
 }
 .fselect:hover { color: var(--ink); border-color: var(--muted-3); }
 .fselect--on { color: var(--accent); border-color: currentColor; }
-.fselect-wrap::after {
-  content: '';
-  position: absolute;
-  right: 13px;
-  top: 50%;
+.fselect-chevron {
   width: 5px;
   height: 5px;
-  border-right: 1px solid var(--muted-3);
-  border-bottom: 1px solid var(--muted-3);
-  transform: translateY(-70%) rotate(45deg);
-  pointer-events: none;
+  border-right: 1px solid currentColor;
+  border-bottom: 1px solid currentColor;
+  transform: rotate(45deg) translate(-1px, -1px);
+  opacity: 0.6;
+  transition: transform .16s ease;
 }
+.fselect-wrap--open .fselect-chevron { transform: rotate(225deg) translate(1px, 1px); }
+/* the drawn menu — frosted paper, mono options, no OS chrome */
+.fmenu {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 40;
+  min-width: 100%;
+  width: max-content;
+  padding: 4px;
+  background: rgba(251, 251, 251, 0.92);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--rule);
+  border-radius: 10px;
+  box-shadow: 0 10px 30px rgba(10, 10, 20, 0.10);
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  animation: fmenu-in .16s cubic-bezier(.2, .7, .2, 1) both;
+}
+@keyframes fmenu-in {
+  from { opacity: 0; transform: translateY(-3px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.fmenu-item {
+  appearance: none;
+  border: 0;
+  background: none;
+  text-align: left;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color .12s ease, color .12s ease;
+}
+.fmenu-item:hover { background: rgba(0, 0, 0, 0.05); color: var(--ink); }
+.fmenu-item--on { color: var(--accent); }
 
 /* empty filter result */
 .feed-empty {
