@@ -1059,10 +1059,10 @@ function Intro() {
         <span className="bio-part" data-bio="surge">
           {W(". Designer at ")}
           {I(<a className="hand-word hand-word--surge" href="https://www.surgehq.ai" target="_blank" rel="noreferrer">Surge AI</a>)}
-          {W(", the data engine behind the world's leading frontier labs")}
+          {W(", the data engine behind the world's leading frontier labs. ")}
         </span>
         <span className="bio-part" data-bio="konpo">
-          {W(", and I run a nimble design studio called ")}
+          {W("I also run a nimble studio called ")}
           {I(<a className="hand-word hand-word--konpo" href="https://www.konpo.studio" target="_blank" rel="noreferrer">Konpo</a>)}
           {W(", where we passionately hate on traditional agency dynamics. Through it, I've lived a thousand design lives with some amazing people.")}
         </span>

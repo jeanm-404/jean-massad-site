@@ -1232,10 +1232,10 @@ function Intro() {
     href: "https://www.surgehq.ai",
     target: "_blank",
     rel: "noreferrer"
-  }, "Surge AI")), W(", the data engine behind the world's leading frontier labs")), /*#__PURE__*/React.createElement("span", {
+  }, "Surge AI")), W(", the data engine behind the world's leading frontier labs. ")), /*#__PURE__*/React.createElement("span", {
     className: "bio-part",
     "data-bio": "konpo"
-  }, W(", and I run a nimble design studio called "), I(/*#__PURE__*/React.createElement("a", {
+  }, W("I also run a nimble studio called "), I(/*#__PURE__*/React.createElement("a", {
     className: "hand-word hand-word--konpo",
     href: "https://www.konpo.studio",
     target: "_blank",
