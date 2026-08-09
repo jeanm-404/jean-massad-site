@@ -959,7 +959,7 @@ html[data-reveal="go"] .contrib-cell {
   flex-wrap: wrap;
   /* breathing room after the intro (grid-area cancels the container
      gap, so the band sets its own distance from the hero) */
-  margin-top: calc(var(--board-cell) * 3);
+  margin-top: calc(var(--board-cell) * 5);
   margin-bottom: var(--board-cell);
 }
 .feed-note {

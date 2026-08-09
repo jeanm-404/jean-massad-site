@@ -1047,7 +1047,7 @@ function Intro() {
           html[data-bio-focus] and CSS dims every part but that tag. */}
       <p className="intro-paragraph">
         <span className="bio-part" data-bio="jean">
-          {W("On the grind since I could download Photoshop off a sketchy torrent site.")}
+          {W("On the grind since I could download Photoshop off a sketchy torrent site. Similar to a .md file but, like, human.")}
         </span>
         <br /><br />
         {(() => { pause(CHUNK_GAP); return null; })()}
@@ -1262,16 +1262,53 @@ const A = (proj, file, title, cat, aspect) => ({
 const N = (type, file, title, cat, aspect) => ({
   type, src: `uploads/cases/nexus/${file}`, title, cat, aspect, ...CASE.ili,
 });
+// generic case asset — any media type, full filename, project's CASE meta
+const P = (proj, type, file, title, cat, aspect) => ({
+  type, src: `uploads/cases/${file}`, title, cat, aspect, ...CASE[proj],
+});
 // One cover per project; clicking it unfolds the project's other cards
 // inline, in the same column — no popup, the scroll just keeps going.
 const PROJECTS = [
   { key: 'surge', industry: 'AI', org: 'Unicorn', title: 'Surge AI', cat: 'Brand', tag: 'Frontier Data', sub: 'Brand and website for the data engine behind frontier AI.',
     cover: A('surge', 'surge-website', 'Surge AI', 'Websites', '16 / 9'),
     cards: [
-      A('surge', 'surge-hero', 'Hero', 'Brand', '16 / 9'),
+      P('surge', 'image', 'surge-about.webp', 'About', 'Brand', '1920 / 1080'),
       A('surge', 'surge-logo', 'Logo', 'Brand', '16 / 9'),
+      P('surge', 'image', 'surge-pair-left.webp', 'Duo I', 'Brand', '1900 / 2160'),
+      P('surge', 'image', 'surge-pair-right.webp', 'Duo II', 'Brand', '1900 / 2160'),
+      P('surge', 'image', 'surge-font-use.webp', 'Font in Use', 'Systems', '16 / 9'),
+      P('surge', 'image', 'surge-research.webp', 'Research', 'Brand', '3840 / 2266'),
+      P('surge', 'image', 'surge-chart.webp', 'Charts', 'Product', '16 / 9'),
+      P('surge', 'image', 'surge-web-overview.webp', 'Web Overview', 'Websites', '16 / 9'),
+      P('surge', 'image', 'surge-screens.webp', 'Screens', 'Websites', '16 / 9'),
+      P('surge', 'image', 'surge-footer.webp', 'Footer', 'Websites', '16 / 9'),
+      P('surge', 'image', 'surge-poster-left.webp', 'Poster I', 'Brand', '1900 / 2160'),
+      P('surge', 'image', 'surge-poster-right.webp', 'Poster II', 'Brand', '1900 / 2160'),
+      P('surge', 'image', 'surge-product.webp', 'Product', 'Product', '16 / 9'),
+      P('surge', 'image', 'surge-typography.webp', 'Typography', 'Systems', '16 / 9'),
+      P('surge', 'image', 'surge-palette-16.webp', 'Palette', 'Systems', '16 / 9'),
       A('surge', 'surge-palette', 'Color', 'Systems', '16 / 9'),
+      P('surge', 'image', 'surge-palette-sheet.webp', 'Palette Sheet', 'Systems', '16 / 9'),
+      P('surge', 'image', 'surge-primary.webp', 'Primary', 'Systems', '16 / 9'),
+      P('surge', 'image', 'surge-icon-examples.webp', 'Icon Examples', 'Systems', '1900 / 2160'),
+      P('surge', 'image', 'surge-icon-corner.webp', 'Icon Corner', 'Systems', '16 / 9'),
       A('surge', 'surge-icons', 'Icons', 'Systems', '16 / 9'),
+      P('surge', 'image', 'surge-spacing.png', 'Spacing', 'Systems', '16 / 9'),
+      P('surge', 'image', 'surge-grid.webp', 'Grid', 'Systems', '16 / 9'),
+      P('surge', 'image', 'surge-menu.webp', 'Menu', 'Websites', '16 / 9'),
+      P('surge', 'image', 'surge-animation.webp', 'Motion', 'Systems', '16 / 9'),
+      P('surge', 'image', 'surge-shot.webp', 'Shot', 'Brand', '3268 / 1839'),
+      P('surge', 'image', 'surge-grid-radial.webp', 'Radial Grid', 'Product', '16 / 9'),
+      { type: 'embed', title: 'Frontier Skyline',
+        src: 'https://surge-mirror.vercel.app/frontier-minimal.html?view=scores&revision=dark-toggle&theme=dark',
+        preview: 'uploads/artifacts/surge-skyline.png', aspect: '16 / 9',
+        desc: 'Benchmark skylines for the Surge Intelligence Index — every model on every board, one glance. Live prototype, embedded.',
+        cat: 'IDK', scope: ['Craft', 'Data viz'] },
+      { type: 'embed', title: 'Radial Horizon',
+        src: 'https://surge-mirror.vercel.app/compare.html?prototype=frontier&models=fable-5%2Cgpt-5.6-sol%2Cgemini-3.5-flash%2Ckimi-k3&view=all&theme=dark#tw=theme:dark',
+        preview: 'uploads/artifacts/surge-radial.png', aspect: '16 / 9',
+        desc: 'A cross-board radial horizon comparing four frontier models across nine Surge benches. Live prototype, embedded.',
+        cat: 'IDK', scope: ['Craft', 'Data viz'] },
     ] },
   { key: 'fyler', industry: 'AI', org: 'Startup', title: 'Fyler', cat: 'Websites', tag: 'Search Engine', sub: 'Brand, marketing site, and product UI for AI-native search.',
     cover: A('fyler', 'fyler-hero', 'Fyler', 'Websites', '16 / 9'),
@@ -1284,16 +1321,32 @@ const PROJECTS = [
     cover: A('compsych', 'compsych-moodboard', 'ComPsych', 'Brand', '4 / 3'),
     cards: [
       A('compsych', 'compsych-logo', 'Logo', 'Brand', '16 / 9'),
+      P('compsych', 'image', 'compsych-branding.webp', 'Branding', 'Brand', '4414 / 2306'),
       A('compsych', 'compsych-hero', 'Hero', 'Brand', '4 / 3'),
       A('compsych', 'compsych-positioning', 'Positioning', 'Brand', '16 / 9'),
       A('compsych', 'compsych-messaging', 'Messaging', 'Brand', '16 / 9'),
+      P('compsych', 'image', 'compsych-pillars.webp', 'Pillars', 'Brand', '16 / 9'),
+      P('compsych', 'image', 'compsych-model.webp', 'Brand Model', 'Brand', '16 / 9'),
       A('compsych', 'compsych-kerning', 'Kerning', 'Brand', '4 / 3'),
+      A('compsych', 'compsych-wordmark-details', 'Wordmark Details', 'Brand', '600 / 700'),
+      A('compsych', 'compsych-symbol', 'Symbol', 'Brand', '16 / 9'),
+      P('compsych', 'image', 'compsych-identity.webp', 'Identity', 'Brand', '3200 / 1870'),
+      P('compsych', 'image', 'compsych-wordmark-a.webp', 'Wordmark', 'Brand', '1000 / 701'),
       A('compsych', 'compsych-graphics', 'Graphics', 'Brand', '1 / 1'),
       A('compsych', 'compsych-palette-font', 'Palette & Font', 'Systems', '20 / 13'),
+      P('compsych', 'image', 'compsych-font-use.webp', 'Font in Use', 'Systems', '16 / 9'),
+      P('compsych', 'image', 'compsych-percentage.webp', 'Data', 'Systems', '3727 / 2096'),
       A('compsych', 'compsych-guidelines', 'Guidelines', 'Systems', '4 / 3'),
+      A('compsych', 'compsych-brand-hub', 'Brand Hub', 'Systems', '960 / 538'),
+      A('compsych', 'compsych-button', 'Buttons', 'Systems', '16 / 9'),
+      P('compsych', 'image', 'compsych-posters.webp', 'Posters I', 'Brand', '800 / 891'),
+      P('compsych', 'image', 'compsych-posters-b.webp', 'Posters II', 'Brand', '800 / 891'),
+      P('compsych', 'image', 'compsych-print.webp', 'Print', 'Brand', '16 / 9'),
       A('compsych', 'compsych-website', 'Website', 'Websites', '4 / 3'),
+      A('compsych', 'compsych-web-preview', 'Web Preview', 'Websites', '16 / 9'),
       A('compsych', 'compsych-loading', 'Loading', 'Websites', '16 / 9'),
       A('compsych', 'compsych-elements', 'Elements', 'Websites', '10 / 7'),
+      P('compsych', 'image', 'compsych-awards.webp', 'Awards', 'Brand', '2110 / 1406'),
     ] },
   { key: 'coachable', industry: 'Coaching', org: 'Startup', title: 'Coachable', cat: 'Brand', tag: 'Career Coaching', sub: 'Identity and website for career-changing coaching.',
     cover: A('coachable', 'coachable-hero', 'Coachable', 'Brand', '4 / 3'),
@@ -1305,7 +1358,6 @@ const PROJECTS = [
   { key: 'systemone', industry: 'Entertainment', org: 'Startup', title: 'System One', cat: 'Websites', tag: 'Entertainment', sub: 'Brand and website for film-led storytelling.',
     cover: A('systemone', 'systemone-intro', 'System One', 'Websites', '16 / 9'),
     cards: [
-      A('systemone', 'systemone-logo', 'Logo', 'Brand', '3 / 2'),
       A('systemone', 'systemone-girl', 'Film', 'Websites', '4 / 5'),
       A('systemone', 'systemone-stories', 'Stories', 'Websites', '3 / 2'),
     ] },
@@ -1350,18 +1402,8 @@ const ARTIFACTS = [
   { title: 'Switch', type: 'component', demo: 'toggle', aspect: '4 / 3', at: 5,
     desc: 'The site’s entry gate, isolated — a real native switch, velvet chime and all.',
     cat: 'IDK', scope: ['Craft'] },
-  // Surge craft pieces — live prototypes embedded from surge-mirror;
-  // tiles show a captured preview, the overlay loads the real thing.
-  { title: 'Frontier Skyline', type: 'embed', at: 8,
-    src: 'https://surge-mirror.vercel.app/frontier-minimal.html?view=scores&revision=dark-toggle&theme=dark',
-    preview: 'uploads/artifacts/surge-skyline.png', aspect: '16 / 9',
-    desc: 'Benchmark skylines for the Surge Intelligence Index — every model on every board, one glance. Live prototype, embedded.',
-    cat: 'IDK', scope: ['Craft', 'Data viz'], industry: 'AI', org: 'Unicorn' },
-  { title: 'Radial Horizon', type: 'embed', at: 18,
-    src: 'https://surge-mirror.vercel.app/compare.html?prototype=frontier&models=fable-5%2Cgpt-5.6-sol%2Cgemini-3.5-flash%2Ckimi-k3&view=all&theme=dark#tw=theme:dark',
-    preview: 'uploads/artifacts/surge-radial.png', aspect: '16 / 9',
-    desc: 'A cross-board radial horizon comparing four frontier models across nine Surge benches. Live prototype, embedded.',
-    cat: 'IDK', scope: ['Craft', 'Data viz'], industry: 'AI', org: 'Unicorn' },
+  // The Surge live-prototype embeds (Frontier Skyline, Radial Horizon)
+  // moved into the Surge AI project's cards — they travel with it now.
 ];
 
 // Video that only downloads + plays while it's near the viewport. This
