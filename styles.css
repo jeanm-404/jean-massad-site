@@ -446,8 +446,9 @@ html[data-reveal="go"] .container::after {
 .top-intro { min-width: 0; max-width: 720px; }
 .top-elsewhere {
   min-width: 0;
-  /* align with the first line of the intro paragraph (skip avatar height + margin) */
-  padding-top: 74px;
+  /* anchored to the bottom of the hero row — the links end where the
+     intro's last line does */
+  align-self: end;
 }
 
 /* Grid + feed stretch to fill the full container width so cells / tiles get larger. */
@@ -935,14 +936,18 @@ html[data-reveal="go"] .contrib-cell {
    cell-multiple margins — no extra off-grid padding */
 .feed-section { padding: 0; }
 
-/* the divider that carries the work note — the band grows to fit and
-   the note sits on a paper plate over the hatch */
+/* the divider that carries the work note + filters — the band grows
+   to fit; note (paper plate) left, filter dropdowns right */
 .board-divider--note {
   height: auto;
   min-height: calc(var(--board-cell) + 1px);
   padding: calc(var(--board-cell) * 0.5) var(--pad-x);
   display: flex;
   align-items: center;
+  justify-content: space-between;
+  gap: 16px 24px;
+  flex-wrap: wrap;
+  margin-bottom: var(--board-cell);
 }
 .feed-note {
   margin: 0;
@@ -957,20 +962,19 @@ html[data-reveal="go"] .contrib-cell {
   text-wrap: pretty;
 }
 
-/* filter dropdowns, one row — options derive from the data, so new
-   tags (gov, unicorn, fun…) appear the moment work carries them */
+/* filter dropdowns — options derive from the data, so new tags (gov,
+   unicorn, fun…) appear the moment work carries them */
 .feed-filters {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  margin: 0 2px calc(var(--board-cell) * 1.5);
 }
 .fselect-wrap { position: relative; display: inline-flex; }
 .fselect {
   appearance: none;
   -webkit-appearance: none;
   border: 1px solid var(--rule);
-  background: none;
+  background: var(--paper);  /* readable over the divider hatch */
   border-radius: 999px;
   padding: 5px 28px 5px 13px;
   font-size: 10px;

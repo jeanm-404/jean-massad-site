@@ -536,15 +536,7 @@ function App() {
           </div>
         </header>
 
-        {/* the hero/work divider carries the note — text ON the band */}
-        <div className="board-divider board-divider--note reveal" style={{ '--reveal-delay': '5300ms' }}>
-          <p className="feed-note">
-            The work below is technically <a className="hand-word hand-word--konpo" href="https://www.konpo.studio" target="_blank" rel="noreferrer">Konpo’s</a>.
-            Which is, on most days, a trench coat with me inside it. Plus some designers
-            I call when a project deserves better than my average motion skills.
-          </p>
-        </div>
-
+        {/* hero/work divider (note + filters) is rendered by AssetsFeed */}
         <section className="grid-area">
           <AssetsFeed />
         </section>
@@ -1571,24 +1563,32 @@ function AssetsFeed() {
   for (let i = 0; i < visible.length; i += cols) rows.push(visible.slice(i, i + cols));
   return (
     <section className="feed-section" data-screen-label="02 Work">
-      {/* filter dropdowns, one quiet row — each select reads as its
-          dimension name until a value is picked (picking the name = All) */}
-      <div className="feed-filters reveal" style={{ '--reveal-delay': '5450ms' }}>
-        {FILTER_GROUPS.map(([dim, label]) => (
-          <span className="fselect-wrap" key={dim}>
-            <select
-              className={`fselect mono ${filters[dim] ? 'fselect--on' : ''}`}
-              value={filters[dim] || ''}
-              onChange={(e) => setFilter(dim, e.target.value || null)}
-              aria-label={`Filter by ${label.toLowerCase()}`}
-            >
-              <option value="">{label}</option>
-              {values[dim].map((v) => (
-                <option value={v} key={v}>{v}</option>
-              ))}
-            </select>
-          </span>
-        ))}
+      {/* the hero/work divider carries the note AND the filter
+          dropdowns — one hatched band, note left, filters right.
+          Each select reads as its dimension name until a value is
+          picked (picking the name again = All). */}
+      <div className="board-divider board-divider--note reveal" style={{ '--reveal-delay': '5300ms' }}>
+        <p className="feed-note">
+          A collection of <a className="hand-word hand-word--konpo" href="https://www.konpo.studio" target="_blank" rel="noreferrer">Konpo</a> snippets
+          and personal work.
+        </p>
+        <div className="feed-filters">
+          {FILTER_GROUPS.map(([dim, label]) => (
+            <span className="fselect-wrap" key={dim}>
+              <select
+                className={`fselect mono ${filters[dim] ? 'fselect--on' : ''}`}
+                value={filters[dim] || ''}
+                onChange={(e) => setFilter(dim, e.target.value || null)}
+                aria-label={`Filter by ${label.toLowerCase()}`}
+              >
+                <option value="">{label}</option>
+                {values[dim].map((v) => (
+                  <option value={v} key={v}>{v}</option>
+                ))}
+              </select>
+            </span>
+          ))}
+        </div>
       </div>
       <div
         className="feed-masonry"

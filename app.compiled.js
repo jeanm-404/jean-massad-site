@@ -673,19 +673,7 @@ function App() {
     style: {
       '--reveal-delay': '4900ms'
     }
-  }, /*#__PURE__*/React.createElement(Footer, null))), /*#__PURE__*/React.createElement("div", {
-    className: "board-divider board-divider--note reveal",
-    style: {
-      '--reveal-delay': '5300ms'
-    }
-  }, /*#__PURE__*/React.createElement("p", {
-    className: "feed-note"
-  }, "The work below is technically ", /*#__PURE__*/React.createElement("a", {
-    className: "hand-word hand-word--konpo",
-    href: "https://www.konpo.studio",
-    target: "_blank",
-    rel: "noreferrer"
-  }, "Konpo\u2019s"), ". Which is, on most days, a trench coat with me inside it. Plus some designers I call when a project deserves better than my average motion skills.")), /*#__PURE__*/React.createElement("section", {
+  }, /*#__PURE__*/React.createElement(Footer, null))), /*#__PURE__*/React.createElement("section", {
     className: "grid-area"
   }, /*#__PURE__*/React.createElement(AssetsFeed, null)), /*#__PURE__*/React.createElement("div", {
     className: "board-divider reveal",
@@ -1893,10 +1881,19 @@ function AssetsFeed() {
     className: "feed-section",
     "data-screen-label": "02 Work"
   }, /*#__PURE__*/React.createElement("div", {
-    className: "feed-filters reveal",
+    className: "board-divider board-divider--note reveal",
     style: {
-      '--reveal-delay': '5450ms'
+      '--reveal-delay': '5300ms'
     }
+  }, /*#__PURE__*/React.createElement("p", {
+    className: "feed-note"
+  }, "A collection of ", /*#__PURE__*/React.createElement("a", {
+    className: "hand-word hand-word--konpo",
+    href: "https://www.konpo.studio",
+    target: "_blank",
+    rel: "noreferrer"
+  }, "Konpo"), " snippets and personal work."), /*#__PURE__*/React.createElement("div", {
+    className: "feed-filters"
   }, FILTER_GROUPS.map(([dim, label]) => /*#__PURE__*/React.createElement("span", {
     className: "fselect-wrap",
     key: dim
@@ -1910,7 +1907,7 @@ function AssetsFeed() {
   }, label), values[dim].map(v => /*#__PURE__*/React.createElement("option", {
     value: v,
     key: v
-  }, v)))))), /*#__PURE__*/React.createElement("div", {
+  }, v))))))), /*#__PURE__*/React.createElement("div", {
     className: "feed-masonry",
     style: {
       gridTemplateColumns: `repeat(${trackCount}, minmax(0, 1fr))`
