@@ -1540,8 +1540,8 @@ const DEMOS = {
 //   { title, type: 'video'|'image'|'component', src|demo, aspect,
 //     desc, href?, at? }
 // `at` slots the artifact in at that tile index (omit → appended).
-// Artifacts carry scope 'Fun' and no industry/org, so they show under
-// All + Scope:Fun and step back when a client filter is active.
+// Artifacts carry scope 'IDK' and no industry/org, so they show under
+// All + Scope:IDK and step back when a client filter is active.
 const ARTIFACTS = [{
   title: 'Switch',
   type: 'component',
@@ -1549,7 +1549,7 @@ const ARTIFACTS = [{
   aspect: '4 / 3',
   at: 5,
   desc: 'The site’s entry gate, isolated — a real native switch, velvet chime and all.',
-  cat: 'Fun',
+  cat: 'IDK',
   scope: ['Craft']
 }];
 
@@ -1959,7 +1959,7 @@ function AssetsFeed() {
       asset: a,
       note: 'Artifact',
       key: `artifact-${i}`,
-      scope: 'Fun'
+      scope: 'IDK'
     };
     if (a.at != null && a.at <= tiles.length) tiles.splice(a.at, 0, tile);else tiles.push(tile);
   });
