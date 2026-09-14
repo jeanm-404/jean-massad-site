@@ -2809,7 +2809,7 @@ function AssetsFeed() {
 // ─────────────────────────────────────────────────────────────
 const GLITCH_CHARS = '!<>-_\\/[]{}—=+*^?#________';
 
-function GlitchLink({ from, to, href = '#' }) {
+function GlitchLink({ from, to, href = '#', className = '', newTab = true }) {
   const [display, setDisplay] = useState(from);
   const rafRef = useRef(null);
   const startRef = useRef(0);
@@ -2859,9 +2859,9 @@ function GlitchLink({ from, to, href = '#' }) {
   return (
     <a
       href={href}
-      className="ulink glitch-link"
-      target="_blank"
-      rel="noreferrer"
+      className={'ulink glitch-link' + (className ? ' ' + className : '')}
+      target={newTab ? '_blank' : undefined}
+      rel={newTab ? 'noreferrer' : undefined}
       onMouseEnter={() => startScramble(to)}
       onMouseLeave={() => startScramble(from)}
       onFocus={() => startScramble(to)}
@@ -3293,8 +3293,9 @@ function Colophon() {
           bring the loop back; <img className="colophon-avatar" .../> for
           the plain avatar. */}
       <HoloCard />
-      <div className="colophon-rule" aria-hidden="true" />
-      <a className="footer-note footer-contact" href="mailto:jeanmassad@gmail.com">Contact</a>
+      {/* the small rule that sat here was cut 2026-09-14; Contact scrambles
+          into the address on hover, same GlitchLink as the Where fold */}
+      <GlitchLink className="footer-contact" from="Contact" to="jeanmassad@gmail.com" href="mailto:jeanmassad@gmail.com" newTab={false} />
     </div>);
 
 }

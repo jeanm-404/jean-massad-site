@@ -3118,7 +3118,9 @@ const GLITCH_CHARS = '!<>-_\\/[]{}—=+*^?#________';
 function GlitchLink({
   from,
   to,
-  href = '#'
+  href = '#',
+  className = '',
+  newTab = true
 }) {
   const [display, setDisplay] = useState(from);
   const rafRef = useRef(null);
@@ -3168,9 +3170,9 @@ function GlitchLink({
   }, []);
   return /*#__PURE__*/React.createElement("a", {
     href: href,
-    className: "ulink glitch-link",
-    target: "_blank",
-    rel: "noreferrer",
+    className: 'ulink glitch-link' + (className ? ' ' + className : ''),
+    target: newTab ? '_blank' : undefined,
+    rel: newTab ? 'noreferrer' : undefined,
     onMouseEnter: () => startScramble(to),
     onMouseLeave: () => startScramble(from),
     onFocus: () => startScramble(to),
@@ -3898,12 +3900,12 @@ function Colophon() {
   return /*#__PURE__*/React.createElement("div", {
     className: "colophon",
     "data-screen-label": "04 Colophon"
-  }, /*#__PURE__*/React.createElement(HoloCard, null), /*#__PURE__*/React.createElement("div", {
-    className: "colophon-rule",
-    "aria-hidden": "true"
-  }), /*#__PURE__*/React.createElement("a", {
-    className: "footer-note footer-contact",
-    href: "mailto:jeanmassad@gmail.com"
-  }, "Contact"));
+  }, /*#__PURE__*/React.createElement(HoloCard, null), /*#__PURE__*/React.createElement(GlitchLink, {
+    className: "footer-contact",
+    from: "Contact",
+    to: "jeanmassad@gmail.com",
+    href: "mailto:jeanmassad@gmail.com",
+    newTab: false
+  }));
 }
 ReactDOM.createRoot(document.getElementById('root')).render(/*#__PURE__*/React.createElement(App, null));

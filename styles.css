@@ -2263,11 +2263,12 @@ html[data-reveal="go"] .contrib-cell {
   line-height: 1.45;
   color: var(--ink);
   text-decoration: none;
-  border-bottom: 1px solid transparent;
-  transition: color .2s ease, border-color .2s ease;
+  border-bottom: 0;
+  padding-bottom: 0;
+  transition: color .2s ease;
 }
 .colophon .footer-contact:hover,
-.colophon .footer-contact:focus-visible { color: var(--accent); border-bottom-color: currentColor; outline: none; }
+.colophon .footer-contact:focus-visible { color: var(--accent); outline: none; }   /* elsewhere-link hover: accent + scramble, no underline */
 
 @media (max-width: 900px) {
   /* 24 = 1 cell on the mobile grid */
