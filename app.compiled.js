@@ -3801,49 +3801,19 @@ function HoloCard() {
     src: "holo/preevo.jpg",
     alt: "Jean, aged four, as a wise man",
     draggable: "false"
-  }), /*#__PURE__*/React.createElement("span", null, "Evolves from Senior Designer")), /*#__PURE__*/React.createElement("div", {
+  }), /*#__PURE__*/React.createElement("span", null, "Evolves from mini him")), /*#__PURE__*/React.createElement("div", {
     className: "hc-info"
   }, /*#__PURE__*/React.createElement("span", null, "NO. 032"), /*#__PURE__*/React.createElement("span", null, "Designer Pok\xE9mon"), /*#__PURE__*/React.createElement("span", null, "WT: 40 open tabs")), /*#__PURE__*/React.createElement("div", {
     className: "hc-body"
   }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     className: "hc-row"
   }, /*#__PURE__*/React.createElement("span", {
-    className: "hc-badge"
-  }, "Ability"), /*#__PURE__*/React.createElement("span", {
-    className: "hc-nm"
-  }, "Deep End")), /*#__PURE__*/React.createElement("p", {
-    className: "hc-desc"
-  }, "Throw this Pok\xE9mon at your biggest design mess. Each turn, it comes out the other side: mess shipped, all damage healed.")), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
-    className: "hc-row"
-  }, /*#__PURE__*/React.createElement("span", {
-    className: "hc-energy"
-  }, /*#__PURE__*/React.createElement("svg", null, /*#__PURE__*/React.createElement("use", {
-    href: "#hc-e-claude"
-  })), /*#__PURE__*/React.createElement("svg", null, /*#__PURE__*/React.createElement("use", {
-    href: "#hc-e-claude"
-  }))), /*#__PURE__*/React.createElement("span", {
     className: "hc-nm"
   }, "Zero to One"), /*#__PURE__*/React.createElement("span", {
     className: "hc-dmg"
   }, "60+")), /*#__PURE__*/React.createElement("p", {
     className: "hc-desc"
-  }, "Design the whole product, research to release, no hand-offs. Does 20 more damage for each stage this Pok\xE9mon shipped itself.")), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
-    className: "hc-row"
-  }, /*#__PURE__*/React.createElement("span", {
-    className: "hc-energy"
-  }, /*#__PURE__*/React.createElement("svg", null, /*#__PURE__*/React.createElement("use", {
-    href: "#hc-e-figma"
-  })), /*#__PURE__*/React.createElement("svg", null, /*#__PURE__*/React.createElement("use", {
-    href: "#hc-e-figma"
-  })), /*#__PURE__*/React.createElement("svg", null, /*#__PURE__*/React.createElement("use", {
-    href: "#hc-e-figma"
-  }))), /*#__PURE__*/React.createElement("span", {
-    className: "hc-nm"
-  }, "Systemize"), /*#__PURE__*/React.createElement("span", {
-    className: "hc-dmg"
-  }, "50\xD7")), /*#__PURE__*/React.createElement("p", {
-    className: "hc-desc"
-  }, "Turn every screen in play into tokens and components. Does 50 damage times the number of teams shipping on the system."))), /*#__PURE__*/React.createElement("div", {
+  }, "Design the whole product, research to release, no hand-offs. Does 20 more damage for each stage this Pok\xE9mon shipped itself."))), /*#__PURE__*/React.createElement("div", {
     className: "hc-rule"
   }, /*#__PURE__*/React.createElement("b", null, "Yorkshire Tea rule"), /*#__PURE__*/React.createElement("span", null, "Brew once a turn: heal 30 damage from this Pok\xE9mon.")), /*#__PURE__*/React.createElement("div", {
     className: "hc-wrr"

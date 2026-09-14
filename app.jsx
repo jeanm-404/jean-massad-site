@@ -3235,7 +3235,7 @@ function HoloCard() {
 
         <div className="hc-art-frame"></div>
         <div className="hc-art"><img src="holo/avatar-hi.webp" alt="Jean, in Konpo blue" draggable="false" /></div>
-        <div className="hc-preevo"><img className="hc-preevo-img" src="holo/preevo.jpg" alt="Jean, aged four, as a wise man" draggable="false" /><span>Evolves from Senior Designer</span></div>
+        <div className="hc-preevo"><img className="hc-preevo-img" src="holo/preevo.jpg" alt="Jean, aged four, as a wise man" draggable="false" /><span>Evolves from mini him</span></div>
 
         <div className="hc-info">
           <span>NO. 032</span><span>Designer Pokémon</span><span>WT: 40 open tabs</span>
@@ -3243,22 +3243,10 @@ function HoloCard() {
 
         <div className="hc-body">
           <div>
-            <div className="hc-row"><span className="hc-badge">Ability</span><span className="hc-nm">Deep End</span></div>
-            <p className="hc-desc">Throw this Pokémon at your biggest design mess. Each turn, it comes out the other side: mess shipped, all damage healed.</p>
-          </div>
-          <div>
             <div className="hc-row">
-              <span className="hc-energy"><svg><use href="#hc-e-claude"/></svg><svg><use href="#hc-e-claude"/></svg></span>
               <span className="hc-nm">Zero to One</span><span className="hc-dmg">60+</span>
             </div>
             <p className="hc-desc">Design the whole product, research to release, no hand-offs. Does 20 more damage for each stage this Pokémon shipped itself.</p>
-          </div>
-          <div>
-            <div className="hc-row">
-              <span className="hc-energy"><svg><use href="#hc-e-figma"/></svg><svg><use href="#hc-e-figma"/></svg><svg><use href="#hc-e-figma"/></svg></span>
-              <span className="hc-nm">Systemize</span><span className="hc-dmg">50×</span>
-            </div>
-            <p className="hc-desc">Turn every screen in play into tokens and components. Does 50 damage times the number of teams shipping on the system.</p>
           </div>
         </div>
 
