@@ -712,6 +712,10 @@ html[data-reveal="go"] .container::after {
   gap: 64px;
   align-items: start;
   justify-content: space-between;
+  /* the container's flex gap is 64px between every block; the lede sits one
+     cell (32px) under the headline instead (Jean 2026-09-14: "move the desc
+     closer to the headline") */
+  margin-top: calc(var(--board-cell) * -1);
 }
 .top-intro { min-width: 0; max-width: 720px; }
 .top-elsewhere {
@@ -987,7 +991,7 @@ a.brand-word:hover { text-decoration: underline; text-underline-offset: 3px; }
   font-weight: 500;
   letter-spacing: -0.012em;
   line-height: 1.45;
-  color: var(--ink);
+  color: var(--muted);   /* lighter grey than the headline (Jean 2026-09-14) */
 }
 .intro-paragraph--lede { margin: 0 0 14px; }
 /* gap below the lead block = the headline→lead gap (2-cell rhythm) */
