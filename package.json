@@ -2,9 +2,9 @@
   "name": "jean-massad-site",
   "version": "1.0.0",
   "private": true,
-  "description": "Personal portfolio — no framework, precompiled JSX for production.",
+  "description": "Personal portfolio \u2014 no framework, precompiled JSX for production.",
   "scripts": {
-    "build": "babel app.jsx -o app.compiled.js --presets @babel/preset-react",
+    "build": "babel app.jsx -o app.compiled.js --presets @babel/preset-react && node stamp.js",
     "deploy": "npm run build && vercel deploy --prod --yes"
   },
   "devDependencies": {
