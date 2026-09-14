@@ -2255,7 +2255,13 @@ html[data-reveal="go"] .contrib-cell {
 /* the two-line "rainy Basque afternoon" note became a mailto (2026-09-14) */
 .colophon .footer-contact {
   display: inline-block;
-  color: var(--muted);
+  /* same voice as .intro-heading (Jean: "make contact same size as" the lede) */
+  font-family: "Google Sans", var(--sans);
+  font-size: 22px;
+  font-weight: 500;
+  letter-spacing: -0.012em;
+  line-height: 1.45;
+  color: var(--ink);
   text-decoration: none;
   border-bottom: 1px solid transparent;
   transition: color .2s ease, border-color .2s ease;
@@ -2274,6 +2280,7 @@ html[data-reveal="go"] .contrib-cell {
   /* the lead block stays one size — heading AND lede paragraph */
   .intro-paragraph--lede,
   .intro-heading { font-size: 20px; }
+  .colophon .footer-contact { font-size: 20px; }
   .footer-row { grid-template-columns: 1fr; gap: 24px; }
 }
 
