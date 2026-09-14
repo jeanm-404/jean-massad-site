@@ -3243,10 +3243,16 @@ function HoloCard() {
 
         <div className="hc-body">
           <div>
-            <div className="hc-row">
-              <span className="hc-nm">Zero to One</span><span className="hc-dmg">60+</span>
-            </div>
+            <div className="hc-row"><span className="hc-nm hc-nm--ability">Deep End</span></div>
+            <p className="hc-desc">Throw this Pokémon at your biggest design mess. Each turn, it comes out the other side: mess shipped, all damage healed.</p>
+          </div>
+          <div>
+            <div className="hc-row"><span className="hc-nm">Zero to One</span><span className="hc-dmg">60+</span></div>
             <p className="hc-desc">Design the whole product, research to release, no hand-offs. Does 20 more damage for each stage this Pokémon shipped itself.</p>
+          </div>
+          <div>
+            <div className="hc-row"><span className="hc-nm">Systemize</span><span className="hc-dmg">50×</span></div>
+            <p className="hc-desc">Turn every screen in play into tokens and components. Does 50 damage times the number of teams shipping on the system.</p>
           </div>
         </div>
 

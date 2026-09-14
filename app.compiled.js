@@ -3808,12 +3808,26 @@ function HoloCard() {
   }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     className: "hc-row"
   }, /*#__PURE__*/React.createElement("span", {
+    className: "hc-nm hc-nm--ability"
+  }, "Deep End")), /*#__PURE__*/React.createElement("p", {
+    className: "hc-desc"
+  }, "Throw this Pok\xE9mon at your biggest design mess. Each turn, it comes out the other side: mess shipped, all damage healed.")), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    className: "hc-row"
+  }, /*#__PURE__*/React.createElement("span", {
     className: "hc-nm"
   }, "Zero to One"), /*#__PURE__*/React.createElement("span", {
     className: "hc-dmg"
   }, "60+")), /*#__PURE__*/React.createElement("p", {
     className: "hc-desc"
-  }, "Design the whole product, research to release, no hand-offs. Does 20 more damage for each stage this Pok\xE9mon shipped itself."))), /*#__PURE__*/React.createElement("div", {
+  }, "Design the whole product, research to release, no hand-offs. Does 20 more damage for each stage this Pok\xE9mon shipped itself.")), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    className: "hc-row"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "hc-nm"
+  }, "Systemize"), /*#__PURE__*/React.createElement("span", {
+    className: "hc-dmg"
+  }, "50\xD7")), /*#__PURE__*/React.createElement("p", {
+    className: "hc-desc"
+  }, "Turn every screen in play into tokens and components. Does 50 damage times the number of teams shipping on the system."))), /*#__PURE__*/React.createElement("div", {
     className: "hc-rule"
   }, /*#__PURE__*/React.createElement("b", null, "Yorkshire Tea rule"), /*#__PURE__*/React.createElement("span", null, "Brew once a turn: heal 30 damage from this Pok\xE9mon.")), /*#__PURE__*/React.createElement("div", {
     className: "hc-wrr"
