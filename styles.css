@@ -165,7 +165,7 @@ a { color: inherit; }
   height: 14px;
   width: auto;
 }
-/* round avatar inside the Jean chip */
+/* round avatar inside the Jean chip (the colophon carries a 32px twin) */
 .chip-avatar {
   display: block;
   order: -1;
@@ -186,12 +186,14 @@ a { color: inherit; }
   align-items: center;
   justify-content: center;
   background: #0600f4;
-  /* .gate--on is added at the moment the struggling knob breaks
-     through (~1.35s after click): flood 0.6s, then fade out */
+  /* .gate--on is added when the knob breaks through (or the blueprint
+     beat ends): blue → paper in .5s while the gate is already fading, so
+     it is fully transparent at .75s — the page underneath starts its
+     reveal at +250ms and lands as the blue lifts (no blank white beat) */
   transition:
-    background-color .6s ease,
-    opacity .45s ease .8s,
-    visibility 0s linear 1.3s;
+    background-color .5s ease,
+    opacity .4s ease .35s,
+    visibility 0s linear .75s;
 }
 .gate--on {
   background: var(--paper);
@@ -481,7 +483,7 @@ html[data-reveal="pending"] .rulers {
 @keyframes bp-draw   { from { clip-path: inset(-16px 100% -18px 0); opacity: .5; } to { clip-path: inset(-16px -160px -18px 0); opacity: 1; } }
 @keyframes bp-check  { from { opacity: 0; translate: 0 4px; } to { opacity: 1; translate: 0 0; } }
 /* the flood: the sheet dissolves under the white */
-.gate--on::before, .gate--on .bp-stage { opacity: 0 !important; transition: opacity .3s ease; }
+.gate--on::before, .gate--on .bp-stage { opacity: 0 !important; transition: opacity .35s ease; }
 @media (prefers-reduced-motion: reduce) {
   .bp-dim, .bp-block, .bp-fig, .bp-progress { animation: none; }
   .gate::before, .rulers, .ruler, .ruler-sel, .ruler-cursor, .ruler-cursor-val, .gate-field { transition: none; }
@@ -706,7 +708,7 @@ html[data-reveal="go"] .container::after {
   /* Intro stays at a readable width; elsewhere column is exactly 16
      grid cells wide, anchored to the content's right edge — its left
      edge lands on a board grid column. */
-  grid-template-columns: minmax(420px, 720px) calc(var(--board-cell) * 16);
+  grid-template-columns: minmax(0, 720px);
   gap: 64px;
   align-items: start;
   justify-content: space-between;
@@ -722,17 +724,17 @@ html[data-reveal="go"] .container::after {
 /* Grid + feed stretch to fill the full container width so cells / tiles get larger. */
 .grid-area {
   width: 100%;
-  /* cancel the container gap (2 cells) — the note band's own 2-cell
-     base margin (re-applied inside snap()) is what sets the space
-     above it, so hero → band stays exactly 2 cells */
-  margin-top: calc(var(--board-cell) * -2);
+  /* the note band between hero and work is gone (2026-09-14) — hero →
+     first tiles is the container gap plus 2 cells, about the room the
+     band and its margins used to take */
+  margin-top: calc(var(--board-cell) * 2);
 }
 
 @media (max-width: 1100px) {
   /* 32 = 1 cell: hairlines sit exactly on the content edge */
   :root { --pad-x: 32px; }
   .container { padding: 64px var(--pad-x) 96px; }
-  .top-row { grid-template-columns: minmax(0, 720px) auto; }
+  .top-row { grid-template-columns: minmax(0, 720px); }
 }
 @media (max-width: 900px) {
   /* mobile: 24px cell so the tighter padding stays on-grid */
@@ -990,6 +992,80 @@ a.brand-word:hover { text-decoration: underline; text-underline-offset: 3px; }
 .intro-paragraph--lede { margin: 0 0 14px; }
 /* gap below the lead block = the headline→lead gap (2-cell rhythm) */
 .intro-heading { margin: 0 0 calc(var(--board-cell) * 2); }
+
+/* ── the folds (Who / What / Why / Where) — the bio as ruled rows in the
+   elsewhere idiom: 13px labels, hairlines, a + that turns into ×. A row
+   opens to its passage (grid-template-rows 0fr → 1fr); Where holds the
+   elsewhere links as their own rows, one step in. */
+.folds {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border-top: 1px solid var(--rule);
+}
+.fold { border-bottom: 1px solid var(--rule); }
+.fold-row {
+  -webkit-tap-highlight-color: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  width: 100%;
+  padding: 11px 0;
+  margin: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink);
+  text-align: left;
+  cursor: pointer;
+  transition: color .18s;
+}
+.fold-row:hover { color: var(--accent); }
+.fold-glyph {
+  position: relative;
+  flex: none;
+  width: 10px;
+  height: 10px;
+  transition: transform .35s cubic-bezier(.2, .7, .2, 1);
+}
+.fold-glyph::before,
+.fold-glyph::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 4.5px;
+  width: 10px;
+  height: 1px;
+  background: currentColor;
+}
+.fold-glyph::after { transform: rotate(90deg); }
+.fold--open .fold-glyph { transform: rotate(45deg); }
+.fold-body {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows .5s cubic-bezier(.2, .7, .2, 1);
+}
+.fold--open .fold-body { grid-template-rows: 1fr; }
+.fold-inner { min-height: 0; overflow: hidden; }
+.fold--settled .fold-inner { overflow: visible; }
+.fold-inner .intro-paragraph { margin: 6px 0 18px; }
+.fold-inner .intro-paragraph:last-child { margin-bottom: 22px; }
+.fold-links { gap: 0; margin: 0 0 12px; }
+.fold-links li { border-top: 1px solid var(--rule); }
+.fold-links .ulink {
+  display: block;
+  width: 100%;
+  padding: 9px 0 9px 16px;
+  border-bottom: none;
+  color: var(--muted);
+}
+.fold-links .ulink:hover { color: var(--accent); }
+@media (prefers-reduced-motion: reduce) {
+  .fold-body, .fold-glyph, .fold-row { transition: none; }
+}
 
 /* ──── github contribution map — accent blue, quiet ──── */
 .contrib { margin: 34px 0 0; }
@@ -1561,20 +1637,22 @@ html[data-reveal="go"] .contrib-cell {
 }
 /* the Gimmie More control is a plain outline button now — the only
    switch left below the feed is the lights-out one in the colophon */
+/* solid dark pill — the outline version was barely visible on the
+   paper (Jean, 2026-09-14); hover goes Konpo blue */
 .more-btn {
   -webkit-tap-highlight-color: transparent;
-  border: 1px solid var(--rule);
-  background: none;
+  border: 1px solid #121212;
+  background: #121212;
   border-radius: 999px;
   padding: 13px 26px;
   cursor: pointer;
   font-size: 10px;
   letter-spacing: 0.14em;
-  color: var(--muted-2);
-  transition: color .16s ease, border-color .16s ease, transform .16s ease;
+  color: #fff;
+  transition: background-color .16s ease, border-color .16s ease, transform .16s ease;
 }
 .more-btn:hover {
-  color: var(--accent);
+  background: var(--accent);
   border-color: var(--accent);
 }
 .more-btn:active,
@@ -2148,7 +2226,18 @@ html[data-reveal="go"] .contrib-cell {
   margin-left: auto;
   margin-right: auto;
 }
-/* small centered rule between the toggle and the note */
+/* Jean's avatar in the switch's old spot — 48px so it balances the
+   two-line note below (32px read as a favicon), same 34px breath above
+   the rule */
+.colophon-avatar {
+  display: block;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin: 0 auto 34px;
+}
+/* small centered rule between the avatar and the note */
 .colophon-rule {
   height: 1px;
   background: var(--rule);
@@ -2163,6 +2252,16 @@ html[data-reveal="go"] .contrib-cell {
   text-wrap: pretty;
 }
 .colophon .footer-note.mono { font-size: 10px; }
+/* the two-line "rainy Basque afternoon" note became a mailto (2026-09-14) */
+.colophon .footer-contact {
+  display: inline-block;
+  color: var(--muted);
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+  transition: color .2s ease, border-color .2s ease;
+}
+.colophon .footer-contact:hover,
+.colophon .footer-contact:focus-visible { color: var(--accent); border-bottom-color: currentColor; outline: none; }
 
 @media (max-width: 900px) {
   /* 24 = 1 cell on the mobile grid */
@@ -2177,3 +2276,370 @@ html[data-reveal="go"] .contrib-cell {
   .intro-heading { font-size: 20px; }
   .footer-row { grid-template-columns: 1fr; gap: 24px; }
 }
+
+
+/* ===================================================================
+   HOLO CARD — the footer avatar as a Stage 2 rare-holo trading card
+   (2026-09-14). Sandbox/source of truth: scratch/holo-card.html; this
+   block is generated from it with hc- prefixes. Hover = tilt + Konpo
+   foil; click = pick up (flies to centre, enlarges, flips once).
+   Layer stack idea after simeydotme/pokemon-cards-css (GPL-3) — own
+   implementation, own textures (holo/).
+   =================================================================== */
+/* Laid out at its NATURAL size (440px) and scaled DOWN to --hc-w at rest, so the
+   raster is crisp when the card is picked up (a 96px layout scaled 4.6× stays a
+   blurry thumbnail on Safari, which never re-rasterises scaled layers). */
+:root { --hc-w-px: 96; --hc-natural-px: 440; --hc-w: calc(var(--hc-w-px) * 1px); }
+.hc-host { display: contents; }
+/* the colophon's reveal wrapper keeps filter: blur(0) forever (fill both)
+   → a stacking context + containing block that would trap the picked-up
+   card and its fixed backdrop; HoloCard sets animation:none on it once
+   the reveal has played. */
+  /* ---------- scene / 3d ---------- */
+.hc-scene { perspective: 900px; position: relative; width: var(--hc-w); aspect-ratio: .718; margin: 0 auto 34px; }
+.hc-scene--active { z-index: 999; }
+.hc.hc--active { z-index: 30; }
+.hc {
+  width: calc(var(--hc-natural-px) * 1px);
+  aspect-ratio: .718;
+  position: absolute; left: 50%; top: 50%;
+  margin-left: calc(var(--hc-natural-px) * -.5px);
+  margin-top: calc(var(--hc-natural-px) / .718 * -.5px);
+  pointer-events: none;                      /* the 440px box is invisible — only the scaled card is hit-testable */
+  /* pointer state (written by JS) */
+  --pointer-x: 50%;
+  --pointer-y: 50%;
+  --pointer-from-center: 0;
+  --pointer-from-top: .5;
+  --pointer-from-left: .5;
+  --card-opacity: 0;
+  --rotate-x: 0deg;
+  --rotate-y: 0deg;
+  --background-x: 50%;
+  --background-y: 50%;
+  --card-scale: calc(var(--hc-w-px) / var(--hc-natural-px));
+  --translate-x: 0px;
+  --translate-y: 0px;
+  /* dials */
+  --foil-brightness: .65;
+  --glare-strength: .8;
+  --glitter-size: 46%;
+  --mark-size: 14%;
+  --art-mark-size: 22%;
+  --art-foil: .7;
+  --angle: 115deg;
+  /* geometry (% of the card box: x → width, y → height) */
+  --card-radius: 4.55% / 3.5%;
+  --art-top: 9.85%;
+  --art-bottom: 47.15%;
+  --art-left: 8%;
+  --art-right: 92%;
+  --clip-art-invert: polygon(
+    0 0, 100% 0, 100% 100%, 0 100%,
+    0 var(--art-top),
+    var(--art-left) var(--art-top),
+    var(--art-left) var(--art-bottom),
+    var(--art-right) var(--art-bottom),
+    var(--art-right) var(--art-top),
+    0 var(--art-top)
+  );
+  touch-action: none;
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.hc-translater {
+  width: 100%; height: 100%;
+  transform: translate3d(var(--translate-x), var(--translate-y), 0) scale(var(--card-scale));
+  transform-style: preserve-3d;
+  will-change: transform;
+  pointer-events: auto;
+}
+.hc-rotator {
+  width: 100%; height: 100%;
+  border-radius: var(--card-radius);
+  transform: rotateY(var(--rotate-x)) rotateX(var(--rotate-y));
+  transform-style: preserve-3d;
+  will-change: transform, box-shadow;
+  box-shadow:
+    0 calc(2px + 26px * var(--card-opacity)) calc(30px + 40px * var(--card-opacity)) calc(-8px - 12px * var(--card-opacity)) rgba(0, 0, 0, .6),
+    0 1px 2px rgba(0, 0, 0, .35),
+    0 0 0 1px rgba(255, 255, 255, .06);
+  transition: box-shadow .4s ease;
+}
+.hc-front {
+  position: absolute; inset: 0;
+  border-radius: var(--card-radius);
+  overflow: hidden;
+  isolation: isolate;               /* blend modes stay inside the card */
+  container-type: inline-size;      /* → cqw units below */
+  background: linear-gradient(168deg, #f8e07a 0%, #eccb52 45%, #dcb63c 100%);
+  font-family: "Gill Sans", "Gill Sans MT", "Trebuchet MS", "Helvetica Neue", sans-serif;
+  color: #10121a;
+  transform: translateZ(.01px);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+/* hairline sheen on the very edge */
+.hc-front::after {
+  content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .35), inset 0 0 0 2px rgba(0, 0, 0, .06);
+  z-index: 5;
+}
+
+/* ---------- printed card ---------- */
+.hc-frame {
+  position: absolute; inset: 2.45% 3.4%;
+  border-radius: 2.6% / 1.9%;
+  background:
+    radial-gradient(140% 60% at 50% -10%, rgba(255, 255, 255, .28), transparent 60%),
+    repeating-linear-gradient(-32deg, rgba(255, 255, 255, .06) 0 1.5px, transparent 1.5px 8px),
+    linear-gradient(180deg, #3f7fd6 0%, #2a62c4 30%, #2152b0 60%, #2a63c2 84%, #3672cc 100%);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .22), inset 0 0 18px rgba(0, 10, 50, .3);
+}
+.hc-head {
+  position: absolute; left: 6%; right: 6%; top: 3.3%; height: 6.2%;
+  display: flex; align-items: center; gap: 2.2cqw;
+}
+.hc-stage {
+  font-size: 2cqw; font-weight: 600; letter-spacing: .08em; text-transform: uppercase;
+  background: linear-gradient(#fff, #dfe6ee); color: #3a4351;
+  padding: .55em .9em .45em; border-radius: 999px;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .12), 0 1px 0 rgba(255, 255, 255, .5);
+  white-space: nowrap;
+}
+.hc-name {
+  font-size: 6.6cqw; font-weight: 700; letter-spacing: -.01em; line-height: 1;
+  color: #fff; text-shadow: 0 1px 2px rgba(0, 15, 60, .45);
+  margin-top: -.06em;
+}
+.hc-hp {
+  margin-left: auto; display: flex; align-items: baseline; gap: .5cqw; line-height: 1;
+  font-weight: 700; letter-spacing: -.02em;
+  color: #fff; text-shadow: 0 1px 2px rgba(0, 15, 60, .45);
+}
+.hc-hp small { font-size: 2.5cqw; font-weight: 700; letter-spacing: .02em; }
+.hc-hp b { font-size: 6.2cqw; }
+.hc-type { width: 6.4cqw; height: 6.4cqw; display: block; filter: drop-shadow(0 1px 1px rgba(0, 0, 0, .35)); }
+
+.hc-art-frame {
+  position: absolute;
+  top: calc(var(--art-top) - .9%); bottom: calc(100% - var(--art-bottom) - .9%);
+  left: calc(var(--art-left) - 1.2%); right: calc(100% - var(--art-right) - 1.2%);
+  border-radius: 1.4cqw;
+  background: linear-gradient(135deg, #f6f7f9, #a9b3c2 25%, #eef1f5 45%, #8e99a9 70%, #dfe4ea 100%);
+  box-shadow: 0 2px 6px rgba(0, 20, 60, .35), inset 0 0 0 1px rgba(255, 255, 255, .6);
+}
+.hc-art {
+  position: absolute;
+  top: var(--art-top); left: var(--art-left);
+  width: calc(var(--art-right) - var(--art-left));
+  height: calc(var(--art-bottom) - var(--art-top));
+  background: #3633fc;
+  overflow: hidden;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .35), inset 0 3px 12px rgba(0, 0, 40, .35);
+}
+.hc-art img {
+  position: absolute; inset: 0; width: 100%; height: 100%;
+  object-fit: cover; object-position: 50% 26%;
+  /* the 1254px source frames the head smaller than the old avatar — zoom about the face to keep the close-up */
+  transform: scale(1.15); transform-origin: 48% 55%;
+  display: block;
+  -webkit-user-drag: none;
+}
+.hc-preevo {
+  position: absolute; top: calc(var(--art-top) - 1.6%); left: calc(var(--art-left) - 2.2%);
+  display: flex; align-items: center; gap: 1.2cqw; z-index: 2;
+}
+.hc-preevo-img {
+  width: 11cqw; height: 11cqw; border-radius: 50%; display: block; object-fit: cover; object-position: 50% 45%;
+  border: .7cqw solid #e9edf2;
+  box-shadow: 0 0 0 1px rgba(0, 20, 60, .45), 0 2px 5px rgba(0, 20, 60, .35);
+  background: #3633fc;
+}
+.hc-preevo span {
+  font-size: 2.15cqw; font-weight: 600; font-style: italic; color: #1b2230; white-space: nowrap;
+  background: linear-gradient(#ffffffee, #eef3f8dd); border-radius: 999px; padding: .45em 1em .4em;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .18);
+}
+.hc-info {
+  position: absolute; top: 47.95%; left: 9%; right: 9%; height: 2.95%;
+  display: flex; align-items: center; justify-content: center; gap: 1.6cqw;
+  font-size: 2.35cqw; font-weight: 600; font-style: italic; letter-spacing: .01em; white-space: nowrap;
+  background: linear-gradient(#ffffffe6, #f2f6fbcc);
+  border-radius: 999px;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .18), 0 1px 0 rgba(255, 255, 255, .45);
+  color: #1b2230;
+}
+.hc-info span + span::before { content: ""; display: inline-block; width: 1px; height: 1.1em; background: rgba(0,0,0,.3); vertical-align: -.2em; margin-right: 1.6cqw; }
+
+.hc-body {
+  position: absolute; left: 6%; right: 6%; top: 52.1%; height: 26%; box-sizing: border-box;
+  background: linear-gradient(180deg, rgba(255, 255, 255, .78), rgba(255, 255, 255, .86));
+  border-radius: 1.6cqw;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .8), 0 1px 3px rgba(0, 20, 60, .2);
+  padding: 1.2cqw 2.4cqw .8cqw;
+  display: flex; flex-direction: column; justify-content: space-between;
+  font-size: 2.45cqw; line-height: 1.18;
+}
+.hc-row { display: flex; align-items: center; gap: 1.8cqw; }
+.hc-row .hc-nm { font-size: 3.9cqw; font-weight: 700; letter-spacing: -.01em; line-height: 1; }
+.hc-row .hc-dmg { margin-left: auto; font-size: 4.6cqw; font-weight: 700; letter-spacing: -.03em; line-height: 1; }
+.hc-desc { margin: .35cqw 0 0; color: #12151d; }
+.hc-badge {
+  font-size: 2.15cqw; font-weight: 700; font-style: italic; letter-spacing: .02em; text-transform: none;
+  color: #fff; background: linear-gradient(#f0554a, #b8231b);
+  padding: .5em 1.1em .45em 1em; border-radius: .3em 1.3em 1.3em .3em;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .25);
+}
+.hc-badge + .hc-nm { color: #b8231b; }
+.hc-energy { display: inline-flex; gap: .5cqw; }
+.hc-energy svg { width: 4.3cqw; height: 4.3cqw; filter: drop-shadow(0 1px 1px rgba(0, 0, 0, .3)); }
+
+.hc-rule {
+  position: absolute; left: 6%; right: 6%; top: 79%; height: 3.4%;
+  display: flex; align-items: center; gap: 1.4cqw; white-space: nowrap;
+  padding: .4cqw 1.6cqw; box-sizing: border-box;
+  background: linear-gradient(180deg, #f6f8fb, #d9dfe8);
+  border-radius: 1cqw;
+  box-shadow: inset 0 0 0 1px rgba(0, 20, 60, .45), inset 0 1px 0 rgba(255, 255, 255, .9), 0 1px 2px rgba(0, 20, 60, .2);
+  font-size: 2.05cqw; line-height: 1.2; color: #12151d;
+}
+.hc-rule b { font-weight: 700; font-style: italic; white-space: nowrap; letter-spacing: .01em; }
+.hc-wrr {
+  position: absolute; left: 6%; right: 6%; top: 84.5%; height: 6.6%;
+  display: grid; grid-template-columns: 1fr 1fr 1fr; align-items: center;
+  padding: 0 .6cqw; box-sizing: border-box;
+  border-top: 1px solid rgba(255, 255, 255, .45);
+  box-shadow: 0 -1px 0 rgba(0, 20, 70, .45);
+  color: #fff; text-shadow: 0 1px 1px rgba(0, 15, 60, .5);
+}
+.hc-wrr > div { display: flex; flex-direction: column; align-items: flex-start; gap: 1.1cqw; }
+.hc-wrr > div:nth-child(2) { align-items: center; }
+.hc-wrr > div:nth-child(3) { align-items: flex-end; }
+.hc-wrr .hc-lbl { font-size: 1.95cqw; font-weight: 600; letter-spacing: .04em; text-transform: lowercase; opacity: .95; }
+.hc-wrr .hc-val { display: inline-flex; align-items: center; gap: 1cqw; font-size: 3.2cqw; font-weight: 700; }
+.hc-wrr .hc-val svg { width: 4.4cqw; height: 4.4cqw; filter: drop-shadow(0 1px 1px rgba(0, 0, 0, .35)); }
+
+.hc-foot {
+  position: absolute; left: 6%; right: 6%; top: 93.2%; height: 3%;
+  display: flex; align-items: center; justify-content: space-between;
+  font-size: 2cqw; font-weight: 600; color: #fff; text-shadow: 0 1px 1px rgba(0, 15, 60, .5);
+}
+.hc-foot .hc-l, .hc-foot .hc-r { display: flex; align-items: center; gap: 1.4cqw; }
+.hc-reg {
+  font-size: 1.9cqw; font-weight: 700; color: #1b2230; text-shadow: none;
+  background: #fff; border: 1px solid rgba(0, 0, 0, .35); border-radius: .25em;
+  padding: .1em .45em; line-height: 1.2;
+}
+.hc-setsym { width: 3.4cqw; height: 3.4cqw; }
+.hc-rarity { display: inline-block; width: 3cqw; height: 3cqw; }
+.hc-copy {
+  position: absolute; left: 6%; bottom: .55%;
+  font-size: 1.55cqw; font-weight: 600; letter-spacing: .01em; color: rgba(40, 30, 0, .7);
+}
+
+/* ---------- card back (seen mid-flip) ---------- */
+.hc-back {
+  position: absolute; inset: 0; border-radius: var(--card-radius); overflow: hidden;
+  transform: rotateY(180deg) translateZ(.01px);
+  backface-visibility: hidden; -webkit-backface-visibility: hidden;
+  background:
+    url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' width='100' height='100'%3E%3Cg transform='translate(8.00 8.00) scale(0.4293) translate(1.6 1.6)'%3E%3Cpath d='M4.63768 47.3768C10.8177 41.1926 20.8417 41.1963 27.0254 47.3768C33.209 53.5573 33.209 63.5822 27.0254 69.7664C20.8454 75.9506 10.8213 75.947 4.63768 69.7664C-1.54587 63.5859 -1.54592 53.5609 4.63768 47.3768ZM47.3799 47.3768C53.5599 41.193 63.583 41.1965 69.7666 47.3768C75.9502 53.5573 75.9502 63.5822 69.7666 69.7664C63.5867 75.9504 53.5635 75.9466 47.3799 69.7664C41.1962 63.5859 41.1962 53.561 47.3799 47.3768ZM4.63768 4.63653C10.8176 -1.54735 20.8417 -1.54354 27.0254 4.63653C29.5008 7.11068 30.984 10.2016 31.4775 13.4149C24.2363 15.8276 19.0149 22.6598 19.0146 30.7117C19.0146 30.9214 19.0193 31.1308 19.0264 31.3387C13.9895 32.3707 8.54638 30.9329 4.63768 27.0262C-1.54557 20.8456 -1.54584 10.8206 4.63768 4.63653ZM47.3789 4.63653C53.5588 -1.54746 63.5829 -1.54356 69.7666 4.63653C75.9502 10.8171 75.9502 20.842 69.7666 27.0262C65.8806 30.9148 60.4752 32.3552 55.4599 31.3533C55.4673 31.1406 55.4726 30.9263 55.4726 30.7117C55.4724 22.6305 50.2128 15.7787 42.9306 13.3895C43.4285 10.1859 44.9107 7.10499 47.3789 4.63653Z' fill='%23fff' fill-opacity='1'/%3E%3C/g%3E%3Cg transform='translate(58.00 58.00) scale(0.4293) translate(1.6 1.6)'%3E%3Cpath d='M4.63768 47.3768C10.8177 41.1926 20.8417 41.1963 27.0254 47.3768C33.209 53.5573 33.209 63.5822 27.0254 69.7664C20.8454 75.9506 10.8213 75.947 4.63768 69.7664C-1.54587 63.5859 -1.54592 53.5609 4.63768 47.3768ZM47.3799 47.3768C53.5599 41.193 63.583 41.1965 69.7666 47.3768C75.9502 53.5573 75.9502 63.5822 69.7666 69.7664C63.5867 75.9504 53.5635 75.9466 47.3799 69.7664C41.1962 63.5859 41.1962 53.561 47.3799 47.3768ZM4.63768 4.63653C10.8176 -1.54735 20.8417 -1.54354 27.0254 4.63653C29.5008 7.11068 30.984 10.2016 31.4775 13.4149C24.2363 15.8276 19.0149 22.6598 19.0146 30.7117C19.0146 30.9214 19.0193 31.1308 19.0264 31.3387C13.9895 32.3707 8.54638 30.9329 4.63768 27.0262C-1.54557 20.8456 -1.54584 10.8206 4.63768 4.63653ZM47.3789 4.63653C53.5588 -1.54746 63.5829 -1.54356 69.7666 4.63653C75.9502 10.8171 75.9502 20.842 69.7666 27.0262C65.8806 30.9148 60.4752 32.3552 55.4599 31.3533C55.4673 31.1406 55.4726 30.9263 55.4726 30.7117C55.4724 22.6305 50.2128 15.7787 42.9306 13.3895C43.4285 10.1859 44.9107 7.10499 47.3789 4.63653Z' fill='%23fff' fill-opacity='1'/%3E%3C/g%3E%3C/svg%3E") center / 16% auto,
+    radial-gradient(120% 90% at 50% 40%, #2a27ff 0%, #0600f4 55%, #04009c 100%);
+  background-blend-mode: soft-light, normal;
+  display: grid; place-items: center;
+  container-type: inline-size;
+}
+.hc-back::before {
+  content: ""; position: absolute; inset: 3.4% 4.7%; border-radius: 2.6% / 1.9%;
+  border: 1px solid rgba(255, 255, 255, .45);
+  box-shadow: inset 0 0 0 .6cqw rgba(255, 255, 255, .06), 0 0 0 .5cqw rgba(0, 0, 0, .08);
+}
+.hc-back .hc-mark { width: 34%; display: block; filter: drop-shadow(0 6px 18px rgba(0, 0, 30, .35)); }
+.hc-back .hc-wordmark { position: absolute; left: 50%; top: 66%; width: 30%; transform: translateX(-50%); display: block; opacity: .95; }
+.hc-back .hc-url { position: absolute; left: 50%; bottom: 6.5%; transform: translateX(-50%); font: 600 2.4cqw/1 var(--mono); letter-spacing: .12em; color: rgba(255, 255, 255, .7); }
+.hc-backdrop {
+  position: fixed; inset: 0; z-index: 998; background: rgba(8, 8, 20, .42);
+  opacity: 0; pointer-events: none; transition: opacity .55s ease;
+}
+.hc-backdrop.hc--on { opacity: 1; pointer-events: auto; }
+.hc.hc--active .hc-rotator {
+  box-shadow: 0 50px 110px -30px rgba(0, 0, 0, .6), 0 0 0 1px rgba(255, 255, 255, .06);
+}
+
+/* ---------- foil: reverse holo = everything except the illustration ---------- */
+.hc-shine, .hc-glare {
+  position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+  z-index: 3;
+  will-change: opacity, background-position;
+}
+.hc-shine {
+  clip-path: var(--clip-art-invert);
+  background-color: #000;                       /* pattern sits on black → the band mask below works */
+  background-image:
+    repeating-linear-gradient(var(--angle),
+      #ff5fb0 0%, #ffb454 7%, #fff36a 14%, #6dffb0 21%, #55c7ff 28%, #a86bff 35%, #ff5fb0 42%),
+    linear-gradient(-45deg, #000 30%, #3c3c3c 50%, #000 70%),
+    linear-gradient(-45deg, #000 40%, #fff 50%, #000 60%),
+    url("holo/glitter.png"),
+    url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' width='100' height='100'%3E%3Cg transform='translate(8.00 8.00) scale(0.4293) translate(1.6 1.6)'%3E%3Cpath d='M4.63768 47.3768C10.8177 41.1926 20.8417 41.1963 27.0254 47.3768C33.209 53.5573 33.209 63.5822 27.0254 69.7664C20.8454 75.9506 10.8213 75.947 4.63768 69.7664C-1.54587 63.5859 -1.54592 53.5609 4.63768 47.3768ZM47.3799 47.3768C53.5599 41.193 63.583 41.1965 69.7666 47.3768C75.9502 53.5573 75.9502 63.5822 69.7666 69.7664C63.5867 75.9504 53.5635 75.9466 47.3799 69.7664C41.1962 63.5859 41.1962 53.561 47.3799 47.3768ZM4.63768 4.63653C10.8176 -1.54735 20.8417 -1.54354 27.0254 4.63653C29.5008 7.11068 30.984 10.2016 31.4775 13.4149C24.2363 15.8276 19.0149 22.6598 19.0146 30.7117C19.0146 30.9214 19.0193 31.1308 19.0264 31.3387C13.9895 32.3707 8.54638 30.9329 4.63768 27.0262C-1.54557 20.8456 -1.54584 10.8206 4.63768 4.63653ZM47.3789 4.63653C53.5588 -1.54746 63.5829 -1.54356 69.7666 4.63653C75.9502 10.8171 75.9502 20.842 69.7666 27.0262C65.8806 30.9148 60.4752 32.3552 55.4599 31.3533C55.4673 31.1406 55.4726 30.9263 55.4726 30.7117C55.4724 22.6305 50.2128 15.7787 42.9306 13.3895C43.4285 10.1859 44.9107 7.10499 47.3789 4.63653Z' fill='%23fff' fill-opacity='1'/%3E%3C/g%3E%3Cg transform='translate(58.00 58.00) scale(0.4293) translate(1.6 1.6)'%3E%3Cpath d='M4.63768 47.3768C10.8177 41.1926 20.8417 41.1963 27.0254 47.3768C33.209 53.5573 33.209 63.5822 27.0254 69.7664C20.8454 75.9506 10.8213 75.947 4.63768 69.7664C-1.54587 63.5859 -1.54592 53.5609 4.63768 47.3768ZM47.3799 47.3768C53.5599 41.193 63.583 41.1965 69.7666 47.3768C75.9502 53.5573 75.9502 63.5822 69.7666 69.7664C63.5867 75.9504 53.5635 75.9466 47.3799 69.7664C41.1962 63.5859 41.1962 53.561 47.3799 47.3768ZM4.63768 4.63653C10.8176 -1.54735 20.8417 -1.54354 27.0254 4.63653C29.5008 7.11068 30.984 10.2016 31.4775 13.4149C24.2363 15.8276 19.0149 22.6598 19.0146 30.7117C19.0146 30.9214 19.0193 31.1308 19.0264 31.3387C13.9895 32.3707 8.54638 30.9329 4.63768 27.0262C-1.54557 20.8456 -1.54584 10.8206 4.63768 4.63653ZM47.3789 4.63653C53.5588 -1.54746 63.5829 -1.54356 69.7666 4.63653C75.9502 10.8171 75.9502 20.842 69.7666 27.0262C65.8806 30.9148 60.4752 32.3552 55.4599 31.3533C55.4673 31.1406 55.4726 30.9263 55.4726 30.7117C55.4724 22.6305 50.2128 15.7787 42.9306 13.3895C43.4285 10.1859 44.9107 7.10499 47.3789 4.63653Z' fill='%23fff' fill-opacity='1'/%3E%3C/g%3E%3C/svg%3E");
+  background-size:
+    220% 220%,
+    200% 200%,
+    200% 200%,
+    var(--glitter-size) auto,
+    var(--mark-size) auto;
+  background-position:
+    var(--background-x) var(--background-y),
+    calc(100% * var(--pointer-from-left)) calc(100% * var(--pointer-from-top)),
+    calc(100% * var(--pointer-from-left)) calc(100% * var(--pointer-from-top)),
+    calc(60% - var(--pointer-from-left) * 12%) calc(60% - var(--pointer-from-top) * 12%),
+    calc(50% + var(--pointer-from-left) * 4%) calc(50% + var(--pointer-from-top) * 4%);
+  /* top → bottom: rainbow colorises · soft band lifts · sharp band masks · glitter whisper · Konpo mark grid */
+  background-blend-mode: color, screen, multiply, screen, normal;
+  filter: brightness(var(--foil-brightness)) contrast(1.4) saturate(1.2);
+  mix-blend-mode: color-dodge;
+  opacity: calc(1.5 * var(--card-opacity) - var(--pointer-from-center) * .6);
+}
+.hc-shine--art {
+  clip-path: inset(var(--art-top) calc(100% - var(--art-right)) calc(100% - var(--art-bottom)) var(--art-left));
+  background-image:
+    repeating-linear-gradient(calc(var(--angle) + 40deg),
+      #ff5fb0 0%, #ffb454 7%, #fff36a 14%, #6dffb0 21%, #55c7ff 28%, #a86bff 35%, #ff5fb0 42%),
+    radial-gradient(farthest-corner circle at var(--pointer-x) var(--pointer-y), #777 0%, #222 45%, #000 80%),
+    linear-gradient(-45deg, #000 26%, #fff 50%, #000 74%),
+    url("holo/glitter.png"),
+    url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' width='100' height='100'%3E%3Cg transform='translate(8.00 8.00) scale(0.4293) translate(1.6 1.6)'%3E%3Cpath d='M4.63768 47.3768C10.8177 41.1926 20.8417 41.1963 27.0254 47.3768C33.209 53.5573 33.209 63.5822 27.0254 69.7664C20.8454 75.9506 10.8213 75.947 4.63768 69.7664C-1.54587 63.5859 -1.54592 53.5609 4.63768 47.3768ZM47.3799 47.3768C53.5599 41.193 63.583 41.1965 69.7666 47.3768C75.9502 53.5573 75.9502 63.5822 69.7666 69.7664C63.5867 75.9504 53.5635 75.9466 47.3799 69.7664C41.1962 63.5859 41.1962 53.561 47.3799 47.3768ZM4.63768 4.63653C10.8176 -1.54735 20.8417 -1.54354 27.0254 4.63653C29.5008 7.11068 30.984 10.2016 31.4775 13.4149C24.2363 15.8276 19.0149 22.6598 19.0146 30.7117C19.0146 30.9214 19.0193 31.1308 19.0264 31.3387C13.9895 32.3707 8.54638 30.9329 4.63768 27.0262C-1.54557 20.8456 -1.54584 10.8206 4.63768 4.63653ZM47.3789 4.63653C53.5588 -1.54746 63.5829 -1.54356 69.7666 4.63653C75.9502 10.8171 75.9502 20.842 69.7666 27.0262C65.8806 30.9148 60.4752 32.3552 55.4599 31.3533C55.4673 31.1406 55.4726 30.9263 55.4726 30.7117C55.4724 22.6305 50.2128 15.7787 42.9306 13.3895C43.4285 10.1859 44.9107 7.10499 47.3789 4.63653Z' fill='%23fff' fill-opacity='1'/%3E%3C/g%3E%3Cg transform='translate(58.00 58.00) scale(0.4293) translate(1.6 1.6)'%3E%3Cpath d='M4.63768 47.3768C10.8177 41.1926 20.8417 41.1963 27.0254 47.3768C33.209 53.5573 33.209 63.5822 27.0254 69.7664C20.8454 75.9506 10.8213 75.947 4.63768 69.7664C-1.54587 63.5859 -1.54592 53.5609 4.63768 47.3768ZM47.3799 47.3768C53.5599 41.193 63.583 41.1965 69.7666 47.3768C75.9502 53.5573 75.9502 63.5822 69.7666 69.7664C63.5867 75.9504 53.5635 75.9466 47.3799 69.7664C41.1962 63.5859 41.1962 53.561 47.3799 47.3768ZM4.63768 4.63653C10.8176 -1.54735 20.8417 -1.54354 27.0254 4.63653C29.5008 7.11068 30.984 10.2016 31.4775 13.4149C24.2363 15.8276 19.0149 22.6598 19.0146 30.7117C19.0146 30.9214 19.0193 31.1308 19.0264 31.3387C13.9895 32.3707 8.54638 30.9329 4.63768 27.0262C-1.54557 20.8456 -1.54584 10.8206 4.63768 4.63653ZM47.3789 4.63653C53.5588 -1.54746 63.5829 -1.54356 69.7666 4.63653C75.9502 10.8171 75.9502 20.842 69.7666 27.0262C65.8806 30.9148 60.4752 32.3552 55.4599 31.3533C55.4673 31.1406 55.4726 30.9263 55.4726 30.7117C55.4724 22.6305 50.2128 15.7787 42.9306 13.3895C43.4285 10.1859 44.9107 7.10499 47.3789 4.63653Z' fill='%23fff' fill-opacity='1'/%3E%3C/g%3E%3C/svg%3E");
+  background-size:
+    180% 180%,
+    160% 160%,
+    200% 200%,
+    calc(var(--glitter-size) * .8) auto,
+    var(--art-mark-size) auto;
+  background-position:
+    var(--background-y) var(--background-x),
+    center,
+    calc(100% * var(--pointer-from-left)) calc(100% * var(--pointer-from-top)),
+    calc(50% - var(--pointer-from-left) * 10%) calc(50% - var(--pointer-from-top) * 10%),
+    calc(50% + var(--pointer-from-left) * 6%) calc(50% + var(--pointer-from-top) * 6%);
+  /* top → bottom: rainbow colorises · pointer bloom lifts · band masks · glitter · big Konpo marks */
+  background-blend-mode: color, screen, multiply, screen, normal;
+  filter: brightness(var(--art-foil)) contrast(1.35) saturate(1.25);
+}
+.hc-glare {
+  z-index: 4;
+  background-image: radial-gradient(farthest-corner circle at var(--pointer-x) var(--pointer-y),
+    hsla(0, 0%, 100%, .8) 10%, hsla(0, 0%, 100%, .5) 20%, hsla(0, 0%, 0%, .75) 90%);
+  filter: brightness(.7) contrast(1.5);
+  mix-blend-mode: overlay;
+  opacity: calc(var(--card-opacity) * var(--glare-strength));
+}
+.hc-glare::after {
+  content: ""; position: absolute; inset: 0; border-radius: inherit;
+  background-image: radial-gradient(farthest-corner circle at var(--pointer-x) var(--pointer-y),
+    hsl(0, 0%, 100%) 10%, hsla(0, 0%, 100%, .5) 20%, hsla(0, 0%, 0%, .5) 120%);
+  filter: brightness(1) contrast(1.5);
+  opacity: calc(var(--card-opacity) * var(--glare-strength));
+}
+@media (prefers-reduced-motion: reduce) { .hc-rotator { transition: none; } }

@@ -346,15 +346,18 @@ function measureBlueprint() {
   qa('.headline-eyebrow .chip').forEach((el) => push('control', 0, rect(el)));
   lineRects(q('.headline')).forEach((r, k) => push('head', 1 + Math.min(k, 1), r));
   lineRects(q('.intro-heading')).forEach((r) => push('text', 3, r));
-  lineRects(q('.bio-layer:not(.bio-layer--ghost)')).forEach((r, k) => push('text', 4 + (k % 2), r));
-  push('text', 6, rect(q('.top-elsewhere .footer-label')));
-  qa('.top-elsewhere .footer-links li').forEach((li) => {
-    lineRects(li).forEach((t) => push('text', 6, t));
+  // the four folds: the list's top rule, then each row's label, + glyph
+  // and the hairline under it (collapsed — that's how the page lands)
+  const folds = q('.folds');
+  if (folds) { const r = rect(folds); push('line', 4, { x: r.x, y: r.y, w: r.w, h: 1 }); }
+  qa('.fold').forEach((li, k) => {
+    const g = 4 + Math.min(k, 1);
+    lineRects(li.querySelector('.fold-label')).forEach((t) => push('text', g, t));
+    push('control', g, rect(li.querySelector('.fold-glyph')));
     const r = rect(li);
-    if (r) push('line', 6, { x: r.x, y: r.y + r.h - 1, w: r.w, h: 1 });
+    if (r) push('line', g, { x: r.x, y: r.y + r.h - 1, w: r.w, h: 1 });
   });
-  push('text', 7, rect(q('.feed-note')));
-  qa('.asset-tile').forEach((el, k) => push('media', 7 + Math.min(k, 2), rect(el)));
+  qa('.asset-tile').forEach((el, k) => push('media', 6 + Math.min(k, 2), rect(el)));
   return { blocks, frame: frameRect() };
 }
 
@@ -425,8 +428,10 @@ function Gate({ onEnter, entering, count = 1, blueprint = false }) {
     const flood = () => {
       setLit(true);
       playConfirm();
-      setTimeout(onEnter, 600);
-      setTimeout(() => setGone(true), 1500);
+      // the page starts landing while the blue is still lifting — the
+      // blueprint hands straight over to the content it traced
+      setTimeout(onEnter, 250);
+      setTimeout(() => setGone(true), 1100);
     };
     if (!blueprint || reduced) { setTimeout(flood, SUCCESS); return; }
     // First visit: the DRAFT beat between the knob landing and the
@@ -786,12 +791,7 @@ function App() {
           <div className="top-intro">
             <Intro />
           </div>
-          {/* elsewhere is the LAST hero element to reveal — it waits for
-              the intro's final line (~6.85s at the default High bio),
-              per Jean's 1→9 order spec */}
-          <div className="top-elsewhere reveal" style={{ '--reveal-delay': '6950ms' }}>
-            <Footer />
-          </div>
+          {/* elsewhere lives inside the intro now — the Where fold */}
         </header>
 
         {/* hero/work divider (note + filters) is rendered by AssetsFeed */}
@@ -799,17 +799,10 @@ function App() {
           <AssetsFeed />
         </section>
 
-        <div className="board-divider reveal" style={{ '--reveal-delay': '9250ms' }} aria-hidden="true" />
+        <div className="board-divider reveal" style={{ '--reveal-delay': '3600ms' }} aria-hidden="true" />
 
-        <div className="reveal" style={{ '--reveal-delay': '9450ms' }}>
-          <Colophon onOff={lightsOut} />
-        </div>
-
-        {/* mobile-only twin of the hero `elsewhere` — the page's last
-            block, below the lights-out switch and the Yorkshire note;
-            full-bleed rows (the hero copy hides ≤900px) */}
-        <div className="bottom-elsewhere reveal" style={{ '--reveal-delay': '9550ms' }}>
-          <Footer startDelay={9550} />
+        <div className="reveal" style={{ '--reveal-delay': '3800ms' }}>
+          <Colophon />
         </div>
       </main>
     </div>);
@@ -1150,12 +1143,12 @@ const HEADLINE_SEGMENTS = [
 const HEADLINE_TONES = { muted: 'hl-muted', hand: 'hl-muted hl-hand' };
 
 function Headline() {
-  const START = 1300;
+  const START = 500; // the gate is fully transparent at ~750ms after the flood
   const STEP = 40;
   let w = 0;
   // Eyebrow reveals word-by-word, then the big statement follows.
   let u = 0;
-  const T = () => ({ '--reveal-delay': `${150 + u++ * 350}ms` });
+  const T = () => ({ '--reveal-delay': `${u++ * 150}ms` });
   const W = (text) =>
     text.split(' ').filter(Boolean).map((w, k) => (
       <span key={`${w}-${k}-${u}`} className="reveal-word" style={T()}>{w + ' '}</span>
@@ -1318,7 +1311,10 @@ function EffortDial({ level, onPick, delay = 0 }) {
   );
 }
 
-function Intro() {
+// DORMANT since 2026-09-14 — the dial-driven bio (four reasoning-effort
+// levels). The live Intro below renders the Max copy as four folds; this
+// stays for the copy + the dial plumbing (render <IntroDial /> to revive).
+function IntroDial() {
   // Reasoning-effort level for the bio (0 Low → 3 Ultracode). Default
   // High — the classic full bio. The lede + .md line stay constant.
   const [level, setLevel] = useState(2);
@@ -1332,7 +1328,7 @@ function Intro() {
   const WORD_STEP = swapped.current ? 12 : 28;   // ms between words
   const CHUNK_GAP = swapped.current ? 120 : 260; // pause between paragraphs
   // Word-counter helper: track running delay across chunks
-  let t = 1700; // first word delay (after the headline finishes)
+  let t = 900; // first word delay (after the headline finishes)
   const wordDelay = () => { const d = t; t += WORD_STEP; return d; };
   const pause = (ms) => { t += ms; };
   const W = (text) => {
@@ -1584,6 +1580,183 @@ function Intro() {
 
 }
 
+// ─── the folds — Who / What / Why / Where ─────────────────────────
+// The bio is a list of ruled rows in the elsewhere idiom (13px label,
+// hairline under each row, a + that turns into ×). A row opens to its
+// passage, which types in with the brisk stagger; `elsewhere` itself is
+// the last fold (Where). All collapsed by default (Jean, 2026-09-14).
+function Fold({ id, label, open, onToggle, delay, children }) {
+  // the passage mounts on first open (so its words type in) and stays
+  // mounted after, so closing can animate the height back down
+  const everOpen = useRef(open);
+  if (open) everOpen.current = true;
+  // the row clips while it opens; once landed the clip lifts so the
+  // hover pops inside can escape the row — re-clipped the moment it closes
+  const [settled, setSettled] = useState(false);
+  useEffect(() => {
+    if (!open) { setSettled(false); return undefined; }
+    // transitionend is the fast path; the timer covers reduced-motion
+    // (no transition → no event) and background tabs
+    const id = setTimeout(() => setSettled(true), 600);
+    return () => clearTimeout(id);
+  }, [open]);
+  return (
+    <li className={`fold reveal${open ? ' fold--open' : ''}${settled ? ' fold--settled' : ''}`} style={{ '--reveal-delay': `${delay}ms` }}>
+      <button type="button" className="fold-row" aria-expanded={open} aria-controls={`fold-${id}`} onClick={onToggle}>
+        <span className="fold-label">{label}</span>
+        <span className="fold-glyph" aria-hidden="true" />
+      </button>
+      <div
+        className="fold-body"
+        id={`fold-${id}`}
+        aria-hidden={!open}
+        onTransitionEnd={(e) => { if (e.target === e.currentTarget && open) setSettled(true); }}
+      >
+        <div className="fold-inner">{everOpen.current && children}</div>
+      </div>
+    </li>
+  );
+}
+
+function Intro() {
+  const [open, setOpen] = useState(() => new Set());
+  const toggle = (id) => {
+    const opening = !open.has(id);
+    setOpen((prev) => { const n = new Set(prev); if (opening) n.add(id); else n.delete(id); return n; });
+    playStateChange(opening);
+    haptic(6);
+  };
+  // Per-word stagger: one clock for the page reveal (the lede), and a
+  // fresh brisk clock per fold — its passage types in when it opens
+  const typer = (start, step, gap) => {
+    let t = start;
+    const next = () => { const d = t; t += step; return d; };
+    const W = (text) => text.split(/(\s+)/).map((p, i) => (
+      (/^\s+$/.test(p) || p === '') ? p
+        : <span key={i} className="reveal-word" style={{ '--reveal-delay': `${next()}ms` }}>{p}</span>
+    ));
+    const I = (node) => <span className="reveal-word" style={{ '--reveal-delay': `${next()}ms` }}>{node}</span>;
+    // Hover-image word (konpo.studio's about-section pops) — underlined
+    // span, photo pops above on hover; `tall` = portrait art, narrower
+    const POP = (word, img, tall) => I(
+      <span className="ulink ulink--media">
+        {word}
+        <span className={`media-pop${tall ? ' media-pop--tall' : ''}`}>
+          <span className={`media-pop-img media-pop-img--${img}`} />
+        </span>
+      </span>
+    );
+    const Gap = () => { t += gap; return null; };
+    const Surge = (label = 'Surge AI') =>
+      I(<a className="brand-word brand-word--surge" href="https://www.surgehq.ai" target="_blank" rel="noreferrer">{label}</a>);
+    const Konpo = () =>
+      I(<a className="brand-word brand-word--konpo" href="https://www.konpo.studio" target="_blank" rel="noreferrer">Konpo</a>);
+    return { W, I, POP, Gap, Surge, Konpo };
+  };
+  const lede = typer(900, 28, 260);
+  // Passages are wrapped in .bio-part spans tagged by who they're about —
+  // hovering an eyebrow chip (Jean/Konpo/Surge) sets html[data-bio-focus]
+  // and CSS dims every part but that tag.
+  const who = (({ W, I, Surge, Konpo }) => (
+    <p className="intro-paragraph">
+      <span className="bio-part" data-bio="jean">
+        {W("I'm Jean Massad")}
+        {I(<NamePlay />)}
+      </span>
+      <span className="bio-part" data-bio="surge">
+        {W('. Designer at ')}
+        {Surge()}
+        {W(", the data engine behind the world's leading frontier labs. ")}
+      </span>
+      <span className="bio-part" data-bio="konpo">
+        {W('I also run a nimble studio called ')}
+        {Konpo()}
+        {W(', where we passionately hate on traditional agency dynamics.')}
+      </span>
+    </p>
+  ))(typer(0, 14, 120));
+  const what = (({ W, POP, Gap }) => (
+    <>
+      <p className="intro-paragraph">
+        <span className="bio-part">
+          {W('I work through the design spectrum across brand, product and systems for startups, F500, gov and everything in between.')}
+        </span>
+      </p>
+      {Gap()}
+      <p className="intro-paragraph">
+        <span className="bio-part">
+          {/* the pop images are konpo.studio's own about-section hover set */}
+          {W('My work has won over ')}
+          {POP('Awwwards', 'awwwards', true)}
+          {W(' and the ')}
+          {POP('Webbys', 'webby', true)}
+          {W(', survived ')}
+          {POP('Product Hunt', 'producthunt')}
+          {W(', been torn apart on Hacker News, shown up behind ')}
+          {POP('Tim Cook', 'timcook')}
+          {W(' in a keynote, been loved by ')}
+          {POP('Terry Crews', 'terrycrews', true)}
+          {W(', made the cover of ')}
+          {POP('Forbes', 'forbes', true)}
+          {W(' and smiled from the top of the ')}
+          {POP('App Store', 'appstore')}
+          {W('.')}
+        </span>
+      </p>
+      {Gap()}
+      <p className="intro-paragraph">
+        <span className="bio-part">
+          {W('It\'s been called "ok" by a ')}
+          {POP('President', 'president', true)}
+          {W('.')}
+        </span>
+      </p>
+    </>
+  ))(typer(0, 14, 120));
+  const why = (({ W, POP }) => (
+    <p className="intro-paragraph">
+      <span className="bio-part" data-bio="jean">
+        {W("When I'm not busy training my AI replacement, I chase ")}
+        {POP('ski', 'snow')}
+        {W(' and ')}
+        {POP('surf', 'surf')}
+        {W('.')}
+      </span>
+    </p>
+  ))(typer(0, 14, 120));
+  // Where = elsewhere, folded in: the same ruled link rows, one step in
+  const where = (
+    <ul className="footer-links fold-links">
+      {ELSEWHERE_LINKS.map((l, i) => (
+        <li key={l.from} className="reveal" style={{ '--reveal-delay': `${i * 90}ms` }}>
+          <GlitchLink from={l.from} to={l.to} href={l.href} />
+        </li>
+      ))}
+    </ul>
+  );
+  const FOLDS = [['who', 'Who', who], ['what', 'What', what], ['why', 'Why', why], ['where', 'Where', where]];
+
+  return (
+    <section className="intro" data-screen-label="01 Intro" style={{ padding: "0px" }}>
+      {/* lead block — the whole opener carries the heavier, larger cut;
+          the .md line closes it */}
+      <p className="intro-heading bio-part" data-bio="jean">
+        {lede.W("In the design trenches ever since I got Photoshop off a sketchy torrent site. ")}
+        {lede.W("Think of me as an .md file but, like, human.")}
+      </p>
+      {/* the rows land after the lede's last word, elsewhere-style
+          (140ms apart) — the passages only type when a row is opened */}
+      <ul className="folds">
+        {FOLDS.map(([id, label, body], i) => (
+          <Fold key={id} id={id} label={label} delay={1700 + i * 140} open={open.has(id)} onToggle={() => toggle(id)}>
+            {body}
+          </Fold>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
 // ─────────────────────────────────────────────────────────────
 // GitHub contribution map — accent blue instead of GitHub green.
 // Live data comes from /api/contributions (a Vercel function that
@@ -1732,16 +1905,30 @@ const CASE = {
   hutte: { href: 'https://www.konpo.studio/work/hutte',
     desc: 'Brand identity for Hutte, the visual home for Salesforce DevOps — logo, emojis, and a system that scales.', scope: ['Brand', 'Product'] },
 };
+// Clips with a light feed rendition on disk: <name>-lite.mp4 = the same
+// clip capped at 1280px, H.264 CRF 27, silent, faststart (ffmpeg libx264
+// -preset slow), kept only where it saved ≥25%. The feed autoplays the
+// light file (`src`); the lightbox plays the untouched original (`full`).
+const LITE = new Set([
+  'coachable-bento', 'coachable-figma', 'coachable-grow', 'coachable-home-page', 'coachable-logo',
+  'coachable-menu', 'coachable-portraits', 'coachable-typeface', 'hutte-fields', 'hutte-flow',
+  'hutte-hero', 'hutte-members', 'hutte-onboarding', 'hutte-slider', 'hutte-social-a',
+  'hutte-social-b', 'ili-figma', 'systemone-live', 'systemone-scrolling-type', 'systemone-services',
+]);
+const clip = (src) => {
+  const m = src.match(/([^/]+)\.mp4$/);
+  return m && LITE.has(m[1]) ? { src: src.replace(/\.mp4$/, '-lite.mp4'), full: src } : { src };
+};
 const A = (proj, file, title, cat, aspect) => ({
-  type: 'video', src: `uploads/cases/${file}.mp4`, title, cat, aspect, ...CASE[proj],
+  type: 'video', ...clip(`uploads/cases/${file}.mp4`), title, cat, aspect, ...CASE[proj],
 });
 // nexus assets (pulled from the are.na channel) — mixed images + videos
 const N = (type, file, title, cat, aspect) => ({
-  type, src: `uploads/cases/nexus/${file}`, title, cat, aspect, ...CASE.ili,
+  type, ...(type === 'video' ? clip(`uploads/cases/nexus/${file}`) : { src: `uploads/cases/nexus/${file}` }), title, cat, aspect, ...CASE.ili,
 });
 // generic case asset — any media type, full filename, project's CASE meta
 const P = (proj, type, file, title, cat, aspect) => ({
-  type, src: `uploads/cases/${file}`, title, cat, aspect, ...CASE[proj],
+  type, ...(type === 'video' ? clip(`uploads/cases/${file}`) : { src: `uploads/cases/${file}` }), title, cat, aspect, ...CASE[proj],
 });
 // One cover per project; clicking it unfolds the project's other cards
 // inline, in the same column — no popup, the scroll just keeps going.
@@ -1998,13 +2185,16 @@ const ARTIFACTS = [];
 // of the first deal, then the first few cover clips — into the HTTP
 // cache. LazyVideo/AssetMedia then hit cache instead of the network
 // when the reveal runs. Progress feeds the blueprint's counter.
+// every clip ships a "<name>-poster.jpg" first frame; light renditions
+// (<name>-lite.mp4) share the original's poster
+const posterOf = (src) => src.replace(/(-lite)?\.mp4$/, '-poster.jpg');
 const WARM = { total: 0, done: 0, started: false, listeners: new Set() };
 function startWarmup() {
   if (WARM.started) return;
   WARM.started = true;
   const flat = PROJECTS.flatMap((p) => [p.cover, ...p.cards]);
   const light = flat.slice(0, 30)
-    .map((a) => (a.type === 'video' ? a.src.replace(/\.mp4$/, '-poster.jpg') : a.type === 'image' ? a.src : a.preview))
+    .map((a) => (a.type === 'video' ? posterOf(a.src) : a.type === 'image' ? a.src : a.preview))
     .filter(Boolean);
   // the clips are the heavy part — skipped for data-saver visitors
   const saveData = navigator.connection && navigator.connection.saveData;
@@ -2032,12 +2222,36 @@ function startWarmup() {
 // Video that only downloads + plays while it's near the viewport. This
 // keeps us from decoding a dozen clips at once (the smoothness killer)
 // and defers below-the-fold bytes until they're actually scrolled to.
+// Two rings: within a viewport of the fold the clip starts BUFFERING
+// (src set, preload auto) so frames are ready by the time it shows;
+// within 150px it plays — through PLAYERS, which caps how many clips
+// decode at once. The overflow holds its poster until a slot frees.
+const PLAYERS = { max: 4, active: new Set(), waiting: new Set() };
+function playerWants(el) {
+  if (PLAYERS.active.has(el)) return;
+  if (PLAYERS.active.size < PLAYERS.max) {
+    PLAYERS.active.add(el);
+    PLAYERS.waiting.delete(el);
+    const p = el.play();
+    if (p && p.catch) p.catch(() => {});
+  } else {
+    PLAYERS.waiting.add(el);
+  }
+}
+function playerStops(el) {
+  PLAYERS.waiting.delete(el);
+  el.pause();
+  if (PLAYERS.active.delete(el)) {
+    const next = PLAYERS.waiting.values().next().value;
+    if (next) playerWants(next);
+  }
+}
 function LazyVideo({ src, aspect }) {
   const ref = useRef(null);
   const [ready, setReady] = useState(false); // poster painted or first frame decoded
-  // every clip ships a "<name>-poster.jpg" first frame — ~40KB, so the
-  // tile paints in one round-trip instead of waiting on megabytes of video
-  const poster = src.replace(/\.mp4$/, '-poster.jpg');
+  // the poster is ~40KB, so the tile paints in one round-trip instead of
+  // waiting on megabytes of video
+  const poster = posterOf(src);
   useEffect(() => {
     const im = new Image();
     im.onload = () => setReady(true); // poster visible → shimmer off
@@ -2048,21 +2262,38 @@ function LazyVideo({ src, aspect }) {
     let loaded = false;
     const onData = () => setReady(true); // fallback if the poster 404s
     el.addEventListener('loadeddata', onData);
-    const io = new IntersectionObserver(
+    // ahead-of-time buffering only pays on a decent link — on a slow or
+    // data-saver connection the near ring just reads the header, so the
+    // clips actually on screen keep the bandwidth
+    const load = () => {
+      if (loaded) return;
+      loaded = true;
+      // (effectiveType only — Chrome's `downlink` estimate is capped and
+      // reads ~2 Mbps on an idle 200 Mbps line)
+      const c = navigator.connection;
+      const slow = c && (c.saveData || (c.effectiveType && c.effectiveType !== '4g'));
+      el.src = src;
+      el.preload = slow ? 'metadata' : 'auto';
+    };
+    const near = new IntersectionObserver(
+      (entries) => { if (entries[0].isIntersecting) load(); },
+      { rootMargin: '100% 0px', threshold: 0 }
+    );
+    const vis = new IntersectionObserver(
       (entries) => {
-        const vis = entries[0].isIntersecting;
-        if (vis) {
-          if (!loaded) { el.src = src; loaded = true; }
-          const p = el.play();
-          if (p && p.catch) p.catch(() => {});
-        } else if (loaded) {
-          el.pause();
-        }
+        if (entries[0].isIntersecting) { load(); playerWants(el); }
+        else if (loaded) playerStops(el);
       },
       { rootMargin: '150px 0px', threshold: 0.01 }
     );
-    io.observe(el);
-    return () => { io.disconnect(); el.removeEventListener('loadeddata', onData); };
+    near.observe(el);
+    vis.observe(el);
+    return () => {
+      near.disconnect();
+      vis.disconnect();
+      playerStops(el);
+      el.removeEventListener('loadeddata', onData);
+    };
   }, [src]);
   return (
     <div className={`asset-media asset-media--video ${ready ? 'asset-media--ready' : ''}`} style={{ aspectRatio: aspect }}>
@@ -2167,8 +2398,8 @@ function WorkModal({ tile, onClose }) {
       ) : (
         <video
           className="work-lightbox-media"
-          src={asset.src}
-          poster={asset.src && asset.src.replace(/\.mp4$/, '-poster.jpg')}
+          src={asset.full || asset.src}
+          poster={asset.src && posterOf(asset.src)}
           style={{ aspectRatio: asset.aspect }}
           autoPlay
           muted
@@ -2245,7 +2476,7 @@ function FeedTile({ tile, index, onOpen, slotStyle, batchStart, initialLoad }) {
   const entrance = useRef(null);
   if (entrance.current === null) {
     entrance.current = initialLoad
-      ? { cls: 'reveal', style: { '--reveal-delay': `${8150 + Math.min(index, 8) * 100}ms` } }
+      ? { cls: 'reveal', style: { '--reveal-delay': `${2600 + Math.min(index, 8) * 100}ms` } }
       : { cls: 'asset-tile--dealt', style: { '--deal-delay': `${Math.max(0, index - batchStart) * 70}ms` } };
   }
   return (
@@ -2406,8 +2637,6 @@ function AssetsFeed() {
   // dice roll: null = natural order, otherwise the shuffle seed
   const [shuffleSeed, setShuffleSeed] = useState(null);
   const [limit, setLimit] = useState(FIRST_DEAL);  // grown by the Gimmie More switch
-  const [pastBand, setPastBand] = useState(false); // scrolled beyond the divider band?
-  const bandRef = useRef(null);
   // Entrance bookkeeping: tiles mounted at page load join the big page
   // reveal; tiles mounted after any interaction (deal/filter) cascade in
   // one by one from `dealStart` instead.
@@ -2417,17 +2646,6 @@ function AssetsFeed() {
     const onResize = () => { setCols(feedColCount()); setDesktop(feedIsDesktop()); };
     window.addEventListener('resize', onResize);
     return () => window.removeEventListener('resize', onResize);
-  }, []);
-  // Sticky filters: once the band scrolls above the viewport, a fixed
-  // capsule with the same dropdowns fades in at the top.
-  useEffect(() => {
-    const el = bandRef.current;
-    if (!el) return;
-    const io = new IntersectionObserver(([e]) => {
-      setPastBand(!e.isIntersecting && e.boundingClientRect.bottom < 0);
-    }, { threshold: 0 });
-    io.observe(el);
-    return () => io.disconnect();
   }, []);
   const openShot = (tile) => { setActive(tile); playStateChange(true); haptic(10); };
   const closeShot = () => { setActive(null); playStateChange(false); };
@@ -2525,15 +2743,8 @@ function AssetsFeed() {
   if (row.length) rows.push(row);
   return (
     <section className="feed-section" data-screen-label="02 Work">
-      {/* the hero/work divider carries just the note — no resting
-          filters (Jean's call): filtering lives in the sticky capsule
-          that appears once this band scrolls away */}
-      <div className="board-divider board-divider--note reveal" style={{ '--reveal-delay': '7850ms' }} ref={bandRef}>
-        <h3 className="feed-note">
-          A collection of <a className="brand-word" href="https://www.konpo.studio" target="_blank" rel="noreferrer">Konpo</a>, <a className="brand-word" href="https://www.surgehq.ai" target="_blank" rel="noreferrer">Surge</a> and
-          personal snippets of work
-        </h3>
-      </div>
+      {/* no divider band between hero and work any more (2026-09-14,
+          Jean: "remove this text and divider") — the tiles just start */}
       <div
         className="feed-masonry"
         style={{ gridTemplateColumns: `repeat(${trackCount}, minmax(0, 1fr))` }}
@@ -2585,15 +2796,9 @@ function AssetsFeed() {
           }}
         />
       )}
-      {/* sticky controls — appear once you've scrolled past the band,
-          and STAY while shuffle is live (Jean: they must never
-          disappear after using them). Filter funnel removed 2026-08-31
-          (Jean: dice only) — FilterMenu + filter state kept dormant. */}
-      {(pastBand || shuffleSeed !== null) && (
-        <div className="feed-filters-sticky">
-          <DiceButton active={shuffleSeed !== null} onToggle={toggleShuffle} />
-        </div>
-      )}
+      {/* the sticky controls capsule is gone: filter funnel cut
+          2026-08-31, dice cut 2026-09-14 (Jean). FilterMenu / DiceButton
+          + the filter and shuffle state stay dormant in this file. */}
       {active && <WorkModal tile={active} onClose={closeShot} />}
     </section>
   );
@@ -2676,7 +2881,7 @@ const ELSEWHERE_LINKS = [
   { from: 'GitHub ↗',   to: 'AI has turned me into a coding monkey with fire ↗', href: 'https://github.com/jeanm-404' },
 ];
 
-function Footer({ startDelay = 7000 }) {
+function Footer({ startDelay = 6200 }) {
   return (
     <footer className="footer" data-screen-label="03 Footer">
       <div className="footer-row">
@@ -2775,14 +2980,327 @@ function OffSwitch({ onOff }) {
   );
 }
 
-function Colophon({ onOff }) {
+/* ------------------------------------------------------------------
+   HoloCard — the footer "avatar": Jean as a Stage 2 rare-holo card.
+   Hover tilts it and lights the Konpo-mark foil; click/tap/Enter picks
+   it up (springs to the viewport centre, enlarges to ~440px, a single
+   360° flip shows the Konpo back), click again / backdrop / Esc puts
+   it down. On touch devices the picked-up card follows the phone's
+   tilt (DeviceOrientation, permission asked inside the tap on iOS).
+   Pointer state is written straight to CSS vars — no React re-render
+   per frame. Source of truth for markup/CSS: scratch/holo-card.html.
+   ------------------------------------------------------------------ */
+const HC_DEFS = '<defs><symbol id="hc-e-water" viewBox="0 0 32 32"><circle cx="16" cy="16" r="15" fill="#3aa0ea" stroke="#fff" stroke-width="1.6"/><circle cx="16" cy="16" r="15" fill="url(#hc-wg)" opacity=".9"/><path d="M16 6.5c3.6 5 6.3 8.6 6.3 12.1a6.3 6.3 0 0 1-12.6 0C9.7 15.1 12.4 11.5 16 6.5z" fill="#fff"/><path d="M13.2 18.2c0 1.4.7 2.6 1.9 3.2" stroke="#3aa0ea" stroke-width="1.4" fill="none" stroke-linecap="round"/></symbol><radialGradient id="hc-wg" cx=".35" cy=".3" r=".9"><stop offset="0" stop-color="#8fd3ff"/><stop offset="1" stop-color="#1f6fc2"/></radialGradient><symbol id="hc-e-figma" viewBox="0 0 32 32"><circle cx="16" cy="16" r="15" fill="#1e1e1e" stroke="#fff" stroke-width="1.6"/><circle cx="16" cy="16" r="15" fill="url(#hc-fg)" opacity=".9"/><g transform="translate(9.67 6.5) scale(.3333)"><path fill="#1abcfe" d="M19 28.5a9.5 9.5 0 1 1 19 0 9.5 9.5 0 1 1-19 0z"/><path fill="#0acf83" d="M0 47.5A9.5 9.5 0 0 1 9.5 38H19v9.5a9.5 9.5 0 1 1-19 0z"/><path fill="#ff7262" d="M19 0v19h9.5a9.5 9.5 0 1 0 0-19H19z"/><path fill="#f24e1e" d="M0 9.5A9.5 9.5 0 0 0 9.5 19H19V0H9.5A9.5 9.5 0 0 0 0 9.5z"/><path fill="#a259ff" d="M0 28.5A9.5 9.5 0 0 0 9.5 38H19V19H9.5A9.5 9.5 0 0 0 0 28.5z"/></g></symbol><radialGradient id="hc-fg" cx=".35" cy=".3" r=".9"><stop offset="0" stop-color="#3a3a3a"/><stop offset="1" stop-color="#111"/></radialGradient><symbol id="hc-e-claude" viewBox="0 0 32 32"><circle cx="16" cy="16" r="15" fill="#d97757" stroke="#fff" stroke-width="1.6"/><circle cx="16" cy="16" r="15" fill="url(#hc-cg)" opacity=".9"/><g transform="translate(6.5 6.5) scale(.79)"><path d="m4.7144 15.9555 4.7174-2.6471.079-.2307-.079-.1275h-.2307l-.7893-.0486-2.6956-.0729-2.3375-.0971-2.2646-.1214-.5707-.1215-.5343-.7042.0546-.3522.4797-.3218.686.0608 1.5179.1032 2.2767.1578 1.6514.0972 2.4468.255h.3886l.0546-.1579-.1336-.0971-.1032-.0972L6.973 9.8356l-2.55-1.6879-1.3356-.9714-.7225-.4918-.3643-.4614-.1578-1.0078.6557-.7225.8803.0607.2246.0607.8925.686 1.9064 1.4754 2.4893 1.8336.3643.3035.1457-.1032.0182-.0728-.164-.2733-1.3539-2.4467-1.445-2.4893-.6435-1.032-.17-.6194c-.0607-.255-.1032-.4674-.1032-.7285L6.287.1335 6.6997 0l.9957.1336.419.3642.6192 1.4147 1.0018 2.2282 1.5543 3.0296.4553.8985.2429.8318.091.255h.1579v-.1457l.1275-1.706.2368-2.0947.2307-2.6957.0789-.7589.3764-.9107.7468-.4918.5828.2793.4797.686-.0668.4433-.2853 1.8517-.5586 2.9021-.3643 1.9429h.2125l.2429-.2429.9835-1.3053 1.6514-2.0643.7286-.8196.85-.9046.5464-.4311h1.0321l.759 1.1293-.34 1.1657-1.0625 1.3478-.8804 1.1414-1.2628 1.7-.7893 1.36.0729.1093.1882-.0183 2.8535-.607 1.5421-.2794 1.8396-.3157.8318.3886.091.3946-.3278.8075-1.967.4857-2.3072.4614-3.4364.8136-.0425.0304.0486.0607 1.5482.1457.6618.0364h1.621l3.0175.2247.7892.522.4736.6376-.079.4857-1.2142.6193-1.6393-.3886-3.825-.9107-1.3113-.3279h-.1822v.1093l1.0929 1.0686 2.0035 1.8092 2.5075 2.3314.1275.5768-.3218.4554-.34-.0486-2.2039-1.6575-.85-.7468-1.9246-1.621h-.1275v.17l.4432.6496 2.3436 3.5214.1214 1.0807-.17.3521-.6071.2125-.6679-.1214-1.3721-1.9246L14.38 17.959l-1.1414-1.9428-.1397.079-.674 7.2552-.3156.3703-.7286.2793-.6071-.4614-.3218-.7468.3218-1.4753.3886-1.9246.3157-1.53.2853-1.9004.17-.6314-.0121-.0425-.1397.0182-1.4328 1.9672-2.1796 2.9446-1.7243 1.8456-.4128.164-.7164-.3704.0667-.6618.4008-.5889 2.386-3.0357 1.4389-1.882.929-1.0868-.0062-.1579h-.0546l-6.3385 4.1164-1.1293.1457-.4857-.4554.0608-.7467.2307-.2429 1.9064-1.3114Z" fill="#fff"/></g></symbol><radialGradient id="hc-cg" cx=".35" cy=".3" r=".9"><stop offset="0" stop-color="#e9a08a"/><stop offset="1" stop-color="#b8542f"/></radialGradient><symbol id="hc-e-jira" viewBox="0 0 32 32"><circle cx="16" cy="16" r="15" fill="#1868db" stroke="#fff" stroke-width="1.6"/><circle cx="16" cy="16" r="15" fill="url(#hc-jg)" opacity=".9"/><g transform="translate(7 7) scale(.75)"><path d="M11.571 11.513H0a5.218 5.218 0 0 0 5.232 5.215h2.13v2.057A5.215 5.215 0 0 0 12.575 24V12.518a1.005 1.005 0 0 0-1.005-1.005zm5.723-5.756H5.736a5.215 5.215 0 0 0 5.215 5.214h2.129v2.058a5.218 5.218 0 0 0 5.215 5.214V6.758a1.001 1.001 0 0 0-1.001-1.001zM23.013 0H11.455a5.215 5.215 0 0 0 5.215 5.215h2.129v2.057A5.215 5.215 0 0 0 24 12.483V1.005A1.001 1.001 0 0 0 23.013 0Z" fill="#fff"/></g></symbol><radialGradient id="hc-jg" cx=".35" cy=".3" r=".9"><stop offset="0" stop-color="#4c9aff"/><stop offset="1" stop-color="#0747a6"/></radialGradient><symbol id="hc-e-snow" viewBox="0 0 32 32"><circle cx="16" cy="16" r="15" fill="#8fd0f5" stroke="#fff" stroke-width="1.6"/><circle cx="16" cy="16" r="15" fill="url(#hc-sg)" opacity=".9"/><g stroke="#fff" stroke-width="1.7" stroke-linecap="round" fill="none"><path d="M16 6.5v19M7.8 11.25l16.4 9.5M7.8 20.75l16.4-9.5"/><path d="M13.2 8.6L16 10.4l2.8-1.8M13.2 23.4L16 21.6l2.8 1.8M8.9 14.6l2.9-1.6.2-3.3M23.1 17.4l-2.9 1.6-.2 3.3M8.9 17.4l2.9 1.6.2 3.3M23.1 14.6l-2.9-1.6-.2-3.3"/></g></symbol><radialGradient id="hc-sg" cx=".35" cy=".3" r=".9"><stop offset="0" stop-color="#c9ecff"/><stop offset="1" stop-color="#4aa3dd"/></radialGradient><symbol id="hc-e-surf" viewBox="0 0 32 32"><circle cx="16" cy="16" r="15" fill="#1f5fc2" stroke="#fff" stroke-width="1.6"/><circle cx="16" cy="16" r="15" fill="url(#hc-ug)" opacity=".9"/><path d="M6.5 22.5c2.6-.2 3.6-2.4 5.2-4.6 2.2-3.1 5.3-6 9.4-5.6 3 .3 5 2.4 5.7 5.2-1.3-1.5-3-2.1-4.8-1.6 1.7 1.2 2.3 3 1.9 4.9-.6-1.6-1.9-2.5-3.4-2.6-2.2-.1-3.4 1.7-5.4 3.2-2.3 1.7-5.3 2.2-8.6 1.1z" fill="#fff"/><path d="M8 24.6c5.4 1.4 10.9 1.4 16.4 0" stroke="#fff" stroke-width="1.6" stroke-linecap="round" fill="none"/></symbol><radialGradient id="hc-ug" cx=".35" cy=".3" r=".9"><stop offset="0" stop-color="#5aa5f0"/><stop offset="1" stop-color="#123f8f"/></radialGradient><symbol id="hc-e-hn" viewBox="0 0 32 32"><rect x="1.5" y="1.5" width="29" height="29" rx="4" fill="#fff" stroke="#fff" stroke-width="1.6"/><path transform="translate(2.5 2.5) scale(1.125)" fill="#ff6600" fill-rule="evenodd" d="M0 24V0h24v24H0zM6.951 5.896l4.112 7.708v5.064h1.583v-4.972l4.148-7.799h-1.749l-2.457 4.875c-.372.745-.688 1.434-.688 1.434s-.297-.708-.651-1.434L8.831 5.896h-1.88z"/></symbol><symbol id="hc-star" viewBox="0 0 24 24"><path d="M12 2.2l2.95 6.35 6.95.8-5.15 4.75 1.4 6.85L12 17.5l-6.15 3.45 1.4-6.85L2.1 9.35l6.95-.8z" fill="#fff" stroke="#0f1a2e" stroke-width="1.2" stroke-linejoin="round"/></symbol><symbol id="hc-set-rain" viewBox="0 0 32 32"><path d="M9 20a5 5 0 0 1 .6-9.96A7 7 0 0 1 23 12a4.5 4.5 0 0 1 .5 8H9z" fill="#fff" stroke="#0f1a2e" stroke-width="1.2" stroke-linejoin="round"/><g stroke="#fff" stroke-width="1.8" stroke-linecap="round"><path d="M12 23.5l-1.5 4"/><path d="M17 23.5l-1.5 4"/><path d="M22 23.5l-1.5 4"/></g></symbol></defs>';
+const HC_BACK = '<svg class="hc-mark" viewBox="-1.6 -1.6 79.2 79.2"><path d="M4.63768 47.3768C10.8177 41.1926 20.8417 41.1963 27.0254 47.3768C33.209 53.5573 33.209 63.5822 27.0254 69.7664C20.8454 75.9506 10.8213 75.947 4.63768 69.7664C-1.54587 63.5859 -1.54592 53.5609 4.63768 47.3768ZM47.3799 47.3768C53.5599 41.193 63.583 41.1965 69.7666 47.3768C75.9502 53.5573 75.9502 63.5822 69.7666 69.7664C63.5867 75.9504 53.5635 75.9466 47.3799 69.7664C41.1962 63.5859 41.1962 53.561 47.3799 47.3768ZM4.63768 4.63653C10.8176 -1.54735 20.8417 -1.54354 27.0254 4.63653C29.5008 7.11068 30.984 10.2016 31.4775 13.4149C24.2363 15.8276 19.0149 22.6598 19.0146 30.7117C19.0146 30.9214 19.0193 31.1308 19.0264 31.3387C13.9895 32.3707 8.54638 30.9329 4.63768 27.0262C-1.54557 20.8456 -1.54584 10.8206 4.63768 4.63653ZM47.3789 4.63653C53.5588 -1.54746 63.5829 -1.54356 69.7666 4.63653C75.9502 10.8171 75.9502 20.842 69.7666 27.0262C65.8806 30.9148 60.4752 32.3552 55.4599 31.3533C55.4673 31.1406 55.4726 30.9263 55.4726 30.7117C55.4724 22.6305 50.2128 15.7787 42.9306 13.3895C43.4285 10.1859 44.9107 7.10499 47.3789 4.63653Z" fill="#fff"/></svg><svg class="hc-wordmark" viewBox="42.0265 0 87.9925 26.7738"><path d="M42.0265 21.7259V1.0946H45.6396V10.562L54.7195 1.0946H59.2437L49.4726 11.3789L59.5579 21.7259H54.7823L45.6396 12.4785V21.7259H42.0265Z" fill="#fff"/><path d="M58.7144 13.9342C58.7144 9.37856 62.3275 5.82829 66.946 5.82829C71.5645 5.82829 75.1462 9.37856 75.1462 13.9342C75.1462 18.4899 71.5331 22.0401 66.946 22.0401C62.3589 22.0401 58.7144 18.4899 58.7144 13.9342ZM63.4586 10.4625C61.542 12.379 61.542 15.4894 63.4586 17.4059C65.3751 19.3224 68.4855 19.3224 70.402 17.4059C72.3185 15.4894 72.3185 12.379 70.402 10.4625C68.4855 8.54598 65.3751 8.54598 63.4586 10.4625Z" fill="#fff"/><path d="M77.4717 21.7259V6.14248H80.802V7.74481C81.8074 6.55092 83.4097 5.82829 85.3891 5.82829C89.2221 5.82829 91.9555 8.56169 91.9555 12.866V21.7259H88.4681V13.1802C88.4681 10.6353 87.0857 9.12721 84.8236 9.12721C82.5614 9.12721 80.9591 10.6981 80.9591 13.1802V21.7259H77.4717Z" fill="#fff"/><path d="M113.587 13.9342C113.587 9.37856 117.2 5.82829 121.818 5.82829C126.437 5.82829 130.019 9.37856 130.019 13.9342C130.019 18.4899 126.406 22.0401 121.818 22.0401C117.231 22.0401 113.587 18.4899 113.587 13.9342ZM118.331 10.4625C116.415 12.379 116.415 15.4894 118.331 17.4059C120.248 19.3224 123.358 19.3224 125.274 17.4059C127.191 15.4894 127.191 12.379 125.274 10.4625C123.358 8.54598 120.248 8.54598 118.331 10.4625Z" fill="#fff"/><path d="M95.1286 26.7738V6.14248H98.4589V8.21609C99.59 6.70801 101.475 5.82829 103.674 5.82829C108.136 5.82829 111.875 9.36285 111.875 13.9185C111.875 18.4742 108.136 22.0401 103.674 22.0401C101.569 22.0401 99.7785 21.2233 98.616 19.8094V26.7738H95.1286ZM100.025 10.4468C98.1081 12.3633 98.1081 15.4737 100.025 17.3902C101.941 19.3067 105.052 19.3067 106.968 17.3902C108.885 15.4737 108.885 12.3633 106.968 10.4468C105.052 8.53027 101.941 8.53027 100.025 10.4468Z" fill="#fff"/></svg><span class="hc-url">jean.md</span>';
+
+function HoloCard() {
+  const rootRef = useRef(null);
+  const backdropRef = useRef(null);
+
+  useEffect(() => {
+    const card = rootRef.current, backdrop = backdropRef.current;
+    if (!card) return;
+    const scene = card.parentElement;
+    const box = card.querySelector('.hc-translater');
+    // laid out at natural size, shown scaled down: REST is the resting scale (96/440 ≈ .218)
+    const natW = card.offsetWidth || 440, natH = card.offsetHeight || natW / .718;
+    const REST = (scene.getBoundingClientRect().width || 96) / natW;
+    const rotator = card.querySelector('.hc-rotator');
+    const host = card.closest('.reveal');
+    const clamp = (v, a = 0, b = 100) => Math.min(Math.max(v, a), b);
+    const round = (v, p = 3) => parseFloat(v.toFixed(p));
+    const adjust = (v, a, b, c, d) => round(c + (d - c) * (v - a) / (b - a));
+    const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const coarse = matchMedia('(pointer: coarse)').matches;
+
+    // the reveal wrapper keeps filter: blur(0) (fill-mode both) → stacking context + containing
+    // block that would trap the flight and the fixed backdrop; drop its animation once it has played
+    const freeHost = () => { if (host) host.style.animation = 'none'; };
+    if (host) host.addEventListener('animationend', freeHost, { once: true });
+
+    class Spring {
+      constructor(init, k, d) { this.cur = { ...init }; this.target = { ...init }; this.v = {}; for (const key in init) this.v[key] = 0; this.k = k; this.d = d; }
+      set(target, k, d) { Object.assign(this.target, target); if (k != null) this.k = k; if (d != null) this.d = d; }
+      step(f) {
+        const n = Math.ceil(f), h = f / n;
+        for (let i = 0; i < n; i++) for (const key in this.cur) {
+          const delta = this.target[key] - this.cur[key];
+          this.v[key] = this.v[key] * (1 - this.d * h) + delta * this.k * h;
+          this.cur[key] += this.v[key] * h;
+        }
+        let moving = false;
+        for (const key in this.cur) {
+          if (Math.abs(this.target[key] - this.cur[key]) > .01 || Math.abs(this.v[key]) > .01) moving = true;
+          else { this.cur[key] = this.target[key]; this.v[key] = 0; }
+        }
+        return moving;
+      }
+    }
+    const INTERACT = { k: .07, d: .32 }, SNAP = { k: .012, d: .09 }, POP = { k: .033, d: .45 };
+    const rotate = new Spring({ x: 0, y: 0 }, INTERACT.k, INTERACT.d);
+    const glare = new Spring({ x: 50, y: 50, o: 0 }, INTERACT.k, INTERACT.d);
+    const bg = new Spring({ x: 50, y: 50 }, INTERACT.k, INTERACT.d);
+    const scale = new Spring({ s: REST }, .05, .3);
+    const translate = new Spring({ x: 0, y: 0 }, POP.k, POP.d);
+    const rotDelta = new Spring({ x: 0, y: 0 }, POP.k, POP.d);
+    const springs = [rotate, glare, bg, scale, translate, rotDelta];
+    const TILT = 14, POP_W = 440;
+    let raf = null, last = 0, alive = true;
+    let active = false, firstPop = true, popScale = 1, interacting = false, leaveTimer = null;
+
+    const render = () => {
+      const r = rotate.cur, g = glare.cur, b = bg.cur, st = card.style;
+      st.setProperty('--rotate-x', round(r.x + rotDelta.cur.x) + 'deg');
+      st.setProperty('--rotate-y', round(r.y + rotDelta.cur.y) + 'deg');
+      st.setProperty('--pointer-x', round(g.x) + '%');
+      st.setProperty('--pointer-y', round(g.y) + '%');
+      st.setProperty('--pointer-from-center', clamp(Math.hypot(g.x - 50, g.y - 50) / 50, 0, 1));
+      st.setProperty('--pointer-from-top', round(g.y / 100));
+      st.setProperty('--pointer-from-left', round(g.x / 100));
+      st.setProperty('--card-opacity', round(clamp(g.o, 0, 1)));
+      st.setProperty('--background-x', round(b.x) + '%');
+      st.setProperty('--background-y', round(b.y) + '%');
+      st.setProperty('--card-scale', round(scale.cur.s));
+      st.setProperty('--translate-x', round(translate.cur.x) + 'px');
+      st.setProperty('--translate-y', round(translate.cur.y) + 'px');
+    };
+    const tick = (t) => {
+      if (!alive) return;
+      const f = last ? clamp((t - last) / (1000 / 60), .2, 8) : 1; last = t;
+      const moving = springs.map(s => s.step(f)).some(Boolean);
+      render();
+      raf = moving ? requestAnimationFrame(tick) : (last = 0, null);
+    };
+    const kick = () => { if (raf == null) raf = requestAnimationFrame(tick); };
+
+    const aim = (px, py, k = INTERACT.k, d = INTERACT.d) => {
+      const cx = px - 50, cy = py - 50;
+      rotate.set({ x: round(-(cx / 50) * TILT), y: round((cy / 50) * TILT) }, k, d);
+      glare.set({ x: round(px), y: round(py), o: 1 }, k, d);
+      bg.set({ x: adjust(px, 0, 100, 37, 63), y: adjust(py, 0, 100, 33, 67) }, k, d);
+      if (!active) scale.set({ s: REST * 1.035 }, .05, .3);
+      kick();
+    };
+    const rest = () => {
+      if (active && orientOn) return;            // the phone's tilt owns the pose while picked up
+      rotate.set({ x: 0, y: 0 }, SNAP.k, SNAP.d);
+      glare.set({ x: 50, y: 50, o: 0 }, SNAP.k, SNAP.d);
+      bg.set({ x: 50, y: 50 }, SNAP.k, SNAP.d);
+      if (!active) scale.set({ s: REST }, .05, .3);
+      kick();
+    };
+
+    // --- pointer ---------------------------------------------------------
+    const onMove = (e) => {
+      stopShowcase();
+      clearTimeout(leaveTimer);
+      interacting = true;
+      const rect = box.getBoundingClientRect();
+      aim(clamp(round(100 * (e.clientX - rect.left) / rect.width)), clamp(round(100 * (e.clientY - rect.top) / rect.height)));
+    };
+    const onLeave = () => { interacting = false; clearTimeout(leaveTimer); leaveTimer = setTimeout(rest, 320); };
+    const onUp = (e) => { if (e.pointerType !== 'mouse') onLeave(); };
+    box.addEventListener('pointermove', onMove);
+    box.addEventListener('pointerdown', onMove);
+    box.addEventListener('pointerleave', onLeave);
+    box.addEventListener('pointerup', onUp);
+    box.addEventListener('pointercancel', onLeave);
+
+    // --- phone tilt (picked-up card on touch devices) ----------------------
+    let orientOn = false, orientBase = null;
+    const onOrient = (e) => {
+      if (!active || e.gamma == null || e.beta == null) return;
+      if (!orientBase) orientBase = { g: e.gamma, b: e.beta };
+      const gx = clamp(e.gamma - orientBase.g, -16, 16), by = clamp(e.beta - orientBase.b, -18, 18);
+      rotate.set({ x: round(-(gx / 16) * TILT), y: round((by / 18) * TILT) }, INTERACT.k, INTERACT.d);
+      glare.set({ x: adjust(gx, -16, 16, 0, 100), y: adjust(by, -18, 18, 0, 100), o: 1 }, INTERACT.k, INTERACT.d);
+      bg.set({ x: adjust(gx, -16, 16, 37, 63), y: adjust(by, -18, 18, 33, 67) }, INTERACT.k, INTERACT.d);
+      kick();
+    };
+    const enableOrientation = () => {
+      if (orientOn || !coarse || typeof DeviceOrientationEvent === 'undefined') return;
+      const start = () => { if (!alive || orientOn) return; orientOn = true; orientBase = null; addEventListener('deviceorientation', onOrient); };
+      try {
+        if (typeof DeviceOrientationEvent.requestPermission === 'function') {
+          DeviceOrientationEvent.requestPermission().then((res) => { if (res === 'granted') start(); }).catch(() => {});
+        } else start();
+      } catch (_) {}
+    };
+
+    // --- pick up / put down -----------------------------------------------
+    const center = () => {
+      const r = card.getBoundingClientRect();   // .hc itself never transforms → its resting box
+      translate.set({ x: round(innerWidth / 2 - r.x - r.width / 2), y: round(innerHeight / 2 - r.y - r.height / 2) }, POP.k, POP.d);
+    };
+    const popover = () => {
+      stopShowcase();
+      freeHost();
+      popScale = Math.min((innerWidth / natW) * .9, (innerHeight / natH) * .9, POP_W / natW);   // 1 = crisp 1:1 raster
+      const delay = firstPop ? 1000 : 100;
+      if (firstPop) rotDelta.set({ x: 360, y: 0 }, POP.k, POP.d);
+      firstPop = false;
+      active = true; orientBase = null;
+      center();
+      scale.set({ s: popScale }, POP.k, POP.d);
+      card.classList.add('hc--active'); scene.classList.add('hc-scene--active'); backdrop.classList.add('hc--on');
+      rotator.setAttribute('aria-pressed', 'true');
+      setTimeout(rest, delay);
+      kick();
+    };
+    const retreat = () => {
+      active = false;
+      scale.set({ s: REST }, POP.k, POP.d);
+      translate.set({ x: 0, y: 0 }, POP.k, POP.d);
+      rotDelta.set({ x: 0, y: 0 }, POP.k, POP.d);
+      card.classList.remove('hc--active'); backdrop.classList.remove('hc--on');
+      rotator.setAttribute('aria-pressed', 'false');
+      setTimeout(() => { if (!active) scene.classList.remove('hc-scene--active'); }, 900);
+      setTimeout(rest, 100);
+      kick();
+    };
+    const toggle = () => { if (active) { retreat(); playStateChange(false); } else { enableOrientation(); popover(); playStateChange(true); haptic(8); } };
+    let downAt = null;
+    const onDown = (e) => { downAt = { x: e.clientX, y: e.clientY }; };
+    const onClick = (e) => { if (downAt && Math.hypot(e.clientX - downAt.x, e.clientY - downAt.y) > 8) return; toggle(); };
+    const onKey = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); } };
+    const onBackdrop = () => { if (active) retreat(); };
+    const onEsc = (e) => { if (e.key === 'Escape' && active) retreat(); };
+    let repositionTimer;
+    const reposition = () => { clearTimeout(repositionTimer); repositionTimer = setTimeout(() => { if (active) center(); }, 300); };
+    box.addEventListener('pointerdown', onDown);
+    box.addEventListener('click', onClick);
+    rotator.addEventListener('keydown', onKey);
+    backdrop.addEventListener('click', onBackdrop);
+    document.addEventListener('keydown', onEsc);
+    addEventListener('resize', reposition);
+    addEventListener('scroll', reposition, { passive: true });
+
+    // --- showcase: one slow orbit the first time the card scrolls into view ---
+    let showcaseRaf = null, showcaseStart = 0, shown = false;
+    const SHOW_MS = 5200;
+    const showcase = (t) => {
+      if (!showcaseStart) showcaseStart = t;
+      const p = (t - showcaseStart) / SHOW_MS;
+      if (p >= 1) { showcaseRaf = null; showcaseStart = 0; rest(); return; }
+      const ease = Math.sin(p * Math.PI), a = -Math.PI * .75 + p * Math.PI * 2.1;
+      aim(50 + Math.cos(a) * 34 * ease, 50 + Math.sin(a) * 30 * ease, .04, .28);
+      showcaseRaf = requestAnimationFrame(showcase);
+    };
+    const stopShowcase = () => { if (showcaseRaf) cancelAnimationFrame(showcaseRaf); showcaseRaf = null; showcaseStart = 0; };
+    const io = new IntersectionObserver((entries) => {
+      if (shown || reduced) return;
+      if (entries.some(en => en.isIntersecting)) { shown = true; io.disconnect(); setTimeout(() => { if (alive && !interacting && !active) showcaseRaf = requestAnimationFrame(showcase); }, 600); }
+    }, { threshold: .6 });
+    io.observe(scene);
+
+    // debug hooks (used by the pane checks): pose parks the pointer, settle advances physics synchronously
+    window.__hc = {
+      pose: (x, y) => aim(x, y, .3, .6),
+      settle: (ms) => { const n = Math.round(ms / (1000 / 60)); for (let i = 0; i < n; i++) springs.forEach(sp => sp.step(1)); render(); },
+      pick: toggle,
+    };
+    render();
+
+    return () => {
+      alive = false;
+      cancelAnimationFrame(raf); stopShowcase(); io.disconnect();
+      clearTimeout(leaveTimer); clearTimeout(repositionTimer);
+      box.removeEventListener('pointermove', onMove); box.removeEventListener('pointerdown', onMove);
+      box.removeEventListener('pointerleave', onLeave); box.removeEventListener('pointerup', onUp); box.removeEventListener('pointercancel', onLeave);
+      box.removeEventListener('pointerdown', onDown); box.removeEventListener('click', onClick);
+      rotator.removeEventListener('keydown', onKey); backdrop.removeEventListener('click', onBackdrop);
+      document.removeEventListener('keydown', onEsc); removeEventListener('resize', reposition); removeEventListener('scroll', reposition);
+      removeEventListener('deviceorientation', onOrient);
+      if (host) host.removeEventListener('animationend', freeHost);
+      delete window.__hc;
+    };
+  }, []);
+
+  return (
+    <div className="hc-host">
+      <div className="hc-backdrop" ref={backdropRef} />
+      <div className="hc-scene">
+        <div className="hc" ref={rootRef} data-rarity="rare holo" data-type="figma">
+          <div className="hc-translater">
+            <div className="hc-rotator" role="button" tabIndex={0} aria-pressed="false" aria-label="Jean, rare holo card — pick up">
+              <div className="hc-front">
+          <div className="hc-frame"></div>
+
+        <div className="hc-head">
+          <span className="hc-stage">Stage 2</span>
+          <span className="hc-name">Jean</span>
+          <span className="hc-hp"><small>HP</small><b>180</b></span>
+          <svg className="hc-type"><use href="#hc-e-figma"/></svg>
+        </div>
+
+        <div className="hc-art-frame"></div>
+        <div className="hc-art"><img src="holo/avatar-hi.webp" alt="Jean, in Konpo blue" draggable="false" /></div>
+        <div className="hc-preevo"><img className="hc-preevo-img" src="holo/preevo.jpg" alt="Jean, aged four, as a wise man" draggable="false" /><span>Evolves from Senior Designer</span></div>
+
+        <div className="hc-info">
+          <span>NO. 032</span><span>Designer Pokémon</span><span>WT: 40 open tabs</span>
+        </div>
+
+        <div className="hc-body">
+          <div>
+            <div className="hc-row"><span className="hc-badge">Ability</span><span className="hc-nm">Deep End</span></div>
+            <p className="hc-desc">Throw this Pokémon at your biggest design mess. Each turn, it comes out the other side: mess shipped, all damage healed.</p>
+          </div>
+          <div>
+            <div className="hc-row">
+              <span className="hc-energy"><svg><use href="#hc-e-claude"/></svg><svg><use href="#hc-e-claude"/></svg></span>
+              <span className="hc-nm">Zero to One</span><span className="hc-dmg">60+</span>
+            </div>
+            <p className="hc-desc">Design the whole product, research to release, no hand-offs. Does 20 more damage for each stage this Pokémon shipped itself.</p>
+          </div>
+          <div>
+            <div className="hc-row">
+              <span className="hc-energy"><svg><use href="#hc-e-figma"/></svg><svg><use href="#hc-e-figma"/></svg><svg><use href="#hc-e-figma"/></svg></span>
+              <span className="hc-nm">Systemize</span><span className="hc-dmg">50×</span>
+            </div>
+            <p className="hc-desc">Turn every screen in play into tokens and components. Does 50 damage times the number of teams shipping on the system.</p>
+          </div>
+        </div>
+
+        <div className="hc-rule"><b>Yorkshire Tea rule</b><span>Brew once a turn: heal 30 damage from this Pokémon.</span></div>
+
+        <div className="hc-wrr">
+          <div><span className="hc-lbl">weakness</span><span className="hc-val"><svg><use href="#hc-e-jira"/></svg>×2</span></div>
+          <div><span className="hc-lbl">resistance</span><span className="hc-val"><svg><use href="#hc-e-hn"/></svg>−30</span></div>
+          <div><span className="hc-lbl">retreat</span><span className="hc-val"><svg><use href="#hc-e-snow"/></svg><svg><use href="#hc-e-surf"/></svg></span></div>
+        </div>
+
+
+        <div className="hc-foot">
+          <span className="hc-l"><span className="hc-reg">J</span><span>Illus. Jean Massad</span></span>
+          <span className="hc-r"><svg className="hc-setsym"><use href="#hc-set-rain"/></svg><span>032/198</span><svg className="hc-rarity" title="rare"><use href="#hc-star"/></svg></span>
+        </div>
+        <div className="hc-copy">©2026 Konpo · jean.md · Rainy Basque Afternoon set</div>
+        <div className="hc-shine" />
+        <div className="hc-shine hc-shine--art" />
+        <div className="hc-glare" />
+              </div>
+              <div className="hc-back" aria-hidden="true" dangerouslySetInnerHTML={{ __html: HC_BACK }} />
+            </div>
+          </div>
+        </div>
+      </div>
+      <svg width="0" height="0" style={{ position: 'absolute' }} aria-hidden="true" dangerouslySetInnerHTML={{ __html: HC_DEFS }} />
+    </div>
+  );
+}
+
+function Colophon() {
   return (
     <div className="colophon" data-screen-label="04 Colophon">
-      {/* the lights-out switch took the weather widget's spot
-          (WeatherLine still exists above — swap back to revert) */}
-      <OffSwitch onOff={onOff} />
+      {/* The holo card sits where Jean's 48px avatar (and before it the
+          lights-out switch / weather widget) sat. OffSwitch + App.lightsOut
+          are still here, dormant: render <OffSwitch onOff={onOff} /> to
+          bring the loop back; <img className="colophon-avatar" .../> for
+          the plain avatar. */}
+      <HoloCard />
       <div className="colophon-rule" aria-hidden="true" />
-      <p className="footer-note">Powered by Yorkshire Tea.</p>
+      <a className="footer-note footer-contact" href="mailto:jeanmassad@gmail.com">Contact</a>
     </div>);
 
 }
