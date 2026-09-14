@@ -9,3 +9,18 @@ app.jsx
 dev.html
 covers.html
 uploads/cases/_originals/
+# dead weight — referenced nowhere (perf pass 2026-08-10)
+uploads/work/
+uploads/motion-reel.mp4
+uploads/interface-loop.mp4
+uploads/volume-phones.webp
+uploads/CleanShot*
+uploads/cases/fyler-hero.mp4
+uploads/cases/fyler-hero-poster.jpg
+uploads/cases/fyler-categories.jpg
+uploads/cases/fyler-rich-location.jpg
+uploads/cases/fyler-rich-comparison.jpg
+uploads/cases/fyler-interface-ltr.jpg
+uploads/cases/fyler-interface-rtl.jpg
+uploads/cases/fyler-palettes.mp4
+uploads/cases/fyler-palettes-poster.jpg

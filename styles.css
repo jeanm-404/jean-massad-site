@@ -140,13 +140,12 @@ a { color: inherit; }
 
 /* inline brand chips (Konpo / Surge AI) */
 .chip {
+  /* bare marks — no pill background/border (Jean's call), and no
+     links: hovering just lifts the mark + spotlights its bio passage */
   display: inline-flex;
   align-items: center;
   gap: 7px;
-  padding: 3px 12px 3px 9px;
-  border: 1px solid var(--rule);
-  border-radius: 999px;
-  background: var(--surface);
+  padding: 3px 0;
   text-decoration: none;
   font-size: 15px;
   font-weight: 500;
@@ -157,13 +156,9 @@ a { color: inherit; }
      the logo is pulled left visually via order — this keeps the
      chip text sitting exactly on the paragraph baseline */
   vertical-align: baseline;
-  transition: border-color .15s ease, background-color .15s ease, transform .15s ease;
+  transition: transform .15s ease;
 }
-a.chip:hover {
-  border-color: var(--muted-3);
-  background: #efefef;
-  transform: translateY(-1px);
-}
+.chip:hover { transform: translateY(-1px); }
 .chip-logo {
   display: block;
   order: -1;
@@ -246,12 +241,250 @@ a.chip:hover {
      a frame-driven animation fights transitions on the same property */
 }
 
+/* the multiplied gate: every return trip doubles the switches — the
+   field wraps and clips at the viewport, so by the late rounds the
+   blue screen is wall-to-wall toggles. All of them flip as one. */
+.gate-field {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px;
+  align-items: center;
+  align-content: center;
+  justify-content: center;
+  max-width: 100vw;
+  max-height: 100vh;
+  overflow: hidden;
+  padding: 20px;
+}
+
 /* reopened gate (footer toggle) fades back in — fully opaque well
    before the hidden page reset happens at +700ms */
 .gate--fadein { animation: gate-fadein .35s ease-out both; }
 @keyframes gate-fadein {
   from { opacity: 0; }
   to   { opacity: 1; }
+}
+
+/* ── rulers — Figma's, on the whiteboard ─────────────────────────
+   Fixed strips on the viewport's top + left edges: minor ticks every
+   10px, majors every 100px, numbers just past each major (vertical ones
+   read bottom-to-top). Origin = the frame's top-left corner (--x0 /
+   --y0v on <html>, published by <Rulers/>). White on the gate's blue,
+   hairline grey once the paper is up. */
+.rulers {
+  position: fixed;
+  inset: 0;
+  z-index: 101;                 /* over the gate (100) */
+  pointer-events: none;
+  --rk: var(--muted-3, #c9c9c9);
+  --rk-faint: var(--rule, #e4e4e4);
+  --rk-text: var(--muted-2, #8a8a8a);
+  --rk-bg: rgba(251, 251, 251, .86);
+  transition: opacity .5s ease;
+}
+html[data-reveal="pending"] .rulers {
+  --rk: rgba(255, 255, 255, .72);
+  --rk-faint: rgba(255, 255, 255, .28);
+  --rk-text: rgba(255, 255, 255, .72);
+  --rk-bg: rgba(255, 255, 255, .05);
+}
+.ruler {
+  position: absolute;
+  background-color: var(--rk-bg);
+  font-family: "JetBrains Mono", monospace;
+  font-size: 8.5px;
+  line-height: 1;
+  letter-spacing: .06em;
+  font-variant-numeric: tabular-nums;
+  color: var(--rk-text);
+  transition: background-color .6s ease, color .6s ease;
+}
+.ruler--x {
+  top: 0; left: 0; right: 0;
+  height: 20px;
+  border-bottom: 1px solid var(--rk-faint);
+  background-image:
+    repeating-linear-gradient(90deg, var(--rk) 0 1px, transparent 1px 100px),
+    repeating-linear-gradient(90deg, var(--rk-faint) 0 1px, transparent 1px 10px);
+  background-size: 100px 8px, 10px 4px;
+  background-position: var(--o, 0px) 100%, var(--o, 0px) 100%;
+  background-repeat: repeat-x;
+}
+.ruler--x span { position: absolute; top: 3px; padding-left: 4px; }
+.ruler--y {
+  top: 0; bottom: 0; left: 0;
+  width: 20px;
+  border-right: 1px solid var(--rk-faint);
+  background-image:
+    repeating-linear-gradient(180deg, var(--rk) 0 1px, transparent 1px 100px),
+    repeating-linear-gradient(180deg, var(--rk-faint) 0 1px, transparent 1px 10px);
+  background-size: 8px 100px, 4px 10px;
+  background-position: 100% var(--o, 0px), 100% var(--o, 0px);
+  background-repeat: repeat-y;
+}
+.ruler--y span {
+  position: absolute;
+  left: 3px;
+  transform-origin: 0 0;
+  transform: rotate(-90deg) translate(calc(-100% - 4px), 0);
+}
+/* the frame's extent, highlighted like a Figma selection while the
+   draft is up */
+.ruler-sel {
+  position: absolute;
+  top: 0; bottom: 0;
+  background: rgba(255, 255, 255, .14);
+  border-left: 1px solid var(--rk);
+  border-right: 1px solid var(--rk);
+  opacity: 0;
+  transition: opacity .4s ease .2s;
+}
+html.bp-draft .ruler-sel { opacity: 1; }
+/* cursor tracker — a blue hair on each strip at the pointer, with its
+   frame coordinate just past it (Photoshop's ruler marker). --cx/--cy
+   are set on .rulers by <Rulers/>; shown only while a mouse is over
+   the page. White on the gate's blue. */
+.rulers {
+  --rk-cursor: var(--accent, #0600f4);
+  --rk-cursor-bg: var(--paper, #fbfbfb);
+}
+html[data-reveal="pending"] .rulers {
+  --rk-cursor: #fff;
+  --rk-cursor-bg: #0600f4;
+}
+.ruler-cursor, .ruler-cursor-val {
+  opacity: 0;
+  transition: opacity .15s ease;
+}
+.rulers--track .ruler-cursor, .rulers--track .ruler-cursor-val { opacity: 1; }
+.ruler-cursor { position: absolute; background: var(--rk-cursor); }
+.ruler--x .ruler-cursor { top: 0; bottom: 0; width: 1px; left: var(--cx, -9px); }
+.ruler--y .ruler-cursor { left: 0; right: 0; height: 1px; top: var(--cy, -9px); }
+.ruler-cursor-val {
+  color: var(--rk-cursor);
+  background: var(--rk-cursor-bg);
+  padding-right: 3px;
+}
+.ruler--x .ruler-cursor-val { left: var(--cx, -9px); }
+.ruler--y .ruler-cursor-val { top: var(--cy, -9px); }
+.ruler-corner {
+  position: absolute;
+  top: 0; left: 0;
+  width: 20px; height: 20px;
+  background: var(--rk-bg);
+  border-right: 1px solid var(--rk-faint);
+  border-bottom: 1px solid var(--rk-faint);
+  transition: background-color .6s ease;
+}
+/* phones: rulers only while the gate is up — the feed runs edge-tight */
+@media (max-width: 900px) {
+  html:not([data-reveal="pending"]) .rulers { opacity: 0; }
+}
+/* the fixed chrome steps down under the top ruler */
+@media (min-width: 901px) {
+  .scroll-nav { top: 34px; }
+  .feed-filters-sticky { top: 20px; }
+}
+
+/* ── blueprint draft — the first flip draws the page on the blue ──
+   imdaryl.com's boot sheet in Konpo blue: a 100px grid phase-locked to
+   the rulers' origin, and a hatched wireframe TRACED FROM THE REAL
+   LAYOUT (measureBlueprint) that sketches itself in — clip-path draws,
+   staggered by --i — while the asset warmup finishes behind it. */
+.gate {
+  --bp-ink: rgba(255, 255, 255, .72);
+  --bp-faint: rgba(255, 255, 255, .28);
+  --bp-ease: cubic-bezier(.2, .7, .2, 1);
+  --bp-settle: cubic-bezier(.2, .8, .2, 1);
+}
+/* the 100px grid */
+.gate::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  background:
+    linear-gradient(rgba(255, 255, 255, .14) 1px, transparent 1px) var(--x0, 0px) var(--y0v, 0px) / 100px 100px,
+    linear-gradient(90deg, rgba(255, 255, 255, .14) 1px, transparent 1px) var(--x0, 0px) var(--y0v, 0px) / 100px 100px;
+  transition: opacity .5s ease;
+}
+.gate--draft::before { opacity: 1; }
+/* the switch did its job — it steps aside for the drawing */
+.gate-field { transition: opacity .35s ease, transform .35s ease; }
+.gate--draft .gate-field { opacity: 0; transform: scale(.92); pointer-events: none; }
+
+/* the sheet — viewport-sized; every child sits at a measured rect */
+.bp-stage {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  color: #fff;
+}
+.bp-dim {
+  position: absolute;
+  height: 0;
+  border-top: 1px solid rgba(255, 255, 255, .8);
+  font-family: "JetBrains Mono", monospace;
+  font-size: 9.5px;
+  line-height: 1;
+  letter-spacing: .06em;
+  font-variant-numeric: tabular-nums;
+  animation: bp-across .55s var(--bp-ease) both .3s;
+}
+.bp-dim::before, .bp-dim::after { content: ""; position: absolute; top: -4px; width: 1px; height: 8px; background: rgba(255, 255, 255, .8); }
+.bp-dim::before { left: 0; }
+.bp-dim::after { right: 0; }
+.bp-dim b { position: absolute; left: 50%; top: -6px; translate: -50% 0; padding: 0 6px; font-weight: 400; background: #0600f4; }
+.bp-block {
+  position: absolute;
+  box-sizing: border-box;
+  border: 1px solid var(--bp-ink);
+  border-radius: 2px;
+  background: repeating-linear-gradient(-45deg, rgba(255, 255, 255, .28) 0 1px, transparent 1px 5px);
+  animation: bp-draw .34s var(--bp-ease) both;
+  animation-delay: calc(.56s + var(--i, 0) * .11s);
+}
+.bp-block--control { border-style: dashed; border-radius: 999px; background: none; }
+.bp-block--media {
+  background:
+    linear-gradient(to top right, transparent calc(50% - .5px), rgba(255, 255, 255, .5) calc(50% - .5px) calc(50% + .5px), transparent calc(50% + .5px)),
+    linear-gradient(to bottom right, transparent calc(50% - .5px), rgba(255, 255, 255, .5) calc(50% - .5px) calc(50% + .5px), transparent calc(50% + .5px));
+}
+.bp-block--line {
+  border: 0;
+  border-radius: 0;
+  background: rgba(255, 255, 255, .5);
+  animation-name: bp-across;
+  animation-delay: calc(.66s + var(--i, 0) * .11s);
+}
+.bp-fig, .bp-progress {
+  position: absolute;
+  bottom: 24px;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 9px;
+  line-height: 14px;
+  letter-spacing: .12em;
+  white-space: nowrap;
+  animation: bp-check .3s var(--bp-settle) both 1.3s;
+}
+.bp-fig { left: 32px; color: var(--bp-ink); }
+.bp-progress {
+  right: 32px;
+  padding: 0 5px;
+  border-radius: 2px;
+  background: #fff;
+  color: #0600f4;
+  animation-delay: .5s;
+}
+@keyframes bp-across { from { clip-path: inset(-8px 100% -8px 0); } to { clip-path: inset(-8px 0 -8px 0); } }
+@keyframes bp-draw   { from { clip-path: inset(-16px 100% -18px 0); opacity: .5; } to { clip-path: inset(-16px -160px -18px 0); opacity: 1; } }
+@keyframes bp-check  { from { opacity: 0; translate: 0 4px; } to { opacity: 1; translate: 0 0; } }
+/* the flood: the sheet dissolves under the white */
+.gate--on::before, .gate--on .bp-stage { opacity: 0 !important; transition: opacity .3s ease; }
+@media (prefers-reduced-motion: reduce) {
+  .bp-dim, .bp-block, .bp-fig, .bp-progress { animation: none; }
+  .gate::before, .rulers, .ruler, .ruler-sel, .ruler-cursor, .ruler-cursor-val, .gate-field { transition: none; }
 }
 
 /* mini footer toggle — same switch, colophon-scaled, starts ON */
@@ -278,7 +511,8 @@ a.chip:hover {
 
 /* ──── whiteboard / blueprint decoration ────
    A quiet graph-paper grid materializes with the white flood,
-   plus chanhdai-style column hairlines and hatched dividers.
+   plus chanhdai-style column hairlines and hatched dividers (grid and
+   frame lines both retired since — the hatched divider remains).
    Everything shares ONE coordinate system: the 32px cell, with
    origin at the container's top-left corner. Paddings (64 = 2
    cells, 96 = 3 cells), hairlines (32 = 1 cell) and dividers
@@ -296,12 +530,22 @@ html[data-reveal="pending"] { overflow: hidden; }
    doesn't change when the reveal unlocks scrolling — otherwise the
    centered gate toggle visibly shifts sideways mid-transition */
 html { scrollbar-gutter: stable; }
-/* never allow horizontal scroll */
+/* never allow horizontal scroll — the clip must live on the ROOT
+   element too: iOS Safari doesn't reliably propagate body's clip to
+   the viewport, so full-bleed rules + edge-bleed cards + off-screen
+   hover pops opened real sideways scroll on phones (hidden fallback
+   for engines without clip) */
+html { overflow-x: hidden; overflow-x: clip; }
 body { overflow-x: clip; }
 /* The grid scrolls with the page and spans the FULL viewport width;
    its pattern is phase-aligned to the container origin via JS
    (backgroundPositionX) so lines stay on the content coordinates. */
 .board-grid {
+  /* graph-paper pattern RETIRED (2026-08-09) — the page keeps the
+     outer hairlines + hatched dividers only; --board-cell still
+     drives every metric. Re-add the two linear-gradients here to
+     bring the squares back. */
+  display: none;
   position: absolute;
   top: 0;
   height: 100%;
@@ -309,9 +553,6 @@ body { overflow-x: clip; }
   width: 100vw;
   z-index: -1;
   pointer-events: none;
-  background-image:
-    linear-gradient(to right,  var(--board-grid) 1px, transparent 1px),
-    linear-gradient(to bottom, var(--board-grid) 1px, transparent 1px);
   background-size: var(--board-cell) var(--board-cell);
   opacity: 0;
 }
@@ -342,8 +583,10 @@ html[data-reveal="go"] .board-grid {
 .board-topline {
   position: absolute;
   top: var(--board-cell);
-  left: 0;
-  right: 0;
+  /* full-bleed: the rule runs to both viewport edges (overshoot is
+     clipped by body overflow-x: clip); content width is untouched */
+  left: calc(50% - 50vw);
+  width: 100vw;
   height: 1px;
   background: var(--rule);
   pointer-events: none;
@@ -381,13 +624,20 @@ html[data-reveal="go"] .container::before,
 html[data-reveal="go"] .container::after {
   animation: board-line-draw .5s cubic-bezier(.3, .6, .2, 1) 250ms both;
 }
+/* frame lines RETIRED (2026-09-14) — the rulers own the edges now; the
+   topline + column hairlines read as a second, redundant frame. Delete
+   these two rules to bring them back. */
+.board-topline { display: none; }
+.container::before, .container::after { content: none; }
 
 /* hatched divider bands — full-bleed 45° stripes between sections.
    Exactly 1 cell tall; JS snaps their top edge to a grid row, so
    both rules sit on background lines. */
 .board-divider {
-  /* span the whiteboard (container box), not the viewport — 100vw
-     includes the scrollbar and causes overflow + off-center bands */
+  /* the band BOX spans the whiteboard (container box) so its content
+     stays on the content grid; the ::before/::after strips below
+     continue the rules + hatch to the viewport edges */
+  position: relative;
   width: calc(100% + 2 * var(--pad-x));
   margin-left: calc(-1 * var(--pad-x));
   /* +1px so the bottom rule overlaps the next grid line exactly;
@@ -404,6 +654,24 @@ html[data-reveal="go"] .container::after {
     transparent 6px
   );
 }
+/* full-bleed extensions — same rules + hatch running to both viewport
+   edges (overshoot clipped by body overflow-x: clip). Absolutely
+   positioned, so they don't join the note band's flex layout and the
+   band's snapped geometry / content alignment stay exactly as-is. */
+.board-divider::before,
+.board-divider::after {
+  content: "";
+  position: absolute;
+  top: -1px;
+  bottom: -1px;
+  width: calc(50vw - 50%);
+  border-top: 1px solid var(--rule-2);
+  border-bottom: 1px solid var(--rule-2);
+  background-image: inherit;
+  pointer-events: none;
+}
+.board-divider::before { right: 100%; }
+.board-divider::after  { left: 100%; }
 
 @media (prefers-reduced-motion: reduce) {
   html[data-reveal="go"] .board-grid,
@@ -454,10 +722,9 @@ html[data-reveal="go"] .container::after {
 /* Grid + feed stretch to fill the full container width so cells / tiles get larger. */
 .grid-area {
   width: 100%;
-  /* cancel the container gap (2 cells): the feed starts flush at the
-     divider band's bottom rule, the tiles' 1-cell FIG row fills the
-     next square, so each THUMBNAIL starts exactly one square below
-     the divider */
+  /* cancel the container gap (2 cells) — the note band's own 2-cell
+     base margin (re-applied inside snap()) is what sets the space
+     above it, so hero → band stays exactly 2 cells */
   margin-top: calc(var(--board-cell) * -2);
 }
 
@@ -500,7 +767,9 @@ html[data-reveal="go"] .container::after {
   text-wrap: pretty;
 }
 /* chips-only row: a little air between pills */
-.headline-eyebrow .chip { margin-right: 6px; }
+/* wider gap now the pills are gone — bare marks need the air to read
+   as three separate names */
+.headline-eyebrow .chip { margin-right: 14px; }
 .headline {
   margin: 0;
   /* Google Sans (variable 400–500) for the big statement only —
@@ -550,6 +819,96 @@ html[data-bio-focus="surge"] .intro .bio-part[data-bio="surge"] { opacity: 1; }
 a.hand-word { text-decoration: none; border-bottom: 0; }
 a.hand-word:hover { text-decoration: underline; text-underline-offset: 3px; }
 
+/* brand names set in BODY type — no handwriting, just the brand color
+   (Jean's call for the intro links; the feed note keeps its hand-word) */
+.brand-word--konpo { color: #9747ff; }  /* matches .chip-logo--konpo */
+.brand-word--surge { color: #782396; }  /* matches .chip-logo--surge */
+.brand-word--accent { color: var(--accent); }  /* Konpo-blue, e.g. the feed note */
+a.brand-word { text-decoration: none; }
+a.brand-word:hover { text-decoration: underline; text-underline-offset: 3px; }
+
+/* the bio renders as a grid STACK — all four effort levels occupy the
+   same cell (ghosts invisible but sized), so the hero row is always as
+   tall as the LONGEST level and `elsewhere` never jumps on dial moves */
+.bio-stack { display: grid; }
+.bio-stack > .bio-layer { grid-area: 1 / 1; }
+.bio-layer--ghost { visibility: hidden; pointer-events: none; }
+
+/* ──── bio reasoning-effort dial ──── */
+/* bare track + 4 detents + accent thumb + level word — sits between
+   the .md line and the bio it rewrites; no label (Jean's call) */
+.vol {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  /* clear air between the dial and the bio it rewrites */
+  margin: 6px 0 20px;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;  /* no grey flash on iOS taps */
+}
+/* touch devices: the slider is fiddly — the input goes inert and a tap
+   anywhere on the dial steps to the next level (wraps at the end) */
+@media (pointer: coarse) {
+  .vol { cursor: pointer; }
+  .vol input[type="range"] { pointer-events: none; }
+}
+.vol-track {
+  position: relative;
+  width: 150px;
+  height: 16px;
+}
+.vol input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  background: none;
+  cursor: pointer;
+}
+.vol-line {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: var(--rule);
+}
+.vol-tick {
+  position: absolute;
+  top: 50%;
+  width: 1px;
+  height: 5px;
+  transform: translateY(-50%);
+  background: var(--muted-3);
+}
+.vol input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: 0;
+  transition: transform .15s ease;
+}
+.vol input[type="range"]:hover::-webkit-slider-thumb { transform: scale(1.25); }
+.vol input[type="range"]::-moz-range-thumb {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: 0;
+}
+.vol-level {
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent);
+  min-width: 78px;  /* fits ULTRACODE without shifting the row */
+}
+
 /* tiny "hear my name" button, inline after the name — lucide
    audio-lines in accent blue, bars pulse while speaking */
 .name-play {
@@ -561,12 +920,15 @@ a.hand-word:hover { text-decoration: underline; text-underline-offset: 3px; }
   padding: 0;
   border: 0;
   background: none;
-  color: var(--accent);
+  /* quiet grey at rest — the accent belongs to the dial now; the icon
+     earns its blue back on hover / while speaking */
+  color: var(--muted-2);
   cursor: pointer;
   vertical-align: -2px;
-  transition: transform .14s ease, opacity .14s ease;
+  transition: transform .14s ease, opacity .14s ease, color .14s ease;
 }
-.name-play:hover { transform: scale(1.15); }
+.name-play:hover { transform: scale(1.15); color: var(--accent); }
+.name-play--on { color: var(--accent); }
 .name-play--on svg { animation: name-pulse 0.9s ease-in-out infinite; }
 @keyframes name-pulse {
   0%, 100% { opacity: 1; }
@@ -913,14 +1275,18 @@ html[data-reveal="go"] .contrib-cell {
   pointer-events: none;
   transition: opacity .18s ease, transform .18s ease;
   z-index: 30;
-  width: 180px;
+  /* BIG — Jean: "visible when hovering, not small" */
+  width: min(380px, 70vw);
   border: 0.5px solid var(--rule);
   background: var(--paper);
   border-radius: var(--radius);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.10);
-  padding: 4px;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.14);
+  padding: 5px;
   overflow: hidden;
 }
+/* portrait art (certificates, covers) stays narrower so it doesn't
+   blow past the viewport top */
+.media-pop--tall { width: min(260px, 55vw); }
 .ulink--media:hover .media-pop {
   opacity: 1;
   transform: translate(-50%, 0);
@@ -928,25 +1294,35 @@ html[data-reveal="go"] .contrib-cell {
 .media-pop-img {
   display: block;
   width: 100%;
-  aspect-ratio: 4 / 3;
+  aspect-ratio: 3 / 2;
   background-size: cover;
   background-position: center;
   border-radius: calc(var(--radius) - 4px);
 }
-.media-pop-img--snow {
-  background-color: #d6e3ee;
-  background-image:
-    radial-gradient(circle at 30% 20%, rgba(255,255,255,0.9) 0%, transparent 30%),
-    radial-gradient(circle at 70% 60%, rgba(255,255,255,0.7) 0%, transparent 35%),
-    linear-gradient(180deg, #c8d8e8 0%, #8aa6c4 60%, #4a6480 100%);
-}
-.media-pop-img--surf {
-  background-color: #1d4a6e;
-  background-image:
-    radial-gradient(ellipse at 50% 70%, rgba(255,255,255,0.8) 0%, transparent 25%),
-    repeating-linear-gradient(180deg, rgba(255,255,255,0.08) 0 4px, transparent 4px 10px),
-    linear-gradient(180deg, #2c8aa6 0%, #1d4a6e 70%, #0f2a44 100%);
-}
+/* real photos (ski/surf = Jean's shots; the rest are konpo.studio's
+   about-section hover set), each at its natural ratio.
+   PERF: browsers fetch background-images even at opacity 0, so all
+   ~1.3MB of pops competed with the hero at first paint — the images
+   are gated behind body.pops-armed, added on idle after load (the
+   intro takes ~7s to type; nobody hovers before the pops are armed) */
+.media-pop-img--awwwards    { aspect-ratio: 511 / 677; }
+.media-pop-img--webby       { aspect-ratio: 538 / 671; }
+.media-pop-img--producthunt { aspect-ratio: 717 / 404; }
+.media-pop-img--timcook     { aspect-ratio: 717 / 404; }
+.media-pop-img--appstore    { aspect-ratio: 717 / 404; }
+.media-pop-img--forbes      { aspect-ratio: 554 / 704; }
+.media-pop-img--president   { aspect-ratio: 315 / 420; }
+.media-pop-img--terrycrews  { aspect-ratio: 462 / 663; }
+.pops-armed .media-pop-img--snow        { background-image: url("uploads/hover/ski.jpg"); }
+.pops-armed .media-pop-img--surf        { background-image: url("uploads/hover/surf.jpg"); }
+.pops-armed .media-pop-img--awwwards    { background-image: url("uploads/hover/awwwards.png"); }
+.pops-armed .media-pop-img--webby       { background-image: url("uploads/hover/webby.png"); }
+.pops-armed .media-pop-img--producthunt { background-image: url("uploads/hover/producthunt.png"); }
+.pops-armed .media-pop-img--timcook     { background-image: url("uploads/hover/timcook.png"); }
+.pops-armed .media-pop-img--appstore    { background-image: url("uploads/hover/appstore.png"); }
+.pops-armed .media-pop-img--forbes      { background-image: url("uploads/hover/forbes.jpg"); }
+.pops-armed .media-pop-img--president   { background-image: url("uploads/hover/president.jpg"); }
+.pops-armed .media-pop-img--terrycrews  { background-image: url("uploads/hover/terrycrews.jpg"); }
 
 .intro-meta {
   display: flex;
@@ -979,27 +1355,26 @@ html[data-reveal="go"] .contrib-cell {
      gap above `elsewhere`. NOTE: snap() re-applies this as an inline
      base margin (plus the grid nudge), so keep the two in step. */
   margin-top: calc(var(--board-cell) * 2);
-  margin-bottom: var(--board-cell);
+  /* 2 cells of air before the first tiles — same rhythm as the rows */
+  margin-bottom: calc(var(--board-cell) * 2);
 }
 .feed-note {
+  /* bare heading, no paper plate (Jean's call) — sits straight on the
+     band's hatch, plain ink */
   margin: 0;
   max-width: 62ch;
-  padding: 10px 16px;
-  background: var(--paper);
-  border: 1px solid var(--rule);
-  font-size: 14px;
-  line-height: 1.55;
-  color: var(--muted);
+  font-family: var(--sans);
+  font-size: 17px;
+  font-weight: 500;
+  letter-spacing: -0.005em;
+  line-height: 1.45;
+  color: var(--ink);
   text-wrap: pretty;
 }
 
-/* filter dropdowns — options derive from the data, so new tags (gov,
-   unicorn, fun…) appear the moment work carries them */
-.feed-filters {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
+/* filtering lives ONLY in the sticky capsule (single FilterMenu chip);
+   options still derive from the data, so new tags (gov, unicorn, fun…)
+   appear the moment work carries them */
 .fselect-wrap { position: relative; display: inline-flex; }
 .fselect {
   appearance: none;
@@ -1070,8 +1445,39 @@ html[data-reveal="go"] .contrib-cell {
 }
 .fmenu-item:hover { background: rgba(0, 0, 0, 0.05); color: var(--ink); }
 .fmenu-item--on { color: var(--accent); }
+/* grouped single-chip menu — the three dimensions sit SIDE BY SIDE
+   (Jean: horizontal, not stacked), centered under the chip */
+.fmenu--grouped {
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 8px 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  animation: fmenu-in-centered .16s cubic-bezier(.2, .7, .2, 1) both;
+}
+@keyframes fmenu-in-centered {
+  from { opacity: 0; transform: translate(-50%, -3px); }
+  to   { opacity: 1; transform: translate(-50%, 0); }
+}
+.fmenu-group {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.fmenu-label {
+  padding: 4px 10px 5px;
+  font-size: 8px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted-3);
+  user-select: none;
+  white-space: nowrap;
+}
 
-/* sticky filter capsule — fixed at the top once the band scrolls away */
+/* sticky filter chip — fixed at the top once the band scrolls away.
+   No capsule chrome (Jean's call): the chip floats alone; its own
+   paper fill + border keep it readable over content. */
 .feed-filters-sticky {
   position: fixed;
   top: 14px;
@@ -1079,27 +1485,66 @@ html[data-reveal="go"] .contrib-cell {
   transform: translateX(-50%);
   z-index: 45;
   display: flex;
-  flex-wrap: wrap;
+  align-items: center;
   justify-content: center;
-  gap: 8px;
-  max-width: calc(100vw - 32px);
-  padding: 8px;
-  background: rgba(251, 251, 251, 0.85);
-  -webkit-backdrop-filter: blur(12px);
-  backdrop-filter: blur(12px);
-  border: 1px solid var(--rule);
-  border-radius: 999px;
-  box-shadow: 0 8px 28px rgba(10, 10, 20, 0.10);
+  gap: 6px;
   animation: sticky-in .22s cubic-bezier(.2, .7, .2, 1) both;
 }
+.feed-filters-sticky .fselect { box-shadow: 0 6px 20px rgba(10, 10, 20, 0.10); }
 @keyframes sticky-in {
   from { opacity: 0; transform: translate(-50%, -8px); }
   to   { opacity: 1; transform: translate(-50%, 0); }
 }
-/* mobile: keep the three triggers side by side — shrink, don't stack */
+/* in the sticky capsule the chip text (and its currentColor chevron)
+   goes Konpo-blue — reads as "live controls" once detached from the band */
+.feed-filters-sticky .fselect,
+.feed-filters-sticky .fselect:hover { color: var(--accent); }
+
+/* icon-only funnel trigger — matches the dice pill; when a filter is
+   live the pill fills solid accent so the state reads at a glance */
+.fselect--icon { padding: 5px 9px; }
+.fselect--icon svg { display: block; }
+.feed-filters-sticky .fselect--icon.fselect--on,
+.feed-filters-sticky .fselect--icon.fselect--on:hover {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+/* dice — random shuffle, sits beside the sticky chip; the die itself
+   spring-tumbles on every roll */
+.fdice {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 5px 9px;
+  border: 1px solid var(--rule);
+  background: var(--paper);
+  border-radius: 999px;
+  color: var(--accent);
+  cursor: pointer;
+  transition: border-color .14s ease;
+  box-shadow: 0 6px 20px rgba(10, 10, 20, 0.10);
+}
+.fdice:hover { border-color: var(--muted-3); }
+/* shuffle is a MODE — solid accent while it's on */
+.fdice--on,
+.fdice--on:hover { background: var(--accent); border-color: var(--accent); color: #fff; }
+.fdice-die { display: block; }
+@keyframes dice-roll {
+  0%   { transform: rotate(0deg) scale(1); }
+  45%  { transform: rotate(215deg) scale(1.25); }
+  100% { transform: rotate(360deg) scale(1); }
+}
+.fdice-die--roll { animation: dice-roll .55s cubic-bezier(.3, .7, .2, 1.25); }
+@media (prefers-reduced-motion: reduce) {
+  .fdice-die--roll { animation: none; }
+}
+/* mobile: slightly tighter chip + menu columns that fit the viewport */
 @media (max-width: 520px) {
-  .feed-filters-sticky { flex-wrap: nowrap; gap: 5px; padding: 6px; }
-  .feed-filters-sticky .fselect { padding: 4px 8px; font-size: 9px; gap: 5px; }
+  .feed-filters-sticky .fselect { padding: 4px 10px; font-size: 9px; gap: 5px; }
+  .fmenu--grouped { gap: 8px; max-width: calc(100vw - 20px); overflow-x: auto; }
 }
 
 /* "Gimmie More" — repurposed footer switch, centered under the feed;
@@ -1114,19 +1559,68 @@ html[data-reveal="go"] .contrib-cell {
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
 }
-.more-label {
+/* the Gimmie More control is a plain outline button now — the only
+   switch left below the feed is the lights-out one in the colophon */
+.more-btn {
+  -webkit-tap-highlight-color: transparent;
+  border: 1px solid var(--rule);
+  background: none;
+  border-radius: 999px;
+  padding: 13px 26px;
+  cursor: pointer;
   font-size: 10px;
   letter-spacing: 0.14em;
   color: var(--muted-2);
-  transition: color .14s ease;
+  transition: color .16s ease, border-color .16s ease, transform .16s ease;
 }
-.more-row:hover .more-label { color: var(--ink); }
-/* the Gimmie More switch wears the accent at rest — always blue,
-   knob slides across it on each pull */
-.more-row .gate-toggle--mini,
-.more-row .gate-toggle--mini:hover,
-.more-row .gate-toggle--mini.gate-toggle--on { background: var(--accent); }
-.more-row:hover .gate-toggle--mini { filter: brightness(1.12); }
+.more-btn:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+.more-btn:active,
+.more-btn--busy { transform: scale(0.96); }
+@media (prefers-reduced-motion: reduce) { .more-btn { transition: none; } }
+
+/* ── the switch field (weather widget's old spot) ─────────────────
+   Mirrors .gate-toggle--mini, but rests ON: accent track, knob right.
+   .tfield--off slides every knob left + grays every track in unison. */
+.tfield {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+  margin: 0 auto 34px;
+}
+.tfield-switch {
+  -webkit-tap-highlight-color: transparent;
+  position: relative;
+  width: 58px;
+  height: 32px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--accent);
+  cursor: pointer;
+  padding: 0;
+  transition: background-color .45s ease;
+}
+.tfield-switch:hover { filter: brightness(1.12); }
+.tfield--off .tfield-switch { background: rgba(0, 0, 0, 0.14); }
+.tfield-knob {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
+  transform: translateX(26px); /* resting ON */
+  transition: transform .32s ease;
+}
+.tfield--off .tfield-knob { transform: translateX(0); }
+@media (prefers-reduced-motion: reduce) {
+  .tfield-switch, .tfield-knob { transition: none; }
+}
 
 /* weather sign-off — meteocon + big type, centered above the footer
    divider; fades in when the line lands, absent if it can't */
@@ -1188,7 +1682,10 @@ html[data-reveal="go"] .contrib-cell {
   align-items: start;
   column-count: 2;
 }
-@media (max-width: 480px)  { .feed-masonry { column-count: 1; } }
+@media (max-width: 480px) {
+  .feed-masonry { column-count: 1; }
+  .board-divider--note { margin-bottom: var(--board-cell); }
+}
 /* desktop: tiles stagger across the 12-track grid (spans/offsets in JS).
    Mobile/tablet keep one track per tile — no --cspan/--cmt applied. */
 @media (min-width: 901px) {
@@ -1250,7 +1747,10 @@ html[data-reveal="go"] .contrib-cell {
   text-align: left;
   width: 100%;
   display: block;
-  margin: 0 0 var(--board-cell);
+  /* 3 cells of clean air between rows — the tiles carry no text, so
+     the margin alone sets the vertical rhythm; generous so the
+     alternating row offsets read as a weave, not a crooked grid */
+  margin: 0 0 calc(var(--board-cell) * 3);
   break-inside: avoid;
   text-decoration: none;
   color: inherit;
@@ -1260,7 +1760,16 @@ html[data-reveal="go"] .contrib-cell {
 .asset-tile--cover { position: relative; }
 .asset-tile--cover .asset-media { transition: transform .18s ease; }
 .asset-tile--cover:hover .asset-media { transform: translateY(-2px); }
-.asset-tile--cover:hover .asset-title { color: var(--ink); text-decoration: underline; text-underline-offset: 3px; }
+/* phones follow recent.design's mobile rhythm: one tight single-column
+   stream, 12px apart (their measured gap) — not the desktop 3-cell air.
+   Lives AFTER the base .asset-tile rule so the cascade favors it. */
+@media (max-width: 480px) {
+  .asset-tile { margin: 0 0 12px; }
+  /* cards run closer to the viewport edges than the page column
+     (~16px effective, like recent.design) — the media is opaque, so
+     the vertical hairlines simply pass behind the stream */
+  .feed-masonry { margin-left: -16px; margin-right: -16px; }
+}
 
 /* ──── expanded view (recent.design-style) ──── */
 /* bare lightbox — no panel: the asset at its max viewport fit over a
@@ -1273,6 +1782,8 @@ html[data-reveal="go"] .contrib-cell {
   align-items: center;
   justify-content: center;
   padding: clamp(14px, 3.5vw, 48px);
+  /* keep the media clear of the bottom caption */
+  padding-bottom: 64px;
   background: rgba(251, 251, 251, 0.55);
   backdrop-filter: blur(22px);
   -webkit-backdrop-filter: blur(22px);
@@ -1298,6 +1809,35 @@ html[data-reveal="go"] .contrib-cell {
   transition: color .14s ease, border-color .14s ease;
 }
 .work-modal-close:hover { color: var(--ink); border-color: var(--muted-3); }
+/* quiet caption pinned to the bottom edge — the ONLY place a shot's
+   FIG / title / category surface; clicks pass through to the backdrop */
+.work-modal-caption {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 18px;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  text-align: center;
+  padding: 0 16px;
+  pointer-events: none;
+}
+.work-modal-caption-title {
+  font-family: var(--sans);
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: -0.005em;
+  color: var(--ink);
+}
+.work-modal-caption-meta {
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  color: var(--muted-2);
+  white-space: nowrap;
+}
 .work-lightbox-media {
   display: block;
   max-width: 100%;
@@ -1340,13 +1880,24 @@ html[data-reveal="go"] .contrib-cell {
 /* frame wraps the media so corner marks can sit outside its clipped edges */
 .asset-frame { position: relative; }
 
-/* media block — quiet gray canvas, sharp blueprint corners */
+/* media block — quiet gray canvas, small radius + hairline stroke
+   (recent.design-style card: the ring sits ON TOP of the media edge) */
 .asset-media {
   position: relative;
   width: 100%;
   background: var(--surface);
   overflow: hidden;
-  box-shadow: inset 0 0 0 0.5px rgba(0, 0, 0, 0.06);
+  border-radius: 10px;
+}
+/* the ring rides above the media (children paint over an inset shadow) */
+.asset-media::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.08);
+  pointer-events: none;
+  z-index: 1;
 }
 .asset-media--img img {
   display: block;
@@ -1373,59 +1924,8 @@ html[data-reveal="go"] .contrib-cell {
   justify-content: center;
 }
 
-/* figure number — floats in the single grid square ABOVE the media,
-   right-aligned; exactly one cell tall so tile pitch stays on-grid */
-.asset-fig {
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
-  height: var(--board-cell);
-  margin: 0 2px;
-  font-size: 9px;
-  letter-spacing: 0.08em;
-  color: var(--muted-3);
-  white-space: nowrap;
-}
-
-/* meta row below the media — exactly one grid cell tall so tile
-   pitch (media + meta + margin) stays a whole number of cells */
-.asset-meta {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  height: var(--board-cell);
-  margin: 0 2px;
-}
-.asset-meta-left {
-  display: flex;
-  align-items: baseline;
-  gap: 8px;
-  min-width: 0;
-}
-.asset-idx {
-  font-size: 9px;
-  letter-spacing: 0.08em;
-  color: var(--muted-3);
-  white-space: nowrap;
-  flex-shrink: 0;
-}
-.asset-title {
-  font-family: var(--sans);
-  font-size: 13px;
-  font-weight: 500;
-  letter-spacing: -0.005em;
-  line-height: 1.4;
-  color: var(--ink);
-}
-.asset-note {
-  font-size: 10px;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  color: var(--muted-2);
-  white-space: nowrap;
-  flex-shrink: 0;
-}
+/* tile chrome (FIG / title / category) removed from the feed — that
+   info lives in the WorkModal caption now, surfaced only on tap */
 
 /* dealt-in entrance — tiles mounted after a Gimmie More (or filter)
    cascade in one by one, 70ms apart, instead of joining the page-load
@@ -1601,16 +2101,36 @@ html[data-reveal="go"] .contrib-cell {
 
 /* elsewhere column: each link is a full-width ruled row, so the
    rules visibly extend to the content's right edge */
-.top-elsewhere .footer-links { gap: 0; }
-.top-elsewhere .footer-links li { border-bottom: 1px solid var(--rule); }
-.top-elsewhere .footer-links li:first-child { border-top: 1px solid var(--rule); }
-.top-elsewhere .footer-links .ulink {
+.top-elsewhere .footer-links,
+.bottom-elsewhere .footer-links { gap: 0; }
+.top-elsewhere .footer-links li,
+.bottom-elsewhere .footer-links li { border-bottom: 1px solid var(--rule); }
+.top-elsewhere .footer-links li:first-child,
+.bottom-elsewhere .footer-links li:first-child { border-top: 1px solid var(--rule); }
+.top-elsewhere .footer-links .ulink,
+.bottom-elsewhere .footer-links .ulink {
   display: block;
   width: 100%;
   padding: 9px 0;
   border-bottom: none;
 }
-.top-elsewhere .footer-links .ulink:hover { color: var(--accent); }
+.top-elsewhere .footer-links .ulink:hover,
+.bottom-elsewhere .footer-links .ulink:hover { color: var(--accent); }
+
+/* mobile twin of `elsewhere` — hidden on desktop; ≤900px it replaces
+   the hero copy below the footer divider, rows bleeding edge to edge
+   while the text keeps the content margin */
+.bottom-elsewhere { display: none; }
+@media (max-width: 900px) {
+  .top-elsewhere { display: none; }
+  .bottom-elsewhere {
+    display: block;
+    width: 100vw;
+    margin-left: calc(50% - 50vw);
+  }
+  .bottom-elsewhere .footer-label { padding: 0 var(--pad-x); }
+  .bottom-elsewhere .footer-links .ulink { padding: 9px var(--pad-x); }
+}
 .footer-note {
   font-size: 11px;
   color: var(--muted);

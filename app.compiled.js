@@ -395,15 +395,137 @@ function haptic(ms = 12) {
 // Gate — the site opens dark with a single light switch.
 // Flipping it floods the page white and starts the reveal.
 // ─────────────────────────────────────────────────────────────
+// ─── the blueprint sheet: traced from the REAL page ─────────────
+// The site is already laid out behind the gate (held at opacity 0 by
+// data-reveal="pending"), so the draft measures the actual DOM: every
+// text line of the headline / lede / bio, the eyebrow chips, the
+// elsewhere rows, any tile inside the viewport, plus the frame's true
+// width. When the flood comes, the content lands exactly where its
+// block was drawn.
+// the whiteboard frame = the container's CONTENT box: its top-left
+// corner is the rulers' origin, its width the blueprint's dimension
+function frameRect() {
+  const cont = document.querySelector('.container');
+  if (!cont) return null;
+  const b = cont.getBoundingClientRect();
+  const cs = getComputedStyle(cont);
+  const pl = parseFloat(cs.paddingLeft) || 0;
+  const pr = parseFloat(cs.paddingRight) || 0;
+  const pt = parseFloat(cs.paddingTop) || 0;
+  return {
+    x: b.left + pl,
+    y: b.top + pt,
+    w: b.width - pl - pr,
+    h: b.height - pt
+  };
+}
+function lineRects(el) {
+  if (!el) return [];
+  const range = document.createRange();
+  range.selectNodeContents(el);
+  const lines = [];
+  Array.from(range.getClientRects()).forEach(r => {
+    if (r.width < 1 || r.height < 1) return;
+    const l = lines.find(L => Math.abs(L.top - r.top) < r.height * 0.6);
+    if (l) {
+      l.left = Math.min(l.left, r.left);
+      l.right = Math.max(l.right, r.right);
+      l.top = Math.min(l.top, r.top);
+      l.bottom = Math.max(l.bottom, r.bottom);
+    } else lines.push({
+      left: r.left,
+      right: r.right,
+      top: r.top,
+      bottom: r.bottom
+    });
+  });
+  return lines.map(L => ({
+    x: L.left,
+    y: L.top,
+    w: L.right - L.left,
+    h: L.bottom - L.top
+  }));
+}
+function measureBlueprint() {
+  const vh = window.innerHeight;
+  const blocks = [];
+  const push = (kind, i, r) => {
+    if (!r || r.w < 1 || r.h < 1 || r.y > vh + 24 || r.y + r.h < -24) return;
+    blocks.push({
+      kind,
+      i,
+      x: Math.round(r.x),
+      y: Math.round(r.y),
+      w: Math.round(r.w),
+      h: Math.round(r.h)
+    });
+  };
+  const rect = el => {
+    if (!el) return null;
+    const b = el.getBoundingClientRect();
+    return {
+      x: b.left,
+      y: b.top,
+      w: b.width,
+      h: b.height
+    };
+  };
+  const q = s => document.querySelector(s);
+  const qa = s => Array.from(document.querySelectorAll(s));
+  // `i` is the draw order (stagger group), top of the page first
+  qa('.headline-eyebrow .chip').forEach(el => push('control', 0, rect(el)));
+  lineRects(q('.headline')).forEach((r, k) => push('head', 1 + Math.min(k, 1), r));
+  lineRects(q('.intro-heading')).forEach(r => push('text', 3, r));
+  lineRects(q('.bio-layer:not(.bio-layer--ghost)')).forEach((r, k) => push('text', 4 + k % 2, r));
+  push('text', 6, rect(q('.top-elsewhere .footer-label')));
+  qa('.top-elsewhere .footer-links li').forEach(li => {
+    lineRects(li).forEach(t => push('text', 6, t));
+    const r = rect(li);
+    if (r) push('line', 6, {
+      x: r.x,
+      y: r.y + r.h - 1,
+      w: r.w,
+      h: 1
+    });
+  });
+  push('text', 7, rect(q('.feed-note')));
+  qa('.asset-tile').forEach((el, k) => push('media', 7 + Math.min(k, 2), rect(el)));
+  return {
+    blocks,
+    frame: frameRect()
+  };
+}
 function Gate({
   onEnter,
-  entering
+  entering,
+  count = 1,
+  blueprint = false
 }) {
   const [on, setOn] = useState(false); // click registered
   const [lit, setLit] = useState(false); // the switch finally gave in
   const [gone, setGone] = useState(false);
-  const knobRef = useRef(null);
+  const [draft, setDraft] = useState(null); // { blocks, frame } while the blueprint beat runs
+  const [warm, setWarm] = useState({
+    done: WARM.done,
+    total: WARM.total
+  });
+  const knobRefs = useRef([]); // one knob per switch — all move as one
   const inputRef = useRef(null);
+
+  // warmup progress feeds the sheet's counter
+  useEffect(() => {
+    const onWarm = w => setWarm({
+      done: w.done,
+      total: w.total
+    });
+    WARM.listeners.add(onWarm);
+    return () => WARM.listeners.delete(onWarm);
+  }, []);
+  // the page rulers highlight the frame's extent while the draft is up
+  useEffect(() => {
+    document.documentElement.classList.toggle('bp-draft', !!draft);
+    return () => document.documentElement.classList.remove('bp-draft');
+  }, [draft]);
 
   // Delayed ticks are Android-only (vibrate). iOS gates ALL synthetic
   // switch clicks — confirmed on-device — so there the choreography is
@@ -416,10 +538,11 @@ function Gate({
   const flip = () => {
     if (on) return;
     setOn(true);
-    const knob = knobRef.current;
+    const knobs = knobRefs.current.filter(Boolean);
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     // The knob struggles: shoves forward, slips back, strains, loses
     // grip, then breaks free. The lights only come on when it lands.
+    // With a multiplied gate, EVERY knob runs the struggle in unison.
     const SUCCESS = reduced || !window.__anime ? 0 : 1350;
     // Haptics follow the struggle. The press tick comes from the native
     // switch itself; these are the slips and the win.
@@ -428,7 +551,7 @@ function Gate({
       setTimeout(() => tick(8), 960); // loses grip
     }
     setTimeout(() => tick(24), SUCCESS); // breaks free — lights on
-    if (knob) {
+    knobs.forEach(knob => {
       if (reduced) {
         knob.style.transform = 'translateX(52px)';
       } else if (window.__anime) {
@@ -469,94 +592,290 @@ function Gate({
         knob.style.transition = 'transform .45s cubic-bezier(.3, .8, .3, 1)';
         knob.style.transform = 'translateX(52px)';
       }
-    }
-    // Success: track fills, chime plays, dots become the grid
-    setTimeout(() => {
+    });
+    // Success: track fills, chime plays, the page floods in
+    const flood = () => {
       setLit(true);
       playConfirm();
-    }, SUCCESS);
-    setTimeout(onEnter, SUCCESS + 600);
-    setTimeout(() => setGone(true), SUCCESS + 1500);
+      setTimeout(onEnter, 600);
+      setTimeout(() => setGone(true), 1500);
+    };
+    if (!blueprint || reduced) {
+      setTimeout(flood, SUCCESS);
+      return;
+    }
+    // First visit: the DRAFT beat between the knob landing and the
+    // flood. The switch steps aside and the page gets drawn on the
+    // blue like a Figma sheet — rulers, 100px grid, hatched wireframe —
+    // while the asset warmup finishes behind it. Held at least MIN so
+    // the drawing reads, stretched until the warmup is done, never
+    // past MAX (a slow network must not hold the door).
+    setTimeout(() => {
+      setDraft(measureBlueprint());
+      // ?bp=hold parks the sheet for design review — any click floods
+      if (new URLSearchParams(window.location.search).get('bp') === 'hold') {
+        window.addEventListener('pointerdown', flood, {
+          once: true
+        });
+        return;
+      }
+      const t0 = performance.now();
+      const MIN = 1700,
+        MAX = 2800;
+      const check = () => {
+        const el = performance.now() - t0;
+        const warmDone = WARM.total === 0 || WARM.done >= WARM.total;
+        if (el >= MAX || el >= MIN && warmDone) flood();else setTimeout(check, 100);
+      };
+      check();
+    }, SUCCESS + 180);
   };
+  const pad = n => String(n).padStart(3, '0');
+  const warmDone = warm.total > 0 && warm.done >= warm.total;
   if (gone) return null;
   // A real native switch input (invisible, full-size) sits under the
   // finger: on iOS the tap toggles an actual switch control, so the
   // system haptic fires natively — no programmatic .click() to gate.
+  // Each return trip doubles the field (2, 4, 8 …) — flipping ANY
+  // switch flips them ALL: one shared `on/lit` state, one knob anim.
   return /*#__PURE__*/React.createElement("div", {
-    className: `gate ${lit ? 'gate--on' : ''} ${entering ? 'gate--fadein' : ''}`
-  }, /*#__PURE__*/React.createElement("label", {
+    className: `gate ${lit ? 'gate--on' : ''} ${entering ? 'gate--fadein' : ''} ${draft ? 'gate--draft' : ''}`
+  }, /*#__PURE__*/React.createElement("div", {
+    className: `gate-field ${count > 1 ? 'gate-field--many' : ''}`
+  }, Array.from({
+    length: count
+  }, (_, i) => /*#__PURE__*/React.createElement("label", {
+    key: i,
     className: `gate-toggle ${lit ? 'gate-toggle--on' : ''}`
   }, /*#__PURE__*/React.createElement("input", {
     type: "checkbox",
     switch: "",
     className: "gate-toggle-input",
-    ref: inputRef,
+    ref: i === 0 ? inputRef : undefined,
     checked: on,
     onChange: flip,
     "aria-label": "Turn on the lights"
   }), /*#__PURE__*/React.createElement("span", {
     className: "gate-toggle-knob",
-    ref: knobRef
-  })));
+    ref: el => {
+      knobRefs.current[i] = el;
+    }
+  })))), draft && /*#__PURE__*/React.createElement("div", {
+    className: "bp-stage",
+    "aria-hidden": "true"
+  }, draft.frame && /*#__PURE__*/React.createElement("div", {
+    className: "bp-dim",
+    style: {
+      top: Math.max(34, draft.frame.y - 14),
+      left: draft.frame.x,
+      width: draft.frame.w
+    }
+  }, /*#__PURE__*/React.createElement("b", null, Math.round(draft.frame.w))), draft.blocks.map((b, k) => /*#__PURE__*/React.createElement("i", {
+    key: k,
+    className: `bp-block bp-block--${b.kind}`,
+    style: {
+      '--i': b.i,
+      left: b.x,
+      top: b.y,
+      width: b.w,
+      height: b.h
+    }
+  })), /*#__PURE__*/React.createElement("span", {
+    className: "bp-fig"
+  }, "FIG_000 \xB7 DRAFT"), /*#__PURE__*/React.createElement("span", {
+    className: "bp-progress"
+  }, warmDone ? 'ASSETS WARM ✓' : `WARMING ASSETS ${pad(warm.done)}/${pad(warm.total)}`)));
 }
 
-// Mini toggle in the footer — flips the site back off.
-// "Gimmie More" — the footer light-switch, repurposed: flip it and the
-// feed deals another hand of shots. The knob slides on, then springs
-// back off, ready for the next pull. Hidden once everything's dealt.
+// ─── rulers — Figma's, on the whiteboard ───────────────────────
+// Fixed strips along the top + left edge: minor ticks every 10px,
+// majors every 100px, numbers just past each major (the vertical ones
+// read bottom-to-top). Origin (0,0) = the frame's top-left corner, so
+// the x-axis runs negative into the left margin and the y-axis counts
+// down the page as you scroll. White on the gate's blue, hairline grey
+// on paper; ≤900px they only live while the gate is up. The origin is
+// also published as html vars so the gate's grid phase-locks to it.
+// A cursor tracker rides both strips (Photoshop's ruler marker): a blue
+// hair at the pointer's x / y with its frame coordinate. It is driven
+// straight through the DOM (--cx/--cy + textContent), never a
+// re-render per mousemove; the y readout also refreshes on scroll.
+function Rulers() {
+  const [m, setM] = useState({
+    x0: 0,
+    oy: 0,
+    w: window.innerWidth,
+    h: window.innerHeight,
+    fw: 0
+  });
+  const rootRef = useRef(null);
+  const cxRef = useRef(null);
+  const cyRef = useRef(null);
+  useEffect(() => {
+    let raf = 0,
+      ptrRaf = 0;
+    const origin = {
+      x0: 0,
+      oy: 0
+    };
+    const ptr = {
+      x: -1,
+      y: -1,
+      on: false
+    };
+    const track = () => {
+      ptrRaf = 0;
+      const root = rootRef.current;
+      if (!root) return;
+      root.classList.toggle('rulers--track', ptr.on);
+      if (!ptr.on) return;
+      root.style.setProperty('--cx', `${ptr.x}px`);
+      root.style.setProperty('--cy', `${ptr.y}px`);
+      if (cxRef.current) cxRef.current.textContent = Math.round(ptr.x - origin.x0);
+      if (cyRef.current) cyRef.current.textContent = Math.round(ptr.y - origin.oy);
+    };
+    const queueTrack = () => {
+      if (!ptrRaf) ptrRaf = requestAnimationFrame(track);
+    };
+    const measure = () => {
+      raf = 0;
+      const r = frameRect() || {
+        x: 0,
+        y: 0,
+        w: 0
+      };
+      const x0 = Math.round(r.x);
+      const oy = Math.round(r.y); // the origin's current viewport y
+      origin.x0 = x0;
+      origin.oy = oy;
+      setM({
+        x0,
+        oy,
+        w: window.innerWidth,
+        h: window.innerHeight,
+        fw: Math.round(r.w)
+      });
+      const html = document.documentElement.style;
+      html.setProperty('--x0', `${x0}px`);
+      html.setProperty('--y0v', `${oy}px`);
+      queueTrack();
+    };
+    const queue = () => {
+      if (!raf) raf = requestAnimationFrame(measure);
+    };
+    const move = e => {
+      if (e.pointerType && e.pointerType !== 'mouse') return; // no cursor to track on touch
+      ptr.x = e.clientX;
+      ptr.y = e.clientY;
+      ptr.on = true;
+      queueTrack();
+    };
+    const leave = () => {
+      ptr.on = false;
+      queueTrack();
+    };
+    measure();
+    const late = setTimeout(measure, 1300); // after snap() settles the frame width
+    window.addEventListener('scroll', queue, {
+      passive: true
+    });
+    window.addEventListener('resize', queue);
+    window.addEventListener('load', queue);
+    window.addEventListener('pointermove', move, {
+      passive: true
+    });
+    document.documentElement.addEventListener('pointerleave', leave);
+    window.addEventListener('blur', leave);
+    return () => {
+      clearTimeout(late);
+      cancelAnimationFrame(raf);
+      cancelAnimationFrame(ptrRaf);
+      window.removeEventListener('scroll', queue);
+      window.removeEventListener('resize', queue);
+      window.removeEventListener('load', queue);
+      window.removeEventListener('pointermove', move);
+      document.documentElement.removeEventListener('pointerleave', leave);
+      window.removeEventListener('blur', leave);
+    };
+  }, []);
+  const labels = (size, origin) => {
+    const out = [];
+    for (let v = Math.ceil(-origin / 100) * 100; v <= size - origin; v += 100) out.push(v);
+    return out;
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    className: "rulers",
+    ref: rootRef,
+    "aria-hidden": "true"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "ruler ruler--x",
+    style: {
+      '--o': `${m.x0}px`
+    }
+  }, labels(m.w, m.x0).map(v => /*#__PURE__*/React.createElement("span", {
+    key: v,
+    style: {
+      left: m.x0 + v
+    }
+  }, v)), /*#__PURE__*/React.createElement("i", {
+    className: "ruler-sel",
+    style: {
+      left: m.x0,
+      width: m.fw
+    }
+  }), /*#__PURE__*/React.createElement("i", {
+    className: "ruler-cursor"
+  }), /*#__PURE__*/React.createElement("span", {
+    className: "ruler-cursor-val",
+    ref: cxRef
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "ruler ruler--y",
+    style: {
+      '--o': `${m.oy}px`
+    }
+  }, labels(m.h, m.oy).map(v => /*#__PURE__*/React.createElement("span", {
+    key: v,
+    style: {
+      top: m.oy + v
+    }
+  }, v)), /*#__PURE__*/React.createElement("i", {
+    className: "ruler-cursor"
+  }), /*#__PURE__*/React.createElement("span", {
+    className: "ruler-cursor-val",
+    ref: cyRef
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "ruler-corner"
+  }));
+}
+
+// "Gimmie More" — outline button at the feed's end: press it and the
+// feed deals another hand of shots. (The only switch left down there
+// is the lights-out one in the colophon.) Hidden once everything's dealt.
 function MoreToggle({
   onMore
 }) {
-  const [on, setOn] = useState(false);
-  const knobRef = useRef(null);
-  const slide = (x, d) => {
-    const knob = knobRef.current;
-    if (!knob) return;
-    if (window.__anime) {
-      window.__anime.animate(knob, {
-        x,
-        duration: d,
-        ease: 'outQuad'
-      });
-    } else {
-      knob.style.transition = 'transform .3s ease';
-      knob.style.transform = `translateX(${x}px)`;
-    }
-  };
-  const flip = () => {
-    if (on) return;
-    setOn(true);
+  const [busy, setBusy] = useState(false);
+  const pull = () => {
+    if (busy) return;
+    setBusy(true);
     playStateChange(true); // velvet up-chirp: more is coming
     haptic(10);
-    slide(26, 300);
     onMore();
-    setTimeout(() => {
-      slide(0, 340);
-      setOn(false);
-    }, 650);
+    setTimeout(() => setBusy(false), 650);
   };
-  return /*#__PURE__*/React.createElement("label", {
+  return /*#__PURE__*/React.createElement("div", {
     className: "more-row"
-  }, /*#__PURE__*/React.createElement("span", {
-    className: `gate-toggle gate-toggle--mini ${on ? 'gate-toggle--on' : ''}`
-  }, /*#__PURE__*/React.createElement("input", {
-    type: "checkbox",
-    switch: "",
-    className: "gate-toggle-input",
-    checked: on,
-    onChange: flip,
+  }, /*#__PURE__*/React.createElement("button", {
+    type: "button",
+    className: `more-btn mono ${busy ? 'more-btn--busy' : ''}`,
+    onClick: pull,
     "aria-label": "Gimmie more \u2014 load more work"
-  }), /*#__PURE__*/React.createElement("span", {
-    className: "gate-toggle-knob",
-    ref: knobRef
-  })), /*#__PURE__*/React.createElement("span", {
-    className: "more-label mono"
   }, "GIMMIE MORE"));
 }
 function App() {
   // Park the iOS haptic switch in the DOM before the first tap ever lands.
   useEffect(() => {
     ensureHapticEl();
+    startWarmup();
   }, []);
 
   // A reload always starts at the top — the gate is the front door, so
@@ -567,6 +886,17 @@ function App() {
   }, []);
   const enter = () => {
     document.documentElement.setAttribute('data-reveal', 'go');
+  };
+
+  // The lights-out loop: the colophon switch sends you back to the blue
+  // loading screen, where the gate switches have DOUBLED (2, 4, 8 … 512).
+  // `gateGen` keys the Gate so each return mounts a fresh one; resetting
+  // data-reveal makes the whole entrance replay when you flip back in.
+  const [gateGen, setGateGen] = useState(0);
+  const lightsOut = () => {
+    document.documentElement.setAttribute('data-reveal', 'pending');
+    window.scrollTo(0, 0); // instant — the blue screen already covers it
+    setGateGen(g => g + 1);
   };
 
   // Snap divider bands to the whiteboard grid: nudge each one down so
@@ -647,11 +977,35 @@ function App() {
       window.removeEventListener('resize', snap);
     };
   }, []);
+
+  // Arm the hover-pop images once the page has loaded and gone idle —
+  // keeps ~1.3MB of pop art out of the first paint's way (see the
+  // .pops-armed rules in styles.css)
+  useEffect(() => {
+    let idleId, timeoutId;
+    const arm = () => document.body.classList.add('pops-armed');
+    const onIdle = () => {
+      if ('requestIdleCallback' in window) idleId = requestIdleCallback(arm, {
+        timeout: 4000
+      });else timeoutId = setTimeout(arm, 2500);
+    };
+    if (document.readyState === 'complete') onIdle();else window.addEventListener('load', onIdle, {
+      once: true
+    });
+    return () => {
+      window.removeEventListener('load', onIdle);
+      if (idleId) cancelIdleCallback(idleId);
+      if (timeoutId) clearTimeout(timeoutId);
+    };
+  }, []);
   return /*#__PURE__*/React.createElement("div", {
     className: "page"
-  }, /*#__PURE__*/React.createElement(Gate, {
-    entering: false,
-    onEnter: enter
+  }, /*#__PURE__*/React.createElement(Rulers, null), /*#__PURE__*/React.createElement(Gate, {
+    key: gateGen,
+    entering: gateGen > 0,
+    blueprint: gateGen === 0,
+    onEnter: enter,
+    count: Math.min(1 << gateGen, 512)
   }), /*#__PURE__*/React.createElement("main", {
     className: "container"
   }, /*#__PURE__*/React.createElement("div", {
@@ -673,22 +1027,31 @@ function App() {
   }, /*#__PURE__*/React.createElement(Intro, null)), /*#__PURE__*/React.createElement("div", {
     className: "top-elsewhere reveal",
     style: {
-      '--reveal-delay': '4900ms'
+      '--reveal-delay': '6950ms'
     }
   }, /*#__PURE__*/React.createElement(Footer, null))), /*#__PURE__*/React.createElement("section", {
     className: "grid-area"
   }, /*#__PURE__*/React.createElement(AssetsFeed, null)), /*#__PURE__*/React.createElement("div", {
     className: "board-divider reveal",
     style: {
-      '--reveal-delay': '7600ms'
+      '--reveal-delay': '9250ms'
     },
     "aria-hidden": "true"
   }), /*#__PURE__*/React.createElement("div", {
     className: "reveal",
     style: {
-      '--reveal-delay': '7800ms'
+      '--reveal-delay': '9450ms'
     }
-  }, /*#__PURE__*/React.createElement(Colophon, null))));
+  }, /*#__PURE__*/React.createElement(Colophon, {
+    onOff: lightsOut
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "bottom-elsewhere reveal",
+    style: {
+      '--reveal-delay': '9550ms'
+    }
+  }, /*#__PURE__*/React.createElement(Footer, {
+    startDelay: 9550
+  }))));
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -993,8 +1356,7 @@ function BragSlot() {
 // Headline — typographical opener; meaning words in ink,
 // connectors muted. Reveals word-by-word before the intro.
 // ─────────────────────────────────────────────────────────────
-const HEADLINE_SEGMENTS = [['Design from napkin sketch through production and scale.', 'ink'], ['With style.', 'hand'] // handwritten kicker — Gochi Hand, muted gray
-];
+const HEADLINE_SEGMENTS = [['Design from napkin sketch through final_final release.', 'ink']];
 const HEADLINE_TONES = {
   muted: 'hl-muted',
   hand: 'hl-muted hl-hand'
@@ -1037,17 +1399,11 @@ function Headline() {
     className: "chip-avatar",
     src: "jean-avatar.png",
     alt: ""
-  })), 'jean', true), C(/*#__PURE__*/React.createElement("a", _extends({
-    href: "https://konpo.studio",
-    target: "_blank",
-    rel: "noreferrer",
+  })), 'jean', true), C(/*#__PURE__*/React.createElement("span", _extends({
     className: "chip"
   }, bio('konpo')), "Konpo", /*#__PURE__*/React.createElement(KonpoMark, {
     className: "chip-logo chip-logo--konpo"
-  })), 'konpo', true), C(/*#__PURE__*/React.createElement("a", _extends({
-    href: "https://surgehq.ai",
-    target: "_blank",
-    rel: "noreferrer",
+  })), 'konpo', true), C(/*#__PURE__*/React.createElement("span", _extends({
     className: "chip"
   }, bio('surge')), "Surge", /*#__PURE__*/React.createElement(SurgeMark, {
     className: "chip-logo chip-logo--surge"
@@ -1158,14 +1514,77 @@ function NamePlay() {
     d: "M22 10v3"
   })));
 }
+
+// Bio "reasoning effort" — the quiet dial that swaps the bio between
+// four intensities (folded in from scratch/intensity.html). Bare track,
+// four detents, accent thumb, level word; no label (Jean's call).
+const EFFORT_LEVELS = ['Low', 'Medium', 'Max', 'Ultracode'];
+// Dial hidden for now (Jean, 2026-08-31) — bio stays pinned to Max.
+// Flip to true to bring the toggle (and the ghost height-lock) back.
+const SHOW_EFFORT_DIAL = false;
+function EffortDial({
+  level,
+  onPick,
+  delay = 0
+}) {
+  // touch devices: the input is inert (see the pointer:coarse CSS) and
+  // a tap ANYWHERE on the dial steps to the next level, wrapping at the
+  // end — dragging a 150px slider with a thumb is fiddly on a phone
+  const stepOnTouch = () => {
+    if (window.matchMedia('(pointer: coarse)').matches) {
+      onPick((level + 1) % EFFORT_LEVELS.length);
+    }
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    className: "vol reveal",
+    style: {
+      '--reveal-delay': `${delay}ms`
+    },
+    "aria-label": "Bio reasoning effort",
+    onClick: stepOnTouch
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "vol-track"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "vol-line",
+    "aria-hidden": "true"
+  }), [0, 33.3, 66.6, 100].map(x => /*#__PURE__*/React.createElement("span", {
+    className: "vol-tick",
+    style: {
+      left: `${x}%`
+    },
+    "aria-hidden": "true",
+    key: x
+  })), /*#__PURE__*/React.createElement("input", {
+    type: "range",
+    min: "0",
+    max: "3",
+    step: "1",
+    value: level,
+    "aria-valuetext": EFFORT_LEVELS[level],
+    onChange: e => onPick(+e.target.value)
+  })), /*#__PURE__*/React.createElement("span", {
+    className: "vol-level mono"
+  }, EFFORT_LEVELS[level]));
+}
 function Intro() {
+  // Reasoning-effort level for the bio (0 Low → 3 Ultracode). Default
+  // High — the classic full bio. The lede + .md line stay constant.
+  const [level, setLevel] = useState(2);
+  // First render joins the big page reveal; after any dial change the
+  // bio re-types with a brisk near-zero stagger instead.
+  const swapped = useRef(false);
+  const pickLevel = v => {
+    swapped.current = true;
+    setLevel(v);
+    haptic(6);
+  };
   // Each chunk fades in with its own delay so the bio reads in like it's being typed-but-not.
   const D = ms => ({
     '--reveal-delay': `${ms}ms`
   });
   // Per-word stagger config
-  const WORD_STEP = 28; // ms between words (brisk but still reads in)
-  const CHUNK_GAP = 260; // pause between paragraphs
+  const WORD_STEP = swapped.current ? 12 : 28; // ms between words
+  const CHUNK_GAP = swapped.current ? 120 : 260; // pause between paragraphs
   // Word-counter helper: track running delay across chunks
   let t = 1700; // first word delay (after the headline finishes)
   const wordDelay = () => {
@@ -1200,6 +1619,104 @@ function Intro() {
       }
     }, node);
   };
+  // Hover-image word (konpo.studio's about-section pops) — underlined
+  // span, photo pops above on hover; `tall` = portrait art, narrower
+  const POP = (word, img, tall) => I(/*#__PURE__*/React.createElement("span", {
+    className: "ulink ulink--media"
+  }, word, /*#__PURE__*/React.createElement("span", {
+    className: `media-pop${tall ? ' media-pop--tall' : ''}`
+  }, /*#__PURE__*/React.createElement("span", {
+    className: `media-pop-img media-pop-img--${img}`
+  }))));
+  const Gap = () => {
+    pause(CHUNK_GAP);
+    return null;
+  };
+  const Surge = (label = 'Surge AI') => I(/*#__PURE__*/React.createElement("a", {
+    className: "brand-word brand-word--surge",
+    href: "https://www.surgehq.ai",
+    target: "_blank",
+    rel: "noreferrer"
+  }, label));
+  const Konpo = () => I(/*#__PURE__*/React.createElement("a", {
+    className: "brand-word brand-word--konpo",
+    href: "https://www.konpo.studio",
+    target: "_blank",
+    rel: "noreferrer"
+  }, "Konpo"));
+
+  // The four bios. Built ONLY for the active level (W()/I() consume the
+  // shared delay counter, so building more than one would skew delays).
+  // The President is the constant that scales with the effort.
+  const renderBio = lv => {
+    if (lv === 0) return /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("span", {
+      className: "bio-part",
+      "data-bio": "jean"
+    }, W("I'm Jean"), I(/*#__PURE__*/React.createElement(NamePlay, null)), W('. I push pixels around a screen.')), /*#__PURE__*/React.createElement("br", null), Gap(), /*#__PURE__*/React.createElement("span", {
+      className: "bio-part",
+      "data-bio": "jean"
+    }, W('Some of them ship.')), /*#__PURE__*/React.createElement("br", null), /*#__PURE__*/React.createElement("br", null), Gap(), /*#__PURE__*/React.createElement("span", {
+      className: "bio-part",
+      "data-bio": "jean"
+    }, W('Sometimes '), POP('ski', 'snow'), W(' and '), POP('surf', 'surf'), W('.')));
+    if (lv === 1) return /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("span", {
+      className: "bio-part",
+      "data-bio": "jean"
+    }, W("I'm Jean Massad"), I(/*#__PURE__*/React.createElement(NamePlay, null))), /*#__PURE__*/React.createElement("span", {
+      className: "bio-part",
+      "data-bio": "surge"
+    }, W('. Designer at '), Surge()), /*#__PURE__*/React.createElement("span", {
+      className: "bio-part",
+      "data-bio": "konpo"
+    }, W(' and a nimble studio called '), Konpo(), W('.')), /*#__PURE__*/React.createElement("span", {
+      className: "bio-part",
+      "data-bio": "jean"
+    }, W(' I can design logos and apps.')), /*#__PURE__*/React.createElement("br", null), /*#__PURE__*/React.createElement("br", null), Gap(), /*#__PURE__*/React.createElement("span", {
+      className: "bio-part"
+    }, W('Some of them were liked by people online. Some of them got torn apart. Both were educational.')), /*#__PURE__*/React.createElement("br", null), /*#__PURE__*/React.createElement("br", null), Gap(), /*#__PURE__*/React.createElement("span", {
+      className: "bio-part"
+    }, W('A president glanced at one of them once.')), /*#__PURE__*/React.createElement("br", null), /*#__PURE__*/React.createElement("br", null), Gap(), /*#__PURE__*/React.createElement("span", {
+      className: "bio-part",
+      "data-bio": "jean"
+    }, W('Off hours I attempt '), POP('ski', 'snow'), W(' and '), POP('surf', 'surf'), W('.')));
+    if (lv === 3) return /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("span", {
+      className: "bio-part",
+      "data-bio": "jean"
+    }, W("I'm Jean Massad"), I(/*#__PURE__*/React.createElement(NamePlay, null))), /*#__PURE__*/React.createElement("span", {
+      className: "bio-part",
+      "data-bio": "surge"
+    }, W('. The only designer at a $30B company, '), Surge(), W('.')), /*#__PURE__*/React.createElement("br", null), /*#__PURE__*/React.createElement("span", {
+      className: "bio-part",
+      "data-bio": "konpo"
+    }, W('I also run my own studio, '), Konpo(), W(", where we've partnered with Social Networks, designed world-class fitness products with an Apple team, branded the world's largest mental health provider and redesigned a state bank's mobile products. We shipped a design app with millions of daily active users, featured by the App Store, and deployed a design system that touches 160M people.")), /*#__PURE__*/React.createElement("span", {
+      className: "bio-part"
+    }, W(' 30+ industry awards along the way.')), /*#__PURE__*/React.createElement("br", null), /*#__PURE__*/React.createElement("br", null), Gap(), /*#__PURE__*/React.createElement("span", {
+      className: "bio-part"
+    }, W('A sitting '), POP('President', 'president', true), W(' reviewed my work and said it was "ok". It actually was.')), /*#__PURE__*/React.createElement("br", null), /*#__PURE__*/React.createElement("br", null), Gap(), /*#__PURE__*/React.createElement("span", {
+      className: "bio-part",
+      "data-bio": "jean"
+    }, POP('Ski', 'snow'), W(' and '), POP('surf', 'surf'), W(' wait for me, not the other way around.')));
+    // lv === 2 — High: the classic full bio
+    return /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("span", {
+      className: "bio-part",
+      "data-bio": "jean"
+    }, W("I'm Jean Massad"), I(/*#__PURE__*/React.createElement(NamePlay, null))), /*#__PURE__*/React.createElement("span", {
+      className: "bio-part",
+      "data-bio": "surge"
+    }, W('. Designer at '), Surge(), W(", the data engine behind the world's leading frontier labs. ")), /*#__PURE__*/React.createElement("span", {
+      className: "bio-part",
+      "data-bio": "konpo"
+    }, W('I also run a nimble studio called '), Konpo(), W(', where we passionately hate on traditional agency dynamics. ')), /*#__PURE__*/React.createElement("span", {
+      className: "bio-part"
+    }, W('I work through the design spectrum across brand, product and systems for startups, F500, gov and everything in between.')), /*#__PURE__*/React.createElement("br", null), /*#__PURE__*/React.createElement("br", null), Gap(), /*#__PURE__*/React.createElement("span", {
+      className: "bio-part"
+    }, W('My work has won over '), POP('Awwwards', 'awwwards', true), W(' and the '), POP('Webbys', 'webby', true), W(', survived '), POP('Product Hunt', 'producthunt'), W(', been torn apart on Hacker News, shown up behind '), POP('Tim Cook', 'timcook'), W(' in a keynote, been loved by '), POP('Terry Crews', 'terrycrews', true), W(', made the cover of '), POP('Forbes', 'forbes', true), W(' and smiled from the top of the '), POP('App Store', 'appstore'), W('.')), /*#__PURE__*/React.createElement("br", null), /*#__PURE__*/React.createElement("br", null), Gap(), /*#__PURE__*/React.createElement("span", {
+      className: "bio-part"
+    }, W('It\'s been called "ok" by a '), POP('President', 'president', true), W('.')), /*#__PURE__*/React.createElement("br", null), /*#__PURE__*/React.createElement("br", null), Gap(), /*#__PURE__*/React.createElement("span", {
+      className: "bio-part",
+      "data-bio": "jean"
+    }, W("When I'm not busy training my AI replacement, I chase "), POP('ski', 'snow'), W(' and '), POP('surf', 'surf'), W('.')));
+  };
   return /*#__PURE__*/React.createElement("section", {
     className: "intro",
     "data-screen-label": "01 Intro",
@@ -1207,67 +1724,34 @@ function Intro() {
       padding: "0px"
     }
   }, /*#__PURE__*/React.createElement("p", {
-    className: "intro-paragraph intro-paragraph--lede"
-  }, /*#__PURE__*/React.createElement("span", {
-    className: "bio-part",
-    "data-bio": "jean"
-  }, W("On the grind since I could download Photoshop off a sketchy torrent site. ")), /*#__PURE__*/React.createElement("span", {
-    className: "bio-part"
-  }, W("Over ten years through the design spectrum. Brand. Websites. Product. Systems. F500. Unicorns. Startups. Governments."))), /*#__PURE__*/React.createElement("p", {
     className: "intro-heading bio-part",
     "data-bio": "jean"
-  }, W("Think of me as a well made .md file but, like, human.")), /*#__PURE__*/React.createElement("p", {
-    className: "intro-paragraph"
-  }, (() => {
-    pause(CHUNK_GAP);
-    return null;
-  })(), /*#__PURE__*/React.createElement("span", {
-    className: "bio-part",
-    "data-bio": "jean"
-  }, W("I'm Jean Massad"), I(/*#__PURE__*/React.createElement(NamePlay, null))), /*#__PURE__*/React.createElement("span", {
-    className: "bio-part",
-    "data-bio": "surge"
-  }, W(". Designer at "), I(/*#__PURE__*/React.createElement("a", {
-    className: "hand-word hand-word--surge",
-    href: "https://www.surgehq.ai",
-    target: "_blank",
-    rel: "noreferrer"
-  }, "Surge AI")), W(", the data engine behind the world's leading frontier labs. ")), /*#__PURE__*/React.createElement("span", {
-    className: "bio-part",
-    "data-bio": "konpo"
-  }, W("I also run a nimble studio called "), I(/*#__PURE__*/React.createElement("a", {
-    className: "hand-word hand-word--konpo",
-    href: "https://www.konpo.studio",
-    target: "_blank",
-    rel: "noreferrer"
-  }, "Konpo")), W(", where we passionately hate on traditional agency dynamics. Through it, I've lived a thousand design lives with some amazing people.")), /*#__PURE__*/React.createElement("br", null), /*#__PURE__*/React.createElement("br", null), (() => {
-    pause(CHUNK_GAP);
-    return null;
-  })(), /*#__PURE__*/React.createElement("span", {
-    className: "bio-part"
-  }, W('My work has won over Awwwards and the Webbys, survived Product Hunt, been torn apart on Hacker News, shown up behind Tim Cook in a keynote, been loved by Terry Crews, made the cover of Forbes, smiled from the top of the App Store, been called "ok" by a President and, mainly, applauded by my parents.')), /*#__PURE__*/React.createElement("br", null), /*#__PURE__*/React.createElement("br", null), (() => {
-    pause(CHUNK_GAP);
-    return null;
-  })(), /*#__PURE__*/React.createElement("span", {
-    className: "bio-part",
-    "data-bio": "jean"
-  }, W("When I'm not busy training my AI replacement, I chase "), I(/*#__PURE__*/React.createElement("a", {
-    href: "#",
-    className: "ulink ulink--media",
-    "data-media": "snow"
-  }, "ski", /*#__PURE__*/React.createElement("span", {
-    className: "media-pop"
-  }, /*#__PURE__*/React.createElement("span", {
-    className: "media-pop-img media-pop-img--snow"
-  })))), W(' and '), I(/*#__PURE__*/React.createElement("a", {
-    href: "#",
-    className: "ulink ulink--media",
-    "data-media": "surf"
-  }, "surf", /*#__PURE__*/React.createElement("span", {
-    className: "media-pop"
-  }, /*#__PURE__*/React.createElement("span", {
-    className: "media-pop-img media-pop-img--surf"
-  })))), W('.'))));
+  }, W("In the design trenches ever since I got Photoshop off a sketchy torrent site. "), W("Think of me as an .md file but, like, human.")), SHOW_EFFORT_DIAL && /*#__PURE__*/React.createElement(EffortDial, {
+    level: level,
+    onPick: pickLevel,
+    delay: (() => {
+      const d = t;
+      pause(220);
+      return d;
+    })()
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "bio-stack"
+  }, (SHOW_EFFORT_DIAL ? [0, 1, 2, 3] : [level]).map(lv => {
+    const active = lv === level;
+    const saved = t;
+    // only the ACTIVE level advances the reveal clock — ghosts
+    // render with throwaway delays and hand the clock back
+    if (active) {
+      if (swapped.current) t = 0;else pause(CHUNK_GAP);
+    }
+    const content = renderBio(lv);
+    if (!active) t = saved;
+    return /*#__PURE__*/React.createElement("p", {
+      className: `intro-paragraph bio-layer${active ? '' : ' bio-layer--ghost'}`,
+      "aria-hidden": active ? undefined : true,
+      key: `${lv}-${active ? `on-${swapped.current}` : 'off'}`
+    }, content);
+  })));
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -1517,7 +2001,7 @@ const PROJECTS = [{
   tag: 'Search Engine',
   sub: 'Brand, marketing site, and product UI for AI-native search.',
   cover: P('fyler', 'image', 'fyler-moodboard-brand.jpg', 'Fyler', 'Brand', '1600 / 1034'),
-  cards: [A('fyler', 'fyler-walkthrough', 'Walkthrough', 'Product', '3 / 2'), A('fyler', 'fyler-hero', 'Hero', 'Websites', '16 / 9'), A('fyler', 'fyler-showcase', 'Showcase', 'Product', '16 / 9'), A('fyler', 'fyler-interface', 'Interface', 'Product', '16 / 9'), P('fyler', 'image', 'fyler-interface-ltr.jpg', 'Interface LTR', 'Product', '16 / 9'), P('fyler', 'image', 'fyler-interface-rtl.jpg', 'Interface RTL', 'Product', '16 / 9'), P('fyler', 'image', 'fyler-inside-search.jpg', 'Inside Search', 'Product', '16 / 9'), P('fyler', 'image', 'fyler-categories.jpg', 'Categories', 'Product', '1583 / 763'), P('fyler', 'image', 'fyler-rich-location.jpg', 'Location', 'Product', '1304 / 1600'), P('fyler', 'image', 'fyler-rich-comparison.jpg', 'Comparison', 'Product', '1361 / 1600'), P('fyler', 'image', 'fyler-rich-weather.jpg', 'Weather', 'Product', '1571 / 2031'), P('fyler', 'image', 'fyler-widget-discovery.jpg', 'Discovery Widget', 'Product', '1600 / 996'), P('fyler', 'image', 'fyler-widget-graphic.jpg', 'Graphic Widget', 'Product', '1600 / 996'), P('fyler', 'image', 'fyler-widget-mobile.jpg', 'Mobile Widget', 'Product', '1600 / 996'), P('fyler', 'image', 'fyler-widget-comparative.jpg', 'Comparative Widget', 'Product', '1600 / 996'), A('fyler', 'fyler-ds-cards', 'System Cards', 'Systems', '1280 / 828'), P('fyler', 'image', 'fyler-ds-1.jpg', 'Design System I', 'Systems', '1600 / 1034'), P('fyler', 'image', 'fyler-ds-2.jpg', 'Design System II', 'Systems', '1600 / 1033'), P('fyler', 'image', 'fyler-ds-3.jpg', 'Design System III', 'Systems', '1600 / 1034'), P('fyler', 'image', 'fyler-ds-4.jpg', 'Design System IV', 'Systems', '1600 / 1033'), P('fyler', 'image', 'fyler-typography.jpg', 'Typography', 'Systems', '1600 / 930'), A('fyler', 'fyler-insp-type', 'Type Inspiration', 'Brand', '1280 / 826'), A('fyler', 'fyler-insp-icons', 'Icon Inspiration', 'Brand', '1280 / 712'), A('fyler', 'fyler-insp-patterns', 'Pattern Inspiration', 'Brand', '16 / 9'), A('fyler', 'fyler-insp-palettes', 'Palette Inspiration', 'Brand', '16 / 9'), A('fyler', 'fyler-palettes', 'Palettes', 'Systems', '1 / 1'), A('fyler', 'fyler-darklight', 'Dark / Light', 'Product', '3 / 2'), P('fyler', 'image', 'fyler-moodboard-1.jpg', 'Moodboard', 'Brand', '1600 / 1034')]
+  cards: [A('fyler', 'fyler-walkthrough', 'Walkthrough', 'Product', '3 / 2'), A('fyler', 'fyler-showcase', 'Showcase', 'Product', '16 / 9'), A('fyler', 'fyler-interface', 'Interface', 'Product', '16 / 9'), P('fyler', 'image', 'fyler-inside-search.jpg', 'Inside Search', 'Product', '16 / 9'), P('fyler', 'image', 'fyler-rich-weather.jpg', 'Weather', 'Product', '1571 / 2031'), P('fyler', 'image', 'fyler-widget-discovery.jpg', 'Discovery Widget', 'Product', '1600 / 996'), P('fyler', 'image', 'fyler-widget-graphic.jpg', 'Graphic Widget', 'Product', '1600 / 996'), P('fyler', 'image', 'fyler-widget-mobile.jpg', 'Mobile Widget', 'Product', '1600 / 996'), P('fyler', 'image', 'fyler-widget-comparative.jpg', 'Comparative Widget', 'Product', '1600 / 996'), A('fyler', 'fyler-ds-cards', 'System Cards', 'Systems', '1280 / 828'), P('fyler', 'image', 'fyler-ds-1.jpg', 'Design System I', 'Systems', '1600 / 1034'), P('fyler', 'image', 'fyler-ds-2.jpg', 'Design System II', 'Systems', '1600 / 1033'), P('fyler', 'image', 'fyler-ds-3.jpg', 'Design System III', 'Systems', '1600 / 1034'), P('fyler', 'image', 'fyler-ds-4.jpg', 'Design System IV', 'Systems', '1600 / 1033'), P('fyler', 'image', 'fyler-typography.jpg', 'Typography', 'Systems', '1600 / 930'), A('fyler', 'fyler-insp-type', 'Type Inspiration', 'Brand', '1280 / 826'), A('fyler', 'fyler-insp-icons', 'Icon Inspiration', 'Brand', '1280 / 712'), A('fyler', 'fyler-insp-patterns', 'Pattern Inspiration', 'Brand', '16 / 9'), A('fyler', 'fyler-insp-palettes', 'Palette Inspiration', 'Brand', '16 / 9'), A('fyler', 'fyler-darklight', 'Dark / Light', 'Product', '3 / 2'), P('fyler', 'image', 'fyler-moodboard-1.jpg', 'Moodboard', 'Brand', '1600 / 1034')]
 }, {
   key: 'compsych',
   industry: 'Healthcare',
@@ -1537,7 +2021,7 @@ const PROJECTS = [{
   tag: 'Career Coaching',
   sub: 'Identity and website for career-changing coaching.',
   cover: A('coachable', 'coachable-hero', 'Coachable', 'Brand', '4 / 3'),
-  cards: [A('coachable', 'coachable-proposals', 'Proposals', 'Brand', '8 / 5'), A('coachable', 'coachable-color', 'Color', 'Systems', '16 / 9'), A('coachable', 'coachable-phone', 'Mobile', 'Product', '4 / 5')]
+  cards: [A('coachable', 'coachable-figma', 'Figma File', 'Brand', '640 / 361'), A('coachable', 'coachable-proposals', 'Proposals', 'Brand', '8 / 5'), A('coachable', 'coachable-logo', 'Logo', 'Brand', '1920 / 1211'), A('coachable', 'coachable-numerals', 'Numerals', 'Brand', '8 / 5'), A('coachable', 'coachable-motif', 'Motif', 'Brand', '1 / 1'), A('coachable', 'coachable-expand', 'Expand', 'Brand', '1 / 1'), A('coachable', 'coachable-color', 'Color', 'Systems', '16 / 9'), P('coachable', 'image', 'coachable-cards.webp', 'Cards', 'Brand', '1601 / 1602'), P('coachable', 'image', 'coachable-print.webp', 'Print Set', 'Brand', '1 / 1'), A('coachable', 'coachable-code', 'Code', 'Brand', '128 / 71'), P('coachable', 'image', 'coachable-weights.webp', 'Weights', 'Systems', '1600 / 1601'), P('coachable', 'image', 'coachable-focus.webp', 'Focus', 'Brand', '1601 / 1602'), A('coachable', 'coachable-mark', 'Mark', 'Brand', '4 / 3'), P('coachable', 'image', 'coachable-stickers.webp', 'Stickers', 'Brand', '1601 / 1602'), P('coachable', 'image', 'coachable-packaging.webp', 'Packaging', 'Brand', '1 / 1'), P('coachable', 'image', 'coachable-keynote.webp', 'Keynote', 'Brand', '4851 / 3061'), A('coachable', 'coachable-home-page', 'Home Page', 'Websites', '16 / 9'), A('coachable', 'coachable-portraits', 'Portraits', 'Websites', '128 / 89'), P('coachable', 'image', 'coachable-site-screens.webp', 'Site Screens', 'Websites', '4851 / 3034'), A('coachable', 'coachable-menu', 'Menu', 'Websites', '1501 / 996'), A('coachable', 'coachable-phone', 'Mobile', 'Product', '4 / 5'), P('coachable', 'image', 'coachable-phone-hand.webp', 'Phone in Hand', 'Websites', '4935 / 3358'), A('coachable', 'coachable-grow', 'Grow', 'Websites', '320 / 261'), P('coachable', 'image', 'coachable-at-work.webp', 'At Work', 'Websites', '2402 / 3301'), P('coachable', 'image', 'coachable-booking.webp', 'Booking', 'Product', '2402 / 3301'), P('coachable', 'image', 'coachable-sections.webp', 'Web Sections', 'Websites', '4851 / 3034'), A('coachable', 'coachable-bento', 'Bento', 'Systems', '4 / 3'), P('coachable', 'image', 'coachable-remote.webp', 'Remote', 'Brand', '4851 / 2731'), A('coachable', 'coachable-typeface', 'Typeface', 'Systems', '8 / 5'), P('coachable', 'image', 'coachable-grid.webp', 'Grid', 'Systems', '4851 / 3034'), P('coachable', 'image', 'coachable-palette.webp', 'Palette', 'Systems', '4851 / 2773')]
 }, {
   key: 'systemone',
   industry: 'Entertainment',
@@ -1547,7 +2031,7 @@ const PROJECTS = [{
   tag: 'Entertainment',
   sub: 'Brand and website for film-led storytelling.',
   cover: A('systemone', 'systemone-intro', 'System One', 'Websites', '16 / 9'),
-  cards: [A('systemone', 'systemone-girl', 'Film', 'Websites', '4 / 5'), A('systemone', 'systemone-stories', 'Stories', 'Websites', '3 / 2')]
+  cards: [A('systemone', 'systemone-logo', 'Logo', 'Brand', '3 / 2'), A('systemone', 'systemone-scrolling-type', 'Scrolling Type', 'Websites', '3 / 2'), P('systemone', 'image', 'systemone-app-icon.jpeg', 'App Icon', 'Brand', '1592 / 2149'), A('systemone', 'systemone-girl', 'Film', 'Websites', '4 / 5'), P('systemone', 'image', 'systemone-website.jpeg', 'Website', 'Websites', '3224 / 2149'), A('systemone', 'systemone-services', 'Services', 'Websites', '3 / 2'), P('systemone', 'image', 'systemone-in-hand.jpeg', 'In Hand', 'Product', '1593 / 2149'), A('systemone', 'systemone-live', 'Live', 'Brand', '16 / 9'), P('systemone', 'image', 'systemone-mobile.webp', 'Mobile', 'Product', '1323 / 1790'), P('systemone', 'image', 'systemone-dashboard.jpeg', 'Dashboard', 'Product', '3222 / 2149'), P('systemone', 'image', 'systemone-artist.jpeg', 'Artist Page', 'Product', '1592 / 2149'), P('systemone', 'image', 'systemone-stage.jpeg', 'On Stage', 'Brand', '1593 / 2149'), P('systemone', 'image', 'systemone-billboard.jpeg', 'Billboard', 'Brand', '3226 / 2149'), P('systemone', 'image', 'systemone-ooh.jpeg', 'OOH', 'Brand', '3226 / 2149'), P('systemone', 'image', 'systemone-poster.jpeg', 'Poster', 'Brand', '3222 / 2149'), P('systemone', 'image', 'systemone-cards.jpeg', 'Cards', 'Brand', '3222 / 2149'), A('systemone', 'systemone-stories', 'Stories', 'Websites', '3 / 2'), P('systemone', 'image', 'systemone-tagline.jpeg', 'Tagline', 'Brand', '3222 / 2149'), P('systemone', 'image', 'systemone-scheme-a.webp', 'Scheme I', 'Systems', '3842 / 2163'), P('systemone', 'image', 'systemone-scheme-b.webp', 'Scheme II', 'Systems', '1921 / 1081'), A('systemone', 'systemone-outro', 'Outro', 'Brand', '16 / 9'), P('systemone', 'image', 'systemone-numbers.png', 'Numbers', 'Websites', '124 / 37')]
 },
 // ILI.DIGITAL runs on the "Nexus" are.na channel — a longer, mixed
 // image/video stack that stress-tests the inline-expand pattern.
@@ -1560,7 +2044,7 @@ const PROJECTS = [{
   tag: 'Venture Studio',
   sub: 'The Nexus brand system, from logo to product.',
   cover: N('video', 'hero.mp4', 'ILI.DIGITAL', 'Websites', '16 / 9'),
-  cards: [N('video', 'reveal.mp4', 'Reveal', 'Brand', '21 / 9'), N('video', 'logos-2.mp4', 'Logos', 'Brand', '4 / 3'), N('image', 'type-ii.webp', 'Typography', 'Systems', '3 / 2'), N('image', 'system-color.webp', 'Color', 'Systems', '3 / 2'), N('image', 'button-system.webp', 'Buttons', 'Systems', '2 / 3'), N('image', 'icon-system.webp', 'Icons', 'Systems', '6 / 5'), N('video', 'smile.mp4', 'Smile', 'Brand', '4 / 3'), N('video', 'frames.mp4', 'Frames', 'Brand', '6 / 5'), N('image', 'website-ii.webp', 'Website', 'Websites', '16 / 9'), N('video', 'charts.mp4', 'Charts', 'Product', '3 / 2'), N('image', 'poster.webp', 'Poster', 'Brand', '3 / 4'), N('image', 'book.jpg', 'Book', 'Brand', '16 / 9'), N('video', 'animation.mp4', 'Animation', 'Brand', '21 / 9')]
+  cards: [A('ili', 'ili-figma', 'Figma File', 'Brand', '96 / 47'), N('video', 'logos-2.mp4', 'Logos', 'Brand', '4 / 3'), N('video', 'detail.mp4', 'Logo Detail', 'Brand', '4 / 5'), N('image', 'technical-logo.png', 'Blueprint', 'Brand', '14 / 17'), N('video', 'reveal.mp4', 'Reveal', 'Brand', '21 / 9'), P('ili', 'image', 'ili-palette.webp', 'Palette', 'Systems', '647 / 140'), P('ili', 'image', 'ili-typeface.webp', 'Söhne', 'Systems', '246 / 217'), P('ili', 'image', 'ili-principles.webp', 'Fast, Focused', 'Brand', '771 / 656'), N('image', 'type.webp', 'Glyphs', 'Systems', '166 / 67'), N('image', 'status.webp', 'Portrait', 'Brand', '967 / 543'), P('ili', 'image', 'ili-print.png', 'Print', 'Brand', '1505 / 837'), N('video', 'smile.mp4', 'Smile', 'Brand', '4 / 3'), N('image', 'bade.webp', 'Badge', 'Brand', '743 / 1008'), N('image', 'poster.webp', 'Poster', 'Brand', '3 / 4'), N('image', 'corner.webp', 'Signage', 'Brand', '1505 / 874'), N('image', 'system.webp', 'Objects', 'Brand', '768 / 805'), N('image', 'website.webp', 'Web Hero', 'Websites', '539 / 337'), N('video', 'categories.mp4', 'Categories', 'Websites', '320 / 217'), N('video', 'animation.mp4', 'Animation', 'Brand', '21 / 9'), P('ili', 'image', 'ili-strategies.webp', 'AI Strategies', 'Websites', '31 / 17'), N('image', 'website-ii.webp', 'Website', 'Websites', '16 / 9'), A('ili', 'ili-statement', 'Statement', 'Websites', '160 / 101'), N('video', 'frames.mp4', 'Frames', 'Brand', '6 / 5'), N('image', 'category-ii.webp', 'Editorial', 'Websites', '403 / 255'), N('image', 'site-category.webp', 'People', 'Websites', '31 / 18'), N('image', 'footer.webp', 'Digital Builder', 'Websites', '62 / 41'), N('image', 'system-i.webp', 'Type Scale', 'Systems', '1600 / 1067'), N('image', 'system-color.webp', 'Color', 'Systems', '3 / 2'), N('image', 'type-sysrtem.webp', 'Type System', 'Systems', '3218 / 2037'), N('image', 'icon-system.webp', 'Icons', 'Systems', '6 / 5'), N('video', 'iconography.mp4', 'Iconography', 'Systems', '31 / 18'), N('image', 'form-field.webp', 'Form Field', 'Systems', '3276 / 1987'), N('image', 'button-system.webp', 'Buttons', 'Systems', '2 / 3'), N('image', 'tags.webp', 'Tags', 'Systems', '67 / 90'), N('image', 'spacing.webp', 'Spacing', 'Systems', '3222 / 2149'), N('image', 'type-ii.webp', 'Typography', 'Systems', '3 / 2'), N('image', 'technical-smile.webp', 'Smile Blueprint', 'Systems', '1638 / 899'), N('video', 'charts.mp4', 'Charts', 'Product', '3 / 2'), N('image', 'book.jpg', 'Book', 'Brand', '16 / 9')]
 }, {
   key: 'hutte',
   industry: 'DevTools',
@@ -1570,7 +2054,7 @@ const PROJECTS = [{
   tag: 'Salesforce DevOps',
   sub: 'Identity and product for the home of Salesforce DevOps.',
   cover: A('hutte', 'hutte-logo', 'Hutte', 'Brand', '3 / 2'),
-  cards: [A('hutte', 'hutte-emojis', 'Emojis', 'Brand', '1 / 1'), A('hutte', 'hutte-tablet', 'Tablet', 'Brand', '4 / 3'), A('hutte', 'hutte-salesforce', 'Salesforce', 'Product', '16 / 9')]
+  cards: [A('hutte', 'hutte-hero', 'Hero', 'Websites', '16 / 9'), P('hutte', 'image', 'hutte-glyphs.png', 'Glyph Set', 'Systems', '1611 / 1882'), P('hutte', 'image', 'hutte-founders.jpeg', 'Founders', 'Brand', '1611 / 1121'), P('hutte', 'image', 'hutte-color.webp', 'Color', 'Systems', '200 / 127'), P('hutte', 'image', 'hutte-keyboard.webp', 'Keyboard', 'Brand', '700 / 521'), A('hutte', 'hutte-emojis', 'Emojis', 'Brand', '1 / 1'), A('hutte', 'hutte-logo-reduction', 'Logo Reduction', 'Brand', '160 / 81'), P('hutte', 'image', 'hutte-team.jpeg', 'Team', 'Brand', '248 / 165'), P('hutte', 'image', 'hutte-beanie.webp', 'Beanie', 'Brand', '1 / 1'), P('hutte', 'image', 'hutte-flag.webp', 'Flag', 'Brand', '2761 / 2022'), P('hutte', 'image', 'hutte-bottle.webp', 'Bottle', 'Brand', '1378 / 919'), A('hutte', 'hutte-social-a', 'Social I', 'Brand', '480 / 289'), P('hutte', 'image', 'hutte-landing.jpeg', 'Landing', 'Websites', '1593 / 1792'), P('hutte', 'image', 'hutte-landing-b.jpeg', 'Landing II', 'Websites', '797 / 896'), P('hutte', 'image', 'hutte-outdoors.jpeg', 'Outdoors', 'Brand', '3221 / 2241'), A('hutte', 'hutte-social-b', 'Social II', 'Brand', '120 / 67'), P('hutte', 'image', 'hutte-remote.jpeg', 'Remote', 'Product', '3222 / 2041'), P('hutte', 'image', 'hutte-screens.webp', 'Screens', 'Product', '75 / 56'), A('hutte', 'hutte-tablet', 'Tablet', 'Brand', '4 / 3'), A('hutte', 'hutte-flow', 'Flow', 'Product', '1920 / 1091'), A('hutte', 'hutte-salesforce', 'Salesforce', 'Product', '16 / 9'), P('hutte', 'image', 'hutte-isometric.jpeg', 'Isometric', 'Websites', '3222 / 2041'), A('hutte', 'hutte-slider', 'Slider', 'Websites', '1920 / 1043'), A('hutte', 'hutte-members', 'Members', 'Product', '1920 / 1037'), A('hutte', 'hutte-onboarding', 'Onboarding', 'Product', '128 / 85'), P('hutte', 'image', 'hutte-app.webp', 'App', 'Product', '669 / 754'), P('hutte', 'image', 'hutte-timeline.webp', 'Timeline', 'Product', '669 / 754'), P('hutte', 'image', 'hutte-type-ramp.webp', 'Type Ramp', 'Systems', '70 / 39'), A('hutte', 'hutte-fields', 'Fields', 'Systems', '640 / 363'), P('hutte', 'image', 'hutte-cards.webp', 'Cards', 'Systems', '2720 / 751'), P('hutte', 'image', 'hutte-icon-set.webp', 'Icon Set', 'Systems', '679 / 228'), P('hutte', 'image', 'hutte-data-table.webp', 'Data Table', 'Systems', '1357 / 513')]
 }];
 const DEMOS = {
   toggle: DemoToggle,
@@ -1590,6 +2074,53 @@ const DEMOS = {
 // was cut. Drop entries here to interleave pieces into the feed
 // ({ title, type, src|demo|preview, aspect, desc, at }).
 const ARTIFACTS = [];
+
+// ─── asset warmup ─────────────────────────────────────────────
+// The blue gate is dead time, so the moment the app mounts we spend
+// it fetching what the first screen will paint — every poster/image
+// of the first deal, then the first few cover clips — into the HTTP
+// cache. LazyVideo/AssetMedia then hit cache instead of the network
+// when the reveal runs. Progress feeds the blueprint's counter.
+const WARM = {
+  total: 0,
+  done: 0,
+  started: false,
+  listeners: new Set()
+};
+function startWarmup() {
+  if (WARM.started) return;
+  WARM.started = true;
+  const flat = PROJECTS.flatMap(p => [p.cover, ...p.cards]);
+  const light = flat.slice(0, 30).map(a => a.type === 'video' ? a.src.replace(/\.mp4$/, '-poster.jpg') : a.type === 'image' ? a.src : a.preview).filter(Boolean);
+  // the clips are the heavy part — skipped for data-saver visitors
+  const saveData = navigator.connection && navigator.connection.saveData;
+  const clips = saveData ? [] : flat.filter(a => a.type === 'video').slice(0, 6).map(a => a.src);
+  WARM.total = light.length + clips.length;
+  const notify = () => WARM.listeners.forEach(fn => fn(WARM));
+  const get = url => fetch(url).then(r => r.ok ? r.blob() : null).catch(() => null).then(() => {
+    WARM.done++;
+    notify();
+  });
+  // light assets four at a time, then the clips one by one — no
+  // bandwidth fight with the reveal's own first paints
+  const queue = light.slice();
+  let running = 0;
+  new Promise(resolve => {
+    const next = () => {
+      if (!queue.length && running === 0) return resolve();
+      while (queue.length && running < 4) {
+        running++;
+        get(queue.shift()).then(() => {
+          running--;
+          next();
+        });
+      }
+    };
+    next();
+  }).then(async () => {
+    for (const c of clips) await get(c);
+  });
+}
 
 // Video that only downloads + plays while it's near the viewport. This
 // keeps us from decoding a dozen clips at once (the smoothness killer)
@@ -1741,9 +2272,10 @@ function AssetMedia({
 // Rendered through a portal: the container creates a stacking context
 // (z-index: 1), which would trap the modal underneath the sticky nav.
 function WorkModal({
-  asset,
+  tile,
   onClose
 }) {
+  const asset = tile.asset;
   useEffect(() => {
     const onKey = e => {
       if (e.key === 'Escape') onClose();
@@ -1755,9 +2287,11 @@ function WorkModal({
       document.body.style.overflow = '';
     };
   }, [onClose]);
-  // Bare lightbox: no panel, no info body — the asset expands to the
-  // largest size that fits the viewport (aspect kept, never overflows,
-  // mobile included) over a heavily blurred page.
+  // Bare lightbox: no panel — the asset expands to the largest size that
+  // fits the viewport (aspect kept, never overflows, mobile included)
+  // over a heavily blurred page. The tile chrome (FIG / title / category)
+  // lives HERE, as a quiet caption pinned to the bottom edge — the feed
+  // tiles themselves carry no text.
   const stop = e => e.stopPropagation();
   return ReactDOM.createPortal(/*#__PURE__*/React.createElement("div", {
     className: "work-modal",
@@ -1770,7 +2304,13 @@ function WorkModal({
     className: "work-modal-close mono",
     onClick: onClose,
     "aria-label": "Close"
-  }, "\u2715 CLOSE"), asset.type === 'image' ? /*#__PURE__*/React.createElement("img", {
+  }, "\u2715 CLOSE"), /*#__PURE__*/React.createElement("div", {
+    className: "work-modal-caption"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "work-modal-caption-title"
+  }, asset.title), /*#__PURE__*/React.createElement("span", {
+    className: "work-modal-caption-meta mono"
+  }, tile.fig, " \xB7 ", (tile.note || '').toUpperCase())), asset.type === 'image' ? /*#__PURE__*/React.createElement("img", {
     className: "work-lightbox-media",
     src: asset.src,
     alt: asset.title,
@@ -1821,11 +2361,25 @@ function feedIsDesktop() {
 // widths (spans summing to 12) + vertical offsets, cycling per row, so
 // the feed itself reads like a canvas. Mobile / tablet stay uniform.
 const COVER_SPANS = [[7, 5], [5, 7], [8, 4]];
-// second card drops a few cells below the first — enough offset to keep
-// the canvas feel without opening half-a-card of dead scroll per row
-const COVER_MTS = [[0, 3], [0, 2], [0, 4]];
-function coverSlot(rowIdx, colIdx, desktop) {
+// one card in each row drops a few cells below its neighbour — the
+// dropped SIDE alternates per row so the feed weaves down the page
+// instead of always sagging right; offsets stay shy of half a card
+// so no row opens dead scroll
+const COVER_MTS = [[0, 4], [3, 0], [0, 5]];
+function coverSlot(rowIdx, colIdx, desktop, row) {
   if (!desktop) return null; // only desktop staggers
+  // a project cover owns its row: ~80% wide (10 of 12 tracks, on-grid),
+  // anchored LEFT with clean air on the right — the recurring full-row
+  // shape is what marks "new project starts here"
+  if (row && row[0] && row[0].cover) return {
+    '--cspan': 10,
+    '--cmt': 0
+  };
+  // a tile left alone when the next cover closed its row early
+  if (row && row.length === 1) return {
+    '--cspan': 7,
+    '--cmt': 0
+  };
   const spans = COVER_SPANS[rowIdx % COVER_SPANS.length];
   const mts = COVER_MTS[rowIdx % COVER_MTS.length];
   return {
@@ -1855,9 +2409,10 @@ function useTapGuard(threshold = 10) {
   };
 }
 
-// One tile in the flat feed — cover or piece, identical anatomy: FIG
-// label, framed media, meta row. Clicking opens the shot's info overlay
-// (WorkModal) — no inline expansion, the feed itself stays calm.
+// One tile in the flat feed — cover or piece, identical anatomy: just
+// the framed media (recent.design-style — no FIG, no title, no category
+// on the tile; all of that surfaces in the WorkModal on tap). Clicking
+// opens the shot's info overlay — no inline expansion, the feed stays calm.
 function FeedTile({
   tile,
   index,
@@ -1875,7 +2430,7 @@ function FeedTile({
     entrance.current = initialLoad ? {
       cls: 'reveal',
       style: {
-        '--reveal-delay': `${5700 + Math.min(index, 8) * 100}ms`
+        '--reveal-delay': `${8150 + Math.min(index, 8) * 100}ms`
       }
     } : {
       cls: 'asset-tile--dealt',
@@ -1894,21 +2449,11 @@ function FeedTile({
     onClick: onOpen,
     "aria-haspopup": "dialog",
     "aria-label": `${tile.asset.title} — details`
-  }, guard), /*#__PURE__*/React.createElement("span", {
-    className: "asset-fig mono"
-  }, tile.fig), /*#__PURE__*/React.createElement("div", {
+  }, guard), /*#__PURE__*/React.createElement("div", {
     className: "asset-frame"
   }, /*#__PURE__*/React.createElement(AssetMedia, {
     asset: tile.asset
-  })), /*#__PURE__*/React.createElement("div", {
-    className: "asset-meta"
-  }, /*#__PURE__*/React.createElement("span", {
-    className: "asset-meta-left"
-  }, /*#__PURE__*/React.createElement("span", {
-    className: "asset-title"
-  }, tile.asset.title)), /*#__PURE__*/React.createElement("span", {
-    className: "asset-note mono"
-  }, tile.note.toUpperCase()))));
+  }))));
 }
 
 // Display names for the scope filter (data keeps the original cats)
@@ -1919,14 +2464,105 @@ const SCOPE_LABELS = {
 const SCOPE_ORDER = ['IDK', 'Brand', 'Website', 'Product', 'Systems'];
 const FILTER_GROUPS = [['industry', 'Industry'], ['org', 'Org Type'], ['scope', 'Scope']];
 
-// Custom dropdown — a drawn menu instead of the OS <select> popup.
-// Trigger reads as its dimension name until a value is picked; the
-// panel is frosted paper with mono options, outside-click/Esc closes.
-function FilterSelect({
-  label,
-  value,
-  options,
-  onChange
+// Seeded Fisher-Yates — the shuffle must be PURE per render (seed in
+// state), or every re-render would deal a different order
+function mulberry32(seed) {
+  let a = seed | 0;
+  return () => {
+    a = a + 0x6D2B79F5 | 0;
+    let t = Math.imul(a ^ a >>> 15, 1 | a);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+function seededShuffle(list, seed) {
+  const rnd = mulberry32(seed);
+  const out = list.slice();
+  for (let i = out.length - 1; i > 0; i--) {
+    const j = Math.floor(rnd() * (i + 1));
+    [out[i], out[j]] = [out[j], out[i]];
+  }
+  return out;
+}
+
+// Dice next to the sticky filter — a BINARY shuffle mode: on rolls the
+// feed into a random order (solid accent pill), off restores the
+// natural order. The die spring-tumbles on every flip.
+function DiceButton({
+  active,
+  onToggle
+}) {
+  const [rolling, setRolling] = useState(false);
+  return /*#__PURE__*/React.createElement("button", {
+    type: "button",
+    className: `fdice ${active ? 'fdice--on' : ''}`,
+    onClick: () => {
+      setRolling(true);
+      onToggle();
+    },
+    "aria-pressed": active,
+    "aria-label": "Shuffle the work",
+    title: active ? 'Shuffle off' : 'Shuffle'
+  }, /*#__PURE__*/React.createElement("svg", {
+    className: rolling ? 'fdice-die fdice-die--roll' : 'fdice-die',
+    onAnimationEnd: () => setRolling(false),
+    width: "14",
+    height: "14",
+    viewBox: "0 0 24 24",
+    fill: "none",
+    stroke: "currentColor",
+    strokeWidth: "2",
+    strokeLinecap: "round",
+    strokeLinejoin: "round",
+    "aria-hidden": "true"
+  }, /*#__PURE__*/React.createElement("rect", {
+    x: "3",
+    y: "3",
+    width: "18",
+    height: "18",
+    rx: "4.5"
+  }), /*#__PURE__*/React.createElement("circle", {
+    cx: "8.4",
+    cy: "8.4",
+    r: "0.9",
+    fill: "currentColor",
+    stroke: "none"
+  }), /*#__PURE__*/React.createElement("circle", {
+    cx: "15.6",
+    cy: "8.4",
+    r: "0.9",
+    fill: "currentColor",
+    stroke: "none"
+  }), /*#__PURE__*/React.createElement("circle", {
+    cx: "12",
+    cy: "12",
+    r: "0.9",
+    fill: "currentColor",
+    stroke: "none"
+  }), /*#__PURE__*/React.createElement("circle", {
+    cx: "8.4",
+    cy: "15.6",
+    r: "0.9",
+    fill: "currentColor",
+    stroke: "none"
+  }), /*#__PURE__*/React.createElement("circle", {
+    cx: "15.6",
+    cy: "15.6",
+    r: "0.9",
+    fill: "currentColor",
+    stroke: "none"
+  })));
+}
+
+// ONE filter chip — a single pill that opens a grouped menu (Industry /
+// Org Type / Scope headers with their values). Only one value can be
+// active across ALL dimensions; picking the active value again clears.
+// The chip lives ONLY in the sticky capsule — the resting band carries
+// no filters (Jean: "only show filters when scrolling").
+function FilterMenu({
+  filter,
+  groups,
+  onPick
 }) {
   const [open, setOpen] = useState(false);
   const rootRef = useRef(null);
@@ -1945,8 +2581,12 @@ function FilterSelect({
       document.removeEventListener('keydown', onKey);
     };
   }, [open]);
-  const pick = v => {
-    onChange(v);
+  const isOn = (dim, v) => !!filter && filter.dim === dim && filter.val === v;
+  const pick = (dim, v) => {
+    onPick(isOn(dim, v) ? null : {
+      dim,
+      val: v
+    }); // tap-again clears
     setOpen(false);
   };
   return /*#__PURE__*/React.createElement("span", {
@@ -1954,43 +2594,54 @@ function FilterSelect({
     ref: rootRef
   }, /*#__PURE__*/React.createElement("button", {
     type: "button",
-    className: `fselect mono ${value ? 'fselect--on' : ''}`,
+    className: `fselect fselect--icon ${filter ? 'fselect--on' : ''}`,
     onClick: () => setOpen(o => !o),
-    "aria-haspopup": "listbox",
-    "aria-expanded": open
-  }, value || label, /*#__PURE__*/React.createElement("span", {
-    className: "fselect-chevron",
+    "aria-haspopup": "menu",
+    "aria-expanded": open,
+    "aria-label": filter ? `Filtered: ${filter.val}` : 'Filter the work',
+    title: filter ? filter.val : 'Filter'
+  }, /*#__PURE__*/React.createElement("svg", {
+    width: "14",
+    height: "14",
+    viewBox: "0 0 24 24",
+    fill: "none",
+    stroke: "currentColor",
+    strokeWidth: "2",
+    strokeLinecap: "round",
+    strokeLinejoin: "round",
     "aria-hidden": "true"
-  })), open && /*#__PURE__*/React.createElement("div", {
-    className: "fmenu",
-    role: "listbox",
-    "aria-label": label
-  }, /*#__PURE__*/React.createElement("button", {
+  }, /*#__PURE__*/React.createElement("polygon", {
+    points: "22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"
+  }))), open && /*#__PURE__*/React.createElement("div", {
+    className: "fmenu fmenu--grouped",
+    role: "menu",
+    "aria-label": "Filter work"
+  }, groups.map(([dim, label, options]) => /*#__PURE__*/React.createElement("div", {
+    className: "fmenu-group",
+    key: dim
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "fmenu-label mono",
+    "aria-hidden": "true"
+  }, label), options.map(v => /*#__PURE__*/React.createElement("button", {
     type: "button",
-    role: "option",
-    "aria-selected": !value,
-    className: `fmenu-item mono ${!value ? 'fmenu-item--on' : ''}`,
-    onClick: () => pick(null)
-  }, "All"), options.map(v => /*#__PURE__*/React.createElement("button", {
-    type: "button",
-    role: "option",
-    "aria-selected": value === v,
-    className: `fmenu-item mono ${value === v ? 'fmenu-item--on' : ''}`,
-    onClick: () => pick(v),
+    role: "menuitemradio",
+    "aria-checked": isOn(dim, v),
+    className: `fmenu-item mono ${isOn(dim, v) ? 'fmenu-item--on' : ''}`,
+    onClick: () => pick(dim, v),
     key: v
-  }, v))));
+  }, v))))));
 }
 function AssetsFeed() {
-  const PAGE = 14; // tiles per deal — keeps the page from scrolling forever
+  const PAGE = 14; // tiles per Gimmie More pull
+  const FIRST_DEAL = 28; // tiles before the toggle appears (Jean: 2× the pull)
   const [cols, setCols] = useState(feedColCount);
   const [desktop, setDesktop] = useState(feedIsDesktop);
   const [active, setActive] = useState(null); // the shot open in the info overlay
-  const [filters, setFilters] = useState({
-    industry: null,
-    org: null,
-    scope: null
-  });
-  const [limit, setLimit] = useState(PAGE); // grown by the Gimmie More switch
+  // ONE active filter across all dimensions: { dim, val } | null
+  const [filter, setFilterOn] = useState(null);
+  // dice roll: null = natural order, otherwise the shuffle seed
+  const [shuffleSeed, setShuffleSeed] = useState(null);
+  const [limit, setLimit] = useState(FIRST_DEAL); // grown by the Gimmie More switch
   const [pastBand, setPastBand] = useState(false); // scrolled beyond the divider band?
   const bandRef = useRef(null);
   // Entrance bookkeeping: tiles mounted at page load join the big page
@@ -2019,8 +2670,8 @@ function AssetsFeed() {
     io.observe(el);
     return () => io.disconnect();
   }, []);
-  const openShot = asset => {
-    setActive(asset);
+  const openShot = tile => {
+    setActive(tile);
     playStateChange(true);
     haptic(10);
   };
@@ -2028,17 +2679,39 @@ function AssetsFeed() {
     setActive(null);
     playStateChange(false);
   };
-  const setFilter = (dim, val) => {
+  // shared re-deal choreography: cascade from the top + snap relayout,
+  // then glide to the feed start — the change always comes from the
+  // sticky controls deep in the page, and without the glide scroll
+  // anchoring dumps you at a random height
+  const redeal = () => {
     initialLoad.current = false;
-    setDealStart(0); // re-deal cascades from the top
-    setFilters(f => ({
-      ...f,
-      [dim]: val
-    }));
-    setLimit(PAGE); // a fresh filter re-deals from the top
+    setDealStart(0);
+    setLimit(FIRST_DEAL);
     haptic(8);
-    // relayout snapped heights + dividers after the grid re-deals
-    setTimeout(() => window.dispatchEvent(new Event('resize')), 60);
+    setTimeout(() => {
+      window.dispatchEvent(new Event('resize'));
+      const first = document.querySelector('.feed-masonry .asset-tile');
+      if (first) {
+        const cell = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--board-cell')) || 32;
+        // land ONE cell above the first tile — the band stays above the
+        // viewport, so the sticky controls never blink away (3 cells
+        // used to overshoot past the band's trigger line); instant, so
+        // no anchored in-between frame paints
+        const y = first.getBoundingClientRect().top + window.scrollY - cell;
+        window.scrollTo({
+          top: y,
+          behavior: 'auto'
+        });
+      }
+    }, 60);
+  };
+  const setFilter = next => {
+    setFilterOn(next); // shuffle is a mode — filtering doesn't clear it
+    redeal();
+  };
+  const toggleShuffle = () => {
+    setShuffleSeed(s => s === null ? Math.floor(Math.random() * 1e9) : null);
+    redeal();
   };
   // Flat feed: every project contributes its cover then its pieces, in
   // order — one continuous scroll, no folding. Artifacts slot in where
@@ -2046,10 +2719,13 @@ function AssetsFeed() {
   // stay stable under filtering — figures are identity, not position.
   const tiles = [];
   PROJECTS.forEach(p => {
+    // covers are flagged: they start a fresh row, large and LEFT, so
+    // scanning the feed shows where each project begins
     tiles.push({
       asset: p.cover,
       note: p.tag || p.cat,
       key: p.key,
+      cover: true,
       industry: p.industry,
       org: p.org,
       scope: SCOPE_LABELS[p.cover.cat] || p.cover.cat
@@ -2091,53 +2767,78 @@ function AssetsFeed() {
       return (ia === -1 ? 99 : ia) - (ib === -1 ? 99 : ib);
     })
   };
-  const visible = tiles.filter(t => FILTER_GROUPS.every(([dim]) => !filters[dim] || t[dim] === filters[dim]));
+  const visible = tiles.filter(t => !filter || t[filter.dim] === filter.val);
+  // dice roll shuffles the deal order — FIGs don't move, they're
+  // identity (assigned on the full list above), not position
+  const ordered = shuffleSeed === null ? visible : seededShuffle(visible, shuffleSeed);
   // Deal only `limit` tiles; the Gimmie More switch below grows it.
-  const dealt = visible.slice(0, limit);
+  const dealt = ordered.slice(0, limit);
   const hasMore = visible.length > dealt.length;
   // Row-major grid; desktop subdivides into 12 tracks so tiles take
   // varied spans + offsets (coverSlot), tablet/mobile one track per tile.
+  // A project COVER always opens a fresh row (large, left) — if one
+  // would land mid-row, the row closes early and the tile before it
+  // sits alone.
   const trackCount = desktop ? 12 : cols;
   const rows = [];
-  for (let i = 0; i < dealt.length; i += cols) rows.push(dealt.slice(i, i + cols));
+  let row = [];
+  dealt.forEach(t => {
+    if (t.cover) {
+      // covers own their row outright — close whatever was open
+      if (row.length) {
+        rows.push(row);
+        row = [];
+      }
+      rows.push([t]);
+      return;
+    }
+    row.push(t);
+    if (row.length === cols) {
+      rows.push(row);
+      row = [];
+    }
+  });
+  if (row.length) rows.push(row);
   return /*#__PURE__*/React.createElement("section", {
     className: "feed-section",
     "data-screen-label": "02 Work"
   }, /*#__PURE__*/React.createElement("div", {
     className: "board-divider board-divider--note reveal",
     style: {
-      '--reveal-delay': '5300ms'
+      '--reveal-delay': '7850ms'
     },
     ref: bandRef
-  }, /*#__PURE__*/React.createElement("p", {
+  }, /*#__PURE__*/React.createElement("h3", {
     className: "feed-note"
   }, "A collection of ", /*#__PURE__*/React.createElement("a", {
-    className: "hand-word",
+    className: "brand-word",
     href: "https://www.konpo.studio",
     target: "_blank",
     rel: "noreferrer"
-  }, "Konpo"), " snippets and personal work."), /*#__PURE__*/React.createElement("div", {
-    className: "feed-filters"
-  }, FILTER_GROUPS.map(([dim, label]) => /*#__PURE__*/React.createElement(FilterSelect, {
-    key: dim,
-    label: label,
-    value: filters[dim],
-    options: values[dim],
-    onChange: v => setFilter(dim, v)
-  })))), /*#__PURE__*/React.createElement("div", {
+  }, "Konpo"), ", ", /*#__PURE__*/React.createElement("a", {
+    className: "brand-word",
+    href: "https://www.surgehq.ai",
+    target: "_blank",
+    rel: "noreferrer"
+  }, "Surge"), " and personal snippets of work")), /*#__PURE__*/React.createElement("div", {
     className: "feed-masonry",
     style: {
       gridTemplateColumns: `repeat(${trackCount}, minmax(0, 1fr))`
     }
-  }, rows.map((row, ri) => row.map((t, ci) => /*#__PURE__*/React.createElement(FeedTile, {
-    tile: t,
-    index: ri * cols + ci,
-    onOpen: () => openShot(t.asset),
-    slotStyle: coverSlot(ri, ci, desktop),
-    batchStart: dealStart,
-    initialLoad: initialLoad.current,
-    key: t.key
-  })))), visible.length === 0 && /*#__PURE__*/React.createElement("p", {
+  }, (() => {
+    // rows vary in length (covers break them early), so the deal
+    // index runs flat across the whole grid
+    let flatIdx = 0;
+    return rows.map((row, ri) => row.map((t, ci) => /*#__PURE__*/React.createElement(FeedTile, {
+      tile: t,
+      index: flatIdx++,
+      onOpen: () => openShot(t),
+      slotStyle: coverSlot(ri, ci, desktop, row),
+      batchStart: dealStart,
+      initialLoad: initialLoad.current,
+      key: t.key
+    })));
+  })()), visible.length === 0 && /*#__PURE__*/React.createElement("p", {
     className: "feed-empty mono"
   }, "NOTHING HERE YET \u2014 LOOSEN A FILTER"), hasMore && /*#__PURE__*/React.createElement(MoreToggle, {
     onMore: () => {
@@ -2162,16 +2863,13 @@ function AssetsFeed() {
         }
       }, 120);
     }
-  }), pastBand && /*#__PURE__*/React.createElement("div", {
+  }), (pastBand || shuffleSeed !== null) && /*#__PURE__*/React.createElement("div", {
     className: "feed-filters-sticky"
-  }, FILTER_GROUPS.map(([dim, label]) => /*#__PURE__*/React.createElement(FilterSelect, {
-    key: dim,
-    label: label,
-    value: filters[dim],
-    options: values[dim],
-    onChange: v => setFilter(dim, v)
-  }))), active && /*#__PURE__*/React.createElement(WorkModal, {
-    asset: active,
+  }, /*#__PURE__*/React.createElement(DiceButton, {
+    active: shuffleSeed !== null,
+    onToggle: toggleShuffle
+  })), active && /*#__PURE__*/React.createElement(WorkModal, {
+    tile: active,
     onClose: closeShot
   }));
 }
@@ -2269,7 +2967,9 @@ const ELSEWHERE_LINKS = [{
   to: 'AI has turned me into a coding monkey with fire ↗',
   href: 'https://github.com/jeanm-404'
 }];
-function Footer() {
+function Footer({
+  startDelay = 7000
+}) {
   return /*#__PURE__*/React.createElement("footer", {
     className: "footer",
     "data-screen-label": "03 Footer"
@@ -2285,7 +2985,7 @@ function Footer() {
     key: l.from,
     className: "reveal",
     style: {
-      '--reveal-delay': `${5000 + i * 140}ms`
+      '--reveal-delay': `${startDelay + i * 140}ms`
     }
   }, /*#__PURE__*/React.createElement(GlitchLink, {
     from: l.from,
@@ -2339,15 +3039,54 @@ function WeatherLine() {
     className: "wx-line"
   }, wx.line));
 }
-function Colophon() {
+
+// The weather widget's old spot: ONE light switch, resting ON — the
+// inverse of the entry gate. Flip it off and the lights go out: back
+// to the blue loading screen, where the gate switches have multiplied.
+function OffSwitch({
+  onOff
+}) {
+  const [off, setOff] = useState(false); // true while the flip-off plays
+  const busy = useRef(false);
+  const flip = () => {
+    if (busy.current) return;
+    busy.current = true;
+    setOff(true);
+    playToggleOff();
+    haptic(10);
+    setTimeout(() => {
+      onOff();
+      // back ON for the next visit — the blue screen hides the reset
+      setTimeout(() => {
+        setOff(false);
+        busy.current = false;
+      }, 700);
+    }, 520);
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    className: `tfield ${off ? 'tfield--off' : ''}`
+  }, /*#__PURE__*/React.createElement("button", {
+    type: "button",
+    className: "tfield-switch",
+    onClick: flip,
+    "aria-label": "Lights out \u2014 back to the start"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "tfield-knob"
+  })));
+}
+function Colophon({
+  onOff
+}) {
   return /*#__PURE__*/React.createElement("div", {
     className: "colophon",
     "data-screen-label": "04 Colophon"
-  }, /*#__PURE__*/React.createElement(WeatherLine, null), /*#__PURE__*/React.createElement("div", {
+  }, /*#__PURE__*/React.createElement(OffSwitch, {
+    onOff: onOff
+  }), /*#__PURE__*/React.createElement("div", {
     className: "colophon-rule",
     "aria-hidden": "true"
   }), /*#__PURE__*/React.createElement("p", {
     className: "footer-note"
-  }, "Powered by Yorkshire Tea and Claude."));
+  }, "Powered by Yorkshire Tea."));
 }
 ReactDOM.createRoot(document.getElementById('root')).render(/*#__PURE__*/React.createElement(App, null));
