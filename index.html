@@ -77,8 +77,9 @@
   <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png" />
   <link rel="icon" type="image/png" sizes="192x192" href="favicon-192.png" />
   <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png" />
-  <link rel="preload" as="script" href="app.compiled.js?v=7c0c7811" />
-  <link rel="stylesheet" href="styles.css?v=dfdb94a9" />
+  <link rel="preload" as="script" href="app.compiled.js?v=2316b274" />
+  <link rel="stylesheet" href="styles.css?v=8953ea23" />
+  <link rel="stylesheet" href="vendor/locomotive-scroll.css" />
 </head>
 <body>
   <!-- Production: precompiled app.compiled.js + minified React (no Babel).
@@ -89,8 +90,13 @@
     import { animate } from 'https://cdn.jsdelivr.net/npm/animejs@4/+esm';
     window.__anime = { animate };
   </script>
+  <!-- Locomotive Scroll v5 rides on Lenis; its UMD looks for a lowercase
+       `lenis` global, hence the one-line shim between the two -->
+  <script src="vendor/lenis.min.js"></script>
+  <script>window.lenis = window.Lenis;</script>
+  <script src="vendor/locomotive-scroll.umd.js"></script>
   <script src="https://unpkg.com/react@18.3.1/umd/react.production.min.js" integrity="sha384-DGyLxAyjq0f9SPpVevD6IgztCFlnMF6oW/XQGmfe+IsZ8TqEiDrcHkMLKI6fiB/Z" crossorigin="anonymous"></script>
   <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js" integrity="sha384-gTGxhz21lVGYNMcdJOyq01Edg0jhn/c22nsx0kyqP0TxaV5WVdsSH1fSDUf5YJj1" crossorigin="anonymous"></script>
-  <script src="app.compiled.js?v=7c0c7811"></script>
+  <script src="app.compiled.js?v=2316b274"></script>
 </body>
 </html>

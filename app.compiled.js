@@ -884,6 +884,66 @@ function MoreToggle({
     "aria-label": "Gimmie more \u2014 load more work"
   }, "GIMMIE MORE"));
 }
+
+// ─────────────────────────────────────────────────────────────
+// Locomotive Scroll (v5, Lenis underneath): smooth wheel scrolling
+// plus the feed's scroll reveal. Booted when the gate flips, torn
+// down by lights-out so the next entrance replays. Lenis scrolls the
+// window natively (no transform hijack), so the rulers, ScrollNav,
+// sticky rail and the holo card's own scroll listeners are untouched.
+// Vendored in vendor/ (UMD + Lenis + the tiny stylesheet), loaded by
+// index.html / dev.html before this file.
+// ─────────────────────────────────────────────────────────────
+let LOCO = null;
+// first-screen tiles keep the slot they had in the page reveal
+const TILE_REVEAL_BASE = 2600;
+const TILE_REVEAL_STEP = 100;
+// a tile counts as in view once its top clears the bottom 12% of the viewport
+const TILE_TRIGGER = 0.88;
+function locoBoot() {
+  if (LOCO) return LOCO;
+  const lib = window.locomotiveScroll;
+  const Ctor = lib && (typeof lib === 'function' ? lib : lib.default);
+  if (typeof Ctor !== 'function') {
+    // library missing: never leave the feed invisible
+    document.documentElement.setAttribute('data-loco', 'off');
+    return null;
+  }
+  // Tiles in the first viewport are flagged in view the moment
+  // Locomotive boots, so they carry the page-load cascade delay;
+  // everything below the fold answers the scroll with no delay.
+  let k = 0;
+  document.querySelectorAll('.asset-tile[data-scroll]').forEach(el => {
+    const inFold = el.getBoundingClientRect().top < window.innerHeight * TILE_TRIGGER;
+    el.style.setProperty('--tile-delay', inFold ? `${TILE_REVEAL_BASE + Math.min(k++, 8) * TILE_REVEAL_STEP}ms` : '0ms');
+  });
+  const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  LOCO = new Ctor({
+    lenisOptions: {
+      lerp: 0.1,
+      smoothWheel: !reduce
+    },
+    triggerRootMargin: `-1px 0px -${Math.round((1 - TILE_TRIGGER) * 100)}% 0px`
+  });
+  window.__loco = LOCO; // handy in the console
+  return LOCO;
+}
+function locoDestroy() {
+  if (LOCO) {
+    LOCO.destroy();
+    LOCO = null;
+    window.__loco = null;
+  }
+  document.querySelectorAll('.asset-tile[data-scroll].is-inview').forEach(el => el.classList.remove('is-inview'));
+}
+
+// programmatic scrolls ride Lenis so they never fight its loop
+function locoScrollTo(y, opts = {}) {
+  if (LOCO) LOCO.scrollTo(y, opts);else window.scrollTo({
+    top: y,
+    behavior: opts.immediate ? 'auto' : 'smooth'
+  });
+}
 function App() {
   // Park the iOS haptic switch in the DOM before the first tap ever lands.
   useEffect(() => {
@@ -899,6 +959,7 @@ function App() {
   }, []);
   const enter = () => {
     document.documentElement.setAttribute('data-reveal', 'go');
+    locoBoot(); // smooth scroll + the feed's scroll reveal start here
   };
 
   // The lights-out loop: the colophon switch sends you back to the blue
@@ -907,6 +968,7 @@ function App() {
   // data-reveal makes the whole entrance replay when you flip back in.
   const [gateGen, setGateGen] = useState(0);
   const lightsOut = () => {
+    locoDestroy(); // tiles go back to hidden, so the next entrance re-reveals them
     document.documentElement.setAttribute('data-reveal', 'pending');
     window.scrollTo(0, 0); // instant — the blue screen already covers it
     setGateGen(g => g + 1);
@@ -2567,9 +2629,12 @@ function WorkModal({
   // over a heavily blurred page. The tile chrome (FIG / title / category)
   // lives HERE, as a quiet caption pinned to the bottom edge — the feed
   // tiles themselves carry no text.
+  // data-lenis-prevent: while the page is locked behind the lightbox the
+  // wheel must not drive Lenis either (it would scroll the blurred page)
   const stop = e => e.stopPropagation();
   return ReactDOM.createPortal(/*#__PURE__*/React.createElement("div", {
     className: "work-modal",
+    "data-lenis-prevent": "",
     onClick: onClose,
     role: "dialog",
     "aria-modal": "true",
@@ -2690,37 +2755,30 @@ function useTapGuard(threshold = 10) {
 // opens the shot's info overlay — no inline expansion, the feed stays calm.
 function FeedTile({
   tile,
-  index,
   onOpen,
-  slotStyle,
-  batchStart,
-  initialLoad
+  slotStyle
 }) {
   const guard = useTapGuard();
-  // Entrance is locked at FIRST mount and never recomputed — otherwise a
-  // later class flip would re-trigger the animation (the page-load reveal
-  // carries a ~6s delay, which is what made Gimmie More deals invisible).
-  const entrance = useRef(null);
-  if (entrance.current === null) {
-    entrance.current = initialLoad ? {
-      cls: 'reveal',
-      style: {
-        '--reveal-delay': `${2600 + Math.min(index, 8) * 100}ms`
-      }
-    } : {
-      cls: 'asset-tile--dealt',
-      style: {
-        '--deal-delay': `${Math.max(0, index - batchStart) * 70}ms`
-      }
+  // Every tile reveals on scroll: Locomotive flags it `is-inview` as it
+  // enters the viewport (styles: .asset-tile[data-scroll]). Tiles that
+  // exist when the gate flips are picked up by locoBoot wholesale;
+  // tiles dealt later (Gimmie More) register themselves here.
+  const slot = useRef(null);
+  useEffect(() => {
+    const el = slot.current;
+    if (LOCO && el) LOCO.addScrollElements(el);
+    return () => {
+      if (LOCO && el) LOCO.removeScrollElements(el);
     };
-  }
+  }, []);
   return /*#__PURE__*/React.createElement("div", {
     className: "proj",
-    style: slotStyle || undefined
+    style: slotStyle || undefined,
+    ref: slot
   }, /*#__PURE__*/React.createElement("button", _extends({
     type: "button",
-    className: `asset-tile asset-tile--cover ${entrance.current.cls}`,
-    style: entrance.current.style,
+    className: "asset-tile asset-tile--cover",
+    "data-scroll": "",
     onClick: onOpen,
     "aria-haspopup": "dialog",
     "aria-label": `${tile.asset.title} — details`
@@ -2917,11 +2975,6 @@ function AssetsFeed() {
   // dice roll: null = natural order, otherwise the shuffle seed
   const [shuffleSeed, setShuffleSeed] = useState(null);
   const [limit, setLimit] = useState(FIRST_DEAL); // grown by the Gimmie More switch
-  // Entrance bookkeeping: tiles mounted at page load join the big page
-  // reveal; tiles mounted after any interaction (deal/filter) cascade in
-  // one by one from `dealStart` instead.
-  const initialLoad = useRef(true);
-  const [dealStart, setDealStart] = useState(0);
   useEffect(() => {
     const onResize = () => {
       setCols(feedColCount());
@@ -2944,13 +2997,12 @@ function AssetsFeed() {
   // sticky controls deep in the page, and without the glide scroll
   // anchoring dumps you at a random height
   const redeal = () => {
-    initialLoad.current = false;
-    setDealStart(0);
     setLimit(FIRST_DEAL);
     haptic(8);
     setTimeout(() => {
       window.dispatchEvent(new Event('resize'));
-      const first = document.querySelector('.feed-masonry .asset-tile');
+      // measure the untransformed slot, not the tile (hidden tiles sit 28px low)
+      const first = document.querySelector('.feed-masonry .proj');
       if (first) {
         const cell = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--board-cell')) || 32;
         // land ONE cell above the first tile — the band stays above the
@@ -2958,9 +3010,8 @@ function AssetsFeed() {
         // used to overshoot past the band's trigger line); instant, so
         // no anchored in-between frame paints
         const y = first.getBoundingClientRect().top + window.scrollY - cell;
-        window.scrollTo({
-          top: y,
-          behavior: 'auto'
+        locoScrollTo(y, {
+          immediate: true
         });
       }
     }, 60);
@@ -3067,40 +3118,29 @@ function AssetsFeed() {
     style: {
       gridTemplateColumns: `repeat(${trackCount}, minmax(0, 1fr))`
     }
-  }, (() => {
-    // rows vary in length (covers break them early), so the deal
-    // index runs flat across the whole grid
-    let flatIdx = 0;
-    return rows.map((row, ri) => row.map((t, ci) => /*#__PURE__*/React.createElement(FeedTile, {
-      tile: t,
-      index: flatIdx++,
-      onOpen: () => openShot(t),
-      slotStyle: coverSlot(ri, ci, desktop, row),
-      batchStart: dealStart,
-      initialLoad: initialLoad.current,
-      key: t.key
-    })));
-  })()), visible.length === 0 && /*#__PURE__*/React.createElement("p", {
+  }, rows.map((row, ri) => row.map((t, ci) => /*#__PURE__*/React.createElement(FeedTile, {
+    tile: t,
+    onOpen: () => openShot(t),
+    slotStyle: coverSlot(ri, ci, desktop, row),
+    key: t.key
+  })))), visible.length === 0 && /*#__PURE__*/React.createElement("p", {
     className: "feed-empty mono"
   }, "NOTHING HERE YET \u2014 LOOSEN A FILTER"), hasMore && /*#__PURE__*/React.createElement(MoreToggle, {
     onMore: () => {
       // The new tiles land ABOVE the toggle, and scroll anchoring
       // keeps the toggle pinned under the cursor — so without a
       // nudge the deal happens off-screen. Glide to the first
-      // fresh tile so the reveal is actually seen.
+      // fresh tile; Locomotive reveals each one as it scrolls in.
       const prev = dealt.length;
-      initialLoad.current = false;
-      setDealStart(prev); // fresh tiles cascade from here
       setLimit(l => l + PAGE);
       setTimeout(() => {
         window.dispatchEvent(new Event('resize'));
-        const first = document.querySelectorAll('.feed-masonry .asset-tile')[prev];
+        const first = document.querySelectorAll('.feed-masonry .proj')[prev];
         if (first) {
           const cell = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--board-cell')) || 32;
           const y = first.getBoundingClientRect().top + window.scrollY - cell * 2;
-          window.scrollTo({
-            top: y,
-            behavior: 'smooth'
+          locoScrollTo(y, {
+            duration: 1.1
           });
         }
       }, 120);

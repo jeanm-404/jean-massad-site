@@ -2009,19 +2009,30 @@ html[data-reveal="go"] .contrib-cell {
 /* tile chrome (FIG / title / category) removed from the feed — that
    info lives in the WorkModal caption now, surfaced only on tap */
 
-/* dealt-in entrance — tiles mounted after a Gimmie More (or filter)
-   cascade in one by one, 70ms apart, instead of joining the page-load
-   reveal and its ~6s delay */
-@keyframes tile-deal {
-  from { opacity: 0; filter: blur(6px); transform: translateY(6px); }
-  to   { opacity: 1; filter: blur(0); transform: none; }
+/* scroll reveal: Locomotive Scroll flags every feed tile `is-inview`
+   as it enters the viewport (locoBoot in app.jsx) and the tile eases
+   up out of a blur. First-screen tiles carry --tile-delay so they
+   still join the page-load cascade; everything below the fold answers
+   the scroll at once. [data-loco="off"] is the no-library fallback so
+   the feed can never be left invisible. */
+.asset-tile[data-scroll] {
+  opacity: 0;
+  transform: translateY(28px);
+  filter: blur(8px);
+  transition:
+    opacity 900ms cubic-bezier(.2, .7, .2, 1),
+    transform 1100ms cubic-bezier(.2, .7, .2, 1),
+    filter 900ms cubic-bezier(.2, .7, .2, 1);
+  transition-delay: var(--tile-delay, 0ms);
 }
-.asset-tile--dealt {
-  animation: tile-deal 460ms cubic-bezier(.2, .7, .2, 1) both;
-  animation-delay: var(--deal-delay, 0ms);
+.asset-tile[data-scroll].is-inview,
+html[data-loco="off"] .asset-tile[data-scroll] {
+  opacity: 1;
+  transform: none;
+  filter: none;
 }
 @media (prefers-reduced-motion: reduce) {
-  .asset-tile--dealt { animation: none; }
+  .asset-tile[data-scroll] { transition: none; opacity: 1; transform: none; filter: none; }
 }
 
 /* skeleton shimmer — every media box shimmers until its content has
