@@ -2946,57 +2946,9 @@ function Footer({ startDelay = 6200 }) {
 
 }
 
-// Weather callout — the visitor's sky, or mine as an availability
-// status (api/weather.ts; ported from the Astro handoff). No location
-// prompt, no spinner; if everything fails the line simply never shows.
-// Preview states with ?wx=rain, ?wx=vpn, ?wx=down, …
-function WeatherLine() {
-  const [wx, setWx] = useState(null);          // { line, icon }
-  const [entered, setEntered] = useState(false);
-  useEffect(() => {
-    const force = new URLSearchParams(window.location.search).get('wx');
-    const cached = !force && sessionStorage.getItem('wx-v2');
-    if (cached) {
-      try { setWx(JSON.parse(cached)); return; } catch (e) { /* refetch */ }
-    }
-    const params = new URLSearchParams({
-      tz: (Intl.DateTimeFormat().resolvedOptions().timeZone) || '',
-    });
-    if (force) params.set('force', force);
-    fetch('/api/weather?' + params.toString())
-      .then((r) => r.json())
-      .then((data) => {
-        if (!data || !data.line) return;
-        if (!force) sessionStorage.setItem('wx-v2', JSON.stringify(data));
-        setWx(data);
-      })
-      .catch(() => { /* no line beats a broken line */ });
-  }, []);
-  useEffect(() => {
-    if (!wx) return;
-    const raf = requestAnimationFrame(() => setEntered(true));
-    return () => cancelAnimationFrame(raf);
-  }, [wx]);
-  if (!wx) return null;
-  return (
-    <div className={`wx-block ${entered ? 'wx-in' : ''}`} role="status">
-      {wx.icon && (
-        <img
-          className="wx-icon"
-          src={`uploads/weather/${wx.icon}.svg`}
-          alt=""
-          width="72"
-          height="72"
-        />
-      )}
-      <p className="wx-line">{wx.line}</p>
-    </div>
-  );
-}
-
-// The weather widget's old spot: ONE light switch, resting ON — the
-// inverse of the entry gate. Flip it off and the lights go out: back
-// to the blue loading screen, where the gate switches have multiplied.
+// ONE light switch, resting ON, the inverse of the entry gate. Flip
+// it off and the lights go out: back to the blue loading screen, where
+// the gate switches have multiplied.
 function OffSwitch({ onOff }) {
   const [off, setOff] = useState(false); // true while the flip-off plays
   const busy = useRef(false);
@@ -3334,14 +3286,14 @@ function Colophon() {
   return (
     <div className="colophon" data-screen-label="04 Colophon">
       {/* The holo card sits where Jean's 48px avatar (and before it the
-          lights-out switch / weather widget) sat. OffSwitch + App.lightsOut
+          lights-out switch) sat. OffSwitch + App.lightsOut
           are still here, dormant: render <OffSwitch onOff={onOff} /> to
           bring the loop back; <img className="colophon-avatar" .../> for
           the plain avatar. */}
       <HoloCard />
       {/* the small rule that sat here was cut 2026-09-14; Contact scrambles
           into the address on hover, same GlitchLink as the Where fold */}
-      <GlitchLink className="footer-contact" from="Contact" to="jeanmassad@gmail.com" href="mailto:jeanmassad@gmail.com" newTab={false} />
+      <GlitchLink className="footer-contact" from="Contact" to="jean@konpo.studio" href="mailto:jean@konpo.studio" newTab={false} />
     </div>);
 
 }

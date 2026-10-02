@@ -3273,55 +3273,9 @@ function Footer({
   })))))));
 }
 
-// Weather callout — the visitor's sky, or mine as an availability
-// status (api/weather.ts; ported from the Astro handoff). No location
-// prompt, no spinner; if everything fails the line simply never shows.
-// Preview states with ?wx=rain, ?wx=vpn, ?wx=down, …
-function WeatherLine() {
-  const [wx, setWx] = useState(null); // { line, icon }
-  const [entered, setEntered] = useState(false);
-  useEffect(() => {
-    const force = new URLSearchParams(window.location.search).get('wx');
-    const cached = !force && sessionStorage.getItem('wx-v2');
-    if (cached) {
-      try {
-        setWx(JSON.parse(cached));
-        return;
-      } catch (e) {/* refetch */}
-    }
-    const params = new URLSearchParams({
-      tz: Intl.DateTimeFormat().resolvedOptions().timeZone || ''
-    });
-    if (force) params.set('force', force);
-    fetch('/api/weather?' + params.toString()).then(r => r.json()).then(data => {
-      if (!data || !data.line) return;
-      if (!force) sessionStorage.setItem('wx-v2', JSON.stringify(data));
-      setWx(data);
-    }).catch(() => {/* no line beats a broken line */});
-  }, []);
-  useEffect(() => {
-    if (!wx) return;
-    const raf = requestAnimationFrame(() => setEntered(true));
-    return () => cancelAnimationFrame(raf);
-  }, [wx]);
-  if (!wx) return null;
-  return /*#__PURE__*/React.createElement("div", {
-    className: `wx-block ${entered ? 'wx-in' : ''}`,
-    role: "status"
-  }, wx.icon && /*#__PURE__*/React.createElement("img", {
-    className: "wx-icon",
-    src: `uploads/weather/${wx.icon}.svg`,
-    alt: "",
-    width: "72",
-    height: "72"
-  }), /*#__PURE__*/React.createElement("p", {
-    className: "wx-line"
-  }, wx.line));
-}
-
-// The weather widget's old spot: ONE light switch, resting ON — the
-// inverse of the entry gate. Flip it off and the lights go out: back
-// to the blue loading screen, where the gate switches have multiplied.
+// ONE light switch, resting ON, the inverse of the entry gate. Flip
+// it off and the lights go out: back to the blue loading screen, where
+// the gate switches have multiplied.
 function OffSwitch({
   onOff
 }) {
@@ -3943,8 +3897,8 @@ function Colophon() {
   }, /*#__PURE__*/React.createElement(HoloCard, null), /*#__PURE__*/React.createElement(GlitchLink, {
     className: "footer-contact",
     from: "Contact",
-    to: "jeanmassad@gmail.com",
-    href: "mailto:jeanmassad@gmail.com",
+    to: "jean@konpo.studio",
+    href: "mailto:jean@konpo.studio",
     newTab: false
   }));
 }
