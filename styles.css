@@ -1386,20 +1386,20 @@ html[data-reveal="go"] .contrib-cell {
    are gated behind body.pops-armed, added on idle after load (the
    intro takes ~7s to type; nobody hovers before the pops are armed) */
 .media-pop-img--awwwards    { aspect-ratio: 511 / 677; }
-.media-pop-img--webby       { aspect-ratio: 538 / 671; }
+.media-pop-img--webby       { aspect-ratio: 506 / 900; }
 .media-pop-img--producthunt { aspect-ratio: 717 / 404; }
 .media-pop-img--timcook     { aspect-ratio: 717 / 404; }
-.media-pop-img--appstore    { aspect-ratio: 717 / 404; }
+.media-pop-img--appstore    { aspect-ratio: 4 / 5; }
 .media-pop-img--forbes      { aspect-ratio: 554 / 704; }
 .media-pop-img--president   { aspect-ratio: 315 / 420; }
 .media-pop-img--terrycrews  { aspect-ratio: 462 / 663; }
 .pops-armed .media-pop-img--snow        { background-image: url("uploads/hover/ski.jpg"); }
 .pops-armed .media-pop-img--surf        { background-image: url("uploads/hover/surf.jpg"); }
 .pops-armed .media-pop-img--awwwards    { background-image: url("uploads/hover/awwwards.png"); }
-.pops-armed .media-pop-img--webby       { background-image: url("uploads/hover/webby.png"); }
+.pops-armed .media-pop-img--webby       { background-image: url("uploads/hover/webby-2026.jpg"); }
 .pops-armed .media-pop-img--producthunt { background-image: url("uploads/hover/producthunt.png"); }
 .pops-armed .media-pop-img--timcook     { background-image: url("uploads/hover/timcook.png"); }
-.pops-armed .media-pop-img--appstore    { background-image: url("uploads/hover/appstore.png"); }
+.pops-armed .media-pop-img--appstore    { background-image: url("uploads/hover/appstore-aotd.png"); }
 .pops-armed .media-pop-img--forbes      { background-image: url("uploads/hover/forbes.jpg"); }
 .pops-armed .media-pop-img--president   { background-image: url("uploads/hover/president.jpg"); }
 .pops-armed .media-pop-img--terrycrews  { background-image: url("uploads/hover/terrycrews.jpg"); }

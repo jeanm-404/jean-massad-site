@@ -1560,7 +1560,7 @@ function IntroDial() {
           {W(', made the cover of ')}
           {POP('Forbes', 'forbes', true)}
           {W(' and smiled from the top of the ')}
-          {POP('App Store', 'appstore')}
+          {POP('App Store', 'appstore', true)}
           {W('.')}
         </span>
         <br /><br />
@@ -1758,7 +1758,7 @@ function Intro() {
           {W(', made the cover of ')}
           {POP('Forbes', 'forbes', true)}
           {W(' and smiled from the top of the ')}
-          {POP('App Store', 'appstore')}
+          {POP('App Store', 'appstore', true)}
           {W('.')}
         </span>
       </p>

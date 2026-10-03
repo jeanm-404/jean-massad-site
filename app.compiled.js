@@ -1775,7 +1775,7 @@ function IntroDial() {
       className: "bio-part"
     }, W('I work through the design spectrum across brand, product and systems for startups, F500, gov and everything in between.')), /*#__PURE__*/React.createElement("br", null), /*#__PURE__*/React.createElement("br", null), Gap(), /*#__PURE__*/React.createElement("span", {
       className: "bio-part"
-    }, W('My work has won over '), POP('Awwwards', 'awwwards', true), W(' and the '), POP('Webbys', 'webby', true), W(', survived '), POP('Product Hunt', 'producthunt'), W(', been torn apart on Hacker News, shown up behind '), POP('Tim Cook', 'timcook'), W(' in a keynote, been loved by '), POP('Terry Crews', 'terrycrews', true), W(', made the cover of '), POP('Forbes', 'forbes', true), W(' and smiled from the top of the '), POP('App Store', 'appstore'), W('.')), /*#__PURE__*/React.createElement("br", null), /*#__PURE__*/React.createElement("br", null), Gap(), /*#__PURE__*/React.createElement("span", {
+    }, W('My work has won over '), POP('Awwwards', 'awwwards', true), W(' and the '), POP('Webbys', 'webby', true), W(', survived '), POP('Product Hunt', 'producthunt'), W(', been torn apart on Hacker News, shown up behind '), POP('Tim Cook', 'timcook'), W(' in a keynote, been loved by '), POP('Terry Crews', 'terrycrews', true), W(', made the cover of '), POP('Forbes', 'forbes', true), W(' and smiled from the top of the '), POP('App Store', 'appstore', true), W('.')), /*#__PURE__*/React.createElement("br", null), /*#__PURE__*/React.createElement("br", null), Gap(), /*#__PURE__*/React.createElement("span", {
       className: "bio-part"
     }, W('It\'s been called "ok" by a '), POP('President', 'president', true), W('.')), /*#__PURE__*/React.createElement("br", null), /*#__PURE__*/React.createElement("br", null), Gap(), /*#__PURE__*/React.createElement("span", {
       className: "bio-part",
@@ -1977,7 +1977,7 @@ function Intro() {
     className: "intro-paragraph"
   }, /*#__PURE__*/React.createElement("span", {
     className: "bio-part"
-  }, W('My work has won over '), POP('Awwwards', 'awwwards', true), W(' and the '), POP('Webbys', 'webby', true), W(', survived '), POP('Product Hunt', 'producthunt'), W(', been torn apart on Hacker News, shown up behind '), POP('Tim Cook', 'timcook'), W(' in a keynote, been loved by '), POP('Terry Crews', 'terrycrews', true), W(', made the cover of '), POP('Forbes', 'forbes', true), W(' and smiled from the top of the '), POP('App Store', 'appstore'), W('.'))), Gap(), /*#__PURE__*/React.createElement("p", {
+  }, W('My work has won over '), POP('Awwwards', 'awwwards', true), W(' and the '), POP('Webbys', 'webby', true), W(', survived '), POP('Product Hunt', 'producthunt'), W(', been torn apart on Hacker News, shown up behind '), POP('Tim Cook', 'timcook'), W(' in a keynote, been loved by '), POP('Terry Crews', 'terrycrews', true), W(', made the cover of '), POP('Forbes', 'forbes', true), W(' and smiled from the top of the '), POP('App Store', 'appstore', true), W('.'))), Gap(), /*#__PURE__*/React.createElement("p", {
     className: "intro-paragraph"
   }, /*#__PURE__*/React.createElement("span", {
     className: "bio-part"
