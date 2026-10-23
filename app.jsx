@@ -296,11 +296,16 @@ function haptic(ms = 12) {
 // ─────────────────────────────────────────────────────────────
 // ─── the blueprint sheet: traced from the REAL page ─────────────
 // The site is already laid out behind the gate (held at opacity 0 by
-// data-reveal="pending"), so the draft measures the actual DOM: every
-// text line of the headline / lede / bio, the eyebrow chips, the
-// elsewhere rows, any tile inside the viewport, plus the frame's true
-// width. When the flood comes, the content lands exactly where its
-// block was drawn.
+// data-reveal="pending"), so the draft is traced from the actual DOM:
+// transitions.dev's UI generation runtime (vendor/ui-generation.js)
+// measures the hero — eyebrow chips, headline, lede, fold rows — and
+// draws it as a dotted skeleton on the blue, then wipes the real hero
+// in exactly where it was drawn. The sheet adds the frame's true width.
+// Drawing time, and the point in it where the lights come on: mid-
+// trace, so the dots finish in graphite on paper and the scan line
+// reveals the hero (the whole run is about HERO_GEN_MS × 1.09).
+const HERO_GEN_MS = 1600; // the runtime's floor for a drawing that still reads
+const HERO_GEN_FLOOD = 0.56;
 // the whiteboard frame = the container's CONTENT box: its top-left
 // corner is the rulers' origin, its width the blueprint's dimension
 function frameRect() {
@@ -313,59 +318,12 @@ function frameRect() {
   const pt = parseFloat(cs.paddingTop) || 0;
   return { x: b.left + pl, y: b.top + pt, w: b.width - pl - pr, h: b.height - pt };
 }
-function lineRects(el) {
-  if (!el) return [];
-  const range = document.createRange();
-  range.selectNodeContents(el);
-  const lines = [];
-  Array.from(range.getClientRects()).forEach((r) => {
-    if (r.width < 1 || r.height < 1) return;
-    const l = lines.find((L) => Math.abs(L.top - r.top) < r.height * 0.6);
-    if (l) {
-      l.left = Math.min(l.left, r.left); l.right = Math.max(l.right, r.right);
-      l.top = Math.min(l.top, r.top); l.bottom = Math.max(l.bottom, r.bottom);
-    } else lines.push({ left: r.left, right: r.right, top: r.top, bottom: r.bottom });
-  });
-  return lines.map((L) => ({ x: L.left, y: L.top, w: L.right - L.left, h: L.bottom - L.top }));
-}
-function measureBlueprint() {
-  const vh = window.innerHeight;
-  const blocks = [];
-  const push = (kind, i, r) => {
-    if (!r || r.w < 1 || r.h < 1 || r.y > vh + 24 || r.y + r.h < -24) return;
-    blocks.push({ kind, i, x: Math.round(r.x), y: Math.round(r.y), w: Math.round(r.w), h: Math.round(r.h) });
-  };
-  const rect = (el) => {
-    if (!el) return null;
-    const b = el.getBoundingClientRect();
-    return { x: b.left, y: b.top, w: b.width, h: b.height };
-  };
-  const q = (s) => document.querySelector(s);
-  const qa = (s) => Array.from(document.querySelectorAll(s));
-  // `i` is the draw order (stagger group), top of the page first
-  qa('.headline-eyebrow .chip').forEach((el) => push('control', 0, rect(el)));
-  lineRects(q('.headline')).forEach((r, k) => push('head', 1 + Math.min(k, 1), r));
-  lineRects(q('.intro-heading')).forEach((r) => push('text', 3, r));
-  // the four folds: the list's top rule, then each row's label, + glyph
-  // and the hairline under it (collapsed — that's how the page lands)
-  const folds = q('.folds');
-  if (folds) { const r = rect(folds); push('line', 4, { x: r.x, y: r.y, w: r.w, h: 1 }); }
-  qa('.fold').forEach((li, k) => {
-    const g = 4 + Math.min(k, 1);
-    lineRects(li.querySelector('.fold-label')).forEach((t) => push('text', g, t));
-    push('control', g, rect(li.querySelector('.fold-glyph')));
-    const r = rect(li);
-    if (r) push('line', g, { x: r.x, y: r.y + r.h - 1, w: r.w, h: 1 });
-  });
-  qa('.asset-tile').forEach((el, k) => push('media', 6 + Math.min(k, 2), rect(el)));
-  return { blocks, frame: frameRect() };
-}
 
 function Gate({ onEnter, entering, count = 1, blueprint = false }) {
   const [on, setOn] = useState(false);     // click registered
   const [lit, setLit] = useState(false);   // the switch finally gave in
   const [gone, setGone] = useState(false);
-  const [draft, setDraft] = useState(null); // { blocks, frame } while the blueprint beat runs
+  const [draft, setDraft] = useState(null); // { frame } while the blueprint beat runs
   const [warm, setWarm] = useState({ done: WARM.done, total: WARM.total });
   const knobRefs = useRef([]);             // one knob per switch — all move as one
   const inputRef = useRef(null);
@@ -433,29 +391,37 @@ function Gate({ onEnter, entering, count = 1, blueprint = false }) {
       setTimeout(onEnter, 250);
       setTimeout(() => setGone(true), 1100);
     };
-    if (!blueprint || reduced) { setTimeout(flood, SUCCESS); return; }
+    if (!blueprint || reduced || !window.UIGeneration) { setTimeout(flood, SUCCESS); return; }
     // First visit: the DRAFT beat between the knob landing and the
-    // flood. The switch steps aside and the page gets drawn on the
-    // blue like a Figma sheet — rulers, 100px grid, hatched wireframe —
-    // while the asset warmup finishes behind it. Held at least MIN so
-    // the drawing reads, stretched until the warmup is done, never
-    // past MAX (a slow network must not hold the door).
+    // flood. The switch steps aside and the hero gets generated on the
+    // blue like a Figma sheet — rulers, 100px grid, dotted skeleton —
+    // while the asset warmup runs behind it. The lights come on
+    // mid-drawing and the real hero wipes in behind the scan line.
     setTimeout(() => {
-      setDraft(measureBlueprint());
-      // ?bp=hold parks the sheet for design review — any click floods
-      if (new URLSearchParams(window.location.search).get('bp') === 'hold') {
-        window.addEventListener('pointerdown', flood, { once: true });
-        return;
-      }
-      const t0 = performance.now();
-      const MIN = 1700, MAX = 2800;
-      const check = () => {
-        const el = performance.now() - t0;
-        const warmDone = WARM.total === 0 || WARM.done >= WARM.total;
-        if (el >= MAX || (el >= MIN && warmDone)) flood();
-        else setTimeout(check, 100);
+      const hero = document.querySelector('.hero');
+      if (!hero) { flood(); return; }
+      setDraft({ frame: frameRect() });
+      // ?bp=hold plays the drawing in slow motion for design review
+      const ms = HERO_GEN_MS * (new URLSearchParams(window.location.search).get('bp') === 'hold' ? 6 : 1);
+      // the runtime measures text, so it waits for the webfonts: first the
+      // (non-blocking) font stylesheet, then only the faces the hero uses
+      const heroFaces = () => {
+        const set = new Set();
+        [hero, ...hero.querySelectorAll('*')].forEach((el) => {
+          const cs = getComputedStyle(el);
+          set.add(`${cs.fontStyle} ${cs.fontWeight} 1em ${cs.fontFamily}`);
+        });
+        return [...set];
       };
-      check();
+      (window.fontCSS || Promise.resolve())
+        .then(() => Promise.all(heroFaces().map((f) => document.fonts.load(f).catch(() => null))))
+        .then(() => document.fonts.ready)
+        .then(() => {
+        // the hero's own word cascade is handed to the runtime (styles.css)
+        document.documentElement.classList.add('hero-gen');
+        window.UIGeneration.generate(hero, { mode: 'skeleton', duration: ms, maxParts: 120 });
+        setTimeout(flood, ms * HERO_GEN_FLOOD);
+      });
     }, SUCCESS + 180);
   };
 
@@ -489,26 +455,19 @@ function Gate({ onEnter, entering, count = 1, blueprint = false }) {
           </label>
         ))}
       </div>
-      {/* the sheet: the page as it will land, drafted — the frame's
-          true width, then every measured block sketches in on a stagger
-          (--i) in imdaryl.com's blueprint idiom, with the warmup counter.
-          Dissolves under the flood; the real content types in exactly
-          where it was drawn. (The rulers carry the frame's edges — no
+      {/* the sheet, in imdaryl.com's blueprint idiom: the frame's true
+          width and the warmup counter. The hero's dotted skeleton is
+          the runtime's own overlay, drawn above the gate. Dissolves
+          under the flood. (The rulers carry the frame's edges — no
           column guides, no handwritten aside.) */}
       {draft && (
         <div className="bp-stage" aria-hidden="true">
           {draft.frame && (
-            <div className="bp-dim" style={{ top: Math.max(34, draft.frame.y - 14), left: draft.frame.x, width: draft.frame.w }}>
+            // up clear of the skeleton's own size label (10px over the hero)
+            <div className="bp-dim" style={{ top: Math.max(30, draft.frame.y - 34), left: draft.frame.x, width: draft.frame.w }}>
               <b>{Math.round(draft.frame.w)}</b>
             </div>
           )}
-          {draft.blocks.map((b, k) => (
-            <i
-              key={k}
-              className={`bp-block bp-block--${b.kind}`}
-              style={{ '--i': b.i, left: b.x, top: b.y, width: b.w, height: b.h }}
-            />
-          ))}
           <span className="bp-fig">FIG_000 · DRAFT</span>
           <span className="bp-progress">
             {warmDone ? 'ASSETS WARM ✓' : `WARMING ASSETS ${pad(warm.done)}/${pad(warm.total)}`}
@@ -722,6 +681,7 @@ function App() {
   const lightsOut = () => {
     locoDestroy(); // tiles go back to hidden, so the next entrance re-reveals them
     document.documentElement.setAttribute('data-reveal', 'pending');
+    document.documentElement.classList.remove('hero-gen'); // no draft beat next time: the hero cascades in
     window.scrollTo(0, 0); // instant — the blue screen already covers it
     setGateGen((g) => g + 1);
   };
@@ -845,13 +805,16 @@ function App() {
         <div className="board-cover board-cover--hero" aria-hidden="true" />
         <div className="board-cover board-cover--foot" aria-hidden="true" />
         <div className="board-topline" aria-hidden="true" />
-        <Headline />
-        <header className="top-row">
-          <div className="top-intro">
-            <Intro />
-          </div>
-          {/* elsewhere lives inside the intro now — the Where fold */}
-        </header>
+        {/* one element, so the gate's draft beat can generate the hero whole */}
+        <div className="hero">
+          <Headline />
+          <header className="top-row">
+            <div className="top-intro">
+              <Intro />
+            </div>
+            {/* elsewhere lives inside the intro now — the Where fold */}
+          </header>
+        </div>
 
         {/* hero/work divider (note + filters) is rendered by AssetsFeed */}
         <section className="grid-area">
@@ -1996,58 +1959,58 @@ const PROJECTS = [
     cover: A('surge', 'surge-logo', 'Surge AI', 'Brand', '16 / 9'),
     cards: [
       A('surge', 'surge-website', 'Website', 'Websites', '16 / 9'),
-      P('surge', 'image', 'surge-pair-left.jpg', 'Duo I', 'Brand', '1900 / 2160'),
-      P('surge', 'image', 'surge-font-use.jpg', 'Font in Use', 'Systems', '16 / 9'),
-      P('surge', 'image', 'surge-research.jpg', 'Research', 'Brand', '3840 / 2266'),
-      P('surge', 'image', 'surge-chart.jpg', 'Charts', 'Product', '16 / 9'),
-      P('surge', 'image', 'surge-web-overview.jpg', 'Web Overview', 'Websites', '16 / 9'),
-      P('surge', 'image', 'surge-screens.jpg', 'Screens', 'Websites', '16 / 9'),
-      P('surge', 'image', 'surge-poster-right.jpg', 'Poster II', 'Brand', '1900 / 2160'),
-      P('surge', 'image', 'surge-product.jpg', 'Product', 'Product', '16 / 9'),
-      P('surge', 'image', 'surge-typography.jpg', 'Typography', 'Systems', '16 / 9'),
-      P('surge', 'image', 'surge-palette-16.jpg', 'Palette', 'Systems', '16 / 9'),
+      P('surge', 'image', 'surge-pair-left.webp', 'Duo I', 'Brand', '1900 / 2160'),
+      P('surge', 'image', 'surge-font-use.webp', 'Font in Use', 'Systems', '16 / 9'),
+      P('surge', 'image', 'surge-research.webp', 'Research', 'Brand', '3840 / 2266'),
+      P('surge', 'image', 'surge-chart.webp', 'Charts', 'Product', '16 / 9'),
+      P('surge', 'image', 'surge-web-overview.webp', 'Web Overview', 'Websites', '16 / 9'),
+      P('surge', 'image', 'surge-screens.webp', 'Screens', 'Websites', '16 / 9'),
+      P('surge', 'image', 'surge-poster-right.webp', 'Poster II', 'Brand', '1900 / 2160'),
+      P('surge', 'image', 'surge-product.webp', 'Product', 'Product', '16 / 9'),
+      P('surge', 'image', 'surge-typography.webp', 'Typography', 'Systems', '16 / 9'),
+      P('surge', 'image', 'surge-palette-16.webp', 'Palette', 'Systems', '16 / 9'),
       A('surge', 'surge-palette', 'Color', 'Systems', '16 / 9'),
-      P('surge', 'image', 'surge-primary.jpg', 'Primary', 'Systems', '16 / 9'),
-      P('surge', 'image', 'surge-icon-examples.jpg', 'Icon Examples', 'Systems', '1900 / 2160'),
-      P('surge', 'image', 'surge-icon-corner.jpg', 'Icon Corner', 'Systems', '16 / 9'),
+      P('surge', 'image', 'surge-primary.webp', 'Primary', 'Systems', '16 / 9'),
+      P('surge', 'image', 'surge-icon-examples.webp', 'Icon Examples', 'Systems', '1900 / 2160'),
+      P('surge', 'image', 'surge-icon-corner.webp', 'Icon Corner', 'Systems', '16 / 9'),
       A('surge', 'surge-icons', 'Icons', 'Systems', '16 / 9'),
-      P('surge', 'image', 'surge-spacing.png', 'Spacing', 'Systems', '16 / 9'),
-      P('surge', 'image', 'surge-grid.jpg', 'Grid', 'Systems', '16 / 9'),
+      P('surge', 'image', 'surge-spacing.webp', 'Spacing', 'Systems', '16 / 9'),
+      P('surge', 'image', 'surge-grid.webp', 'Grid', 'Systems', '16 / 9'),
       { type: 'embed', title: 'Frontier Skyline',
         src: 'https://surge-mirror.vercel.app/frontier-minimal.html?view=scores&revision=dark-toggle&theme=dark',
-        preview: 'uploads/artifacts/surge-skyline.png', aspect: '16 / 9',
+        preview: 'uploads/artifacts/surge-skyline.webp', aspect: '16 / 9',
         desc: 'Benchmark skylines for the Surge Intelligence Index — every model on every board, one glance. Live prototype, embedded.',
         cat: 'IDK', scope: ['Craft', 'Data viz'] },
       { type: 'embed', title: 'Radial Horizon',
         src: 'https://surge-mirror.vercel.app/compare.html?prototype=frontier&models=fable-5%2Cgpt-5.6-sol%2Cgemini-3.5-flash%2Ckimi-k3&view=all&theme=dark#tw=theme:dark',
-        preview: 'uploads/artifacts/surge-radial.png', aspect: '16 / 9',
+        preview: 'uploads/artifacts/surge-radial.webp', aspect: '16 / 9',
         desc: 'A cross-board radial horizon comparing four frontier models across nine Surge benches. Live prototype, embedded.',
         cat: 'IDK', scope: ['Craft', 'Data viz'] },
     ] },
   { key: 'fyler', industry: 'AI', org: 'Startup', title: 'Fyler', cat: 'Websites', tag: 'Search Engine', sub: 'Brand, marketing site, and product UI for AI-native search.',
-    cover: P('fyler', 'image', 'fyler-moodboard-brand.jpg', 'Fyler', 'Brand', '1600 / 1034'),
+    cover: P('fyler', 'image', 'fyler-moodboard-brand.webp', 'Fyler', 'Brand', '1600 / 1034'),
     cards: [
       A('fyler', 'fyler-walkthrough', 'Walkthrough', 'Product', '3 / 2'),
       A('fyler', 'fyler-showcase', 'Showcase', 'Product', '16 / 9'),
       A('fyler', 'fyler-interface', 'Interface', 'Product', '16 / 9'),
-      P('fyler', 'image', 'fyler-inside-search.jpg', 'Inside Search', 'Product', '16 / 9'),
-      P('fyler', 'image', 'fyler-rich-weather.jpg', 'Weather', 'Product', '1571 / 2031'),
-      P('fyler', 'image', 'fyler-widget-discovery.jpg', 'Discovery Widget', 'Product', '1600 / 996'),
-      P('fyler', 'image', 'fyler-widget-graphic.jpg', 'Graphic Widget', 'Product', '1600 / 996'),
-      P('fyler', 'image', 'fyler-widget-mobile.jpg', 'Mobile Widget', 'Product', '1600 / 996'),
-      P('fyler', 'image', 'fyler-widget-comparative.jpg', 'Comparative Widget', 'Product', '1600 / 996'),
+      P('fyler', 'image', 'fyler-inside-search.webp', 'Inside Search', 'Product', '16 / 9'),
+      P('fyler', 'image', 'fyler-rich-weather.webp', 'Weather', 'Product', '1571 / 2031'),
+      P('fyler', 'image', 'fyler-widget-discovery.webp', 'Discovery Widget', 'Product', '1600 / 996'),
+      P('fyler', 'image', 'fyler-widget-graphic.webp', 'Graphic Widget', 'Product', '1600 / 996'),
+      P('fyler', 'image', 'fyler-widget-mobile.webp', 'Mobile Widget', 'Product', '1600 / 996'),
+      P('fyler', 'image', 'fyler-widget-comparative.webp', 'Comparative Widget', 'Product', '1600 / 996'),
       A('fyler', 'fyler-ds-cards', 'System Cards', 'Systems', '1280 / 828'),
-      P('fyler', 'image', 'fyler-ds-1.jpg', 'Design System I', 'Systems', '1600 / 1034'),
-      P('fyler', 'image', 'fyler-ds-2.jpg', 'Design System II', 'Systems', '1600 / 1033'),
-      P('fyler', 'image', 'fyler-ds-3.jpg', 'Design System III', 'Systems', '1600 / 1034'),
-      P('fyler', 'image', 'fyler-ds-4.jpg', 'Design System IV', 'Systems', '1600 / 1033'),
-      P('fyler', 'image', 'fyler-typography.jpg', 'Typography', 'Systems', '1600 / 930'),
+      P('fyler', 'image', 'fyler-ds-1.webp', 'Design System I', 'Systems', '1600 / 1034'),
+      P('fyler', 'image', 'fyler-ds-2.webp', 'Design System II', 'Systems', '1600 / 1033'),
+      P('fyler', 'image', 'fyler-ds-3.webp', 'Design System III', 'Systems', '1600 / 1034'),
+      P('fyler', 'image', 'fyler-ds-4.webp', 'Design System IV', 'Systems', '1600 / 1033'),
+      P('fyler', 'image', 'fyler-typography.webp', 'Typography', 'Systems', '1600 / 930'),
       A('fyler', 'fyler-insp-type', 'Type Inspiration', 'Brand', '1280 / 826'),
       A('fyler', 'fyler-insp-icons', 'Icon Inspiration', 'Brand', '1280 / 712'),
       A('fyler', 'fyler-insp-patterns', 'Pattern Inspiration', 'Brand', '16 / 9'),
       A('fyler', 'fyler-insp-palettes', 'Palette Inspiration', 'Brand', '16 / 9'),
       A('fyler', 'fyler-darklight', 'Dark / Light', 'Product', '3 / 2'),
-      P('fyler', 'image', 'fyler-moodboard-1.jpg', 'Moodboard', 'Brand', '1600 / 1034'),
+      P('fyler', 'image', 'fyler-moodboard-1.webp', 'Moodboard', 'Brand', '1600 / 1034'),
     ] },
   { key: 'compsych', industry: 'Healthcare', org: 'Enterprise', title: 'ComPsych', cat: 'Brand', tag: 'Mental Health', sub: 'Rebranding the world\u2019s largest employee mental-health provider.',
     cover: A('compsych', 'compsych-hero', 'ComPsych', 'Brand', '4 / 3'),
@@ -2057,27 +2020,27 @@ const PROJECTS = [
       A('compsych', 'compsych-moodboard', 'Moodboard', 'Brand', '4 / 3'),
       A('compsych', 'compsych-positioning', 'Positioning', 'Brand', '16 / 9'),
       A('compsych', 'compsych-messaging', 'Messaging', 'Brand', '16 / 9'),
-      P('compsych', 'image', 'compsych-pillars.jpg', 'Pillars', 'Brand', '16 / 9'),
-      P('compsych', 'image', 'compsych-model.jpg', 'Brand Model', 'Brand', '16 / 9'),
+      P('compsych', 'image', 'compsych-pillars.webp', 'Pillars', 'Brand', '16 / 9'),
+      P('compsych', 'image', 'compsych-model.webp', 'Brand Model', 'Brand', '16 / 9'),
       A('compsych', 'compsych-kerning', 'Kerning', 'Brand', '4 / 3'),
       A('compsych', 'compsych-wordmark-details', 'Wordmark Details', 'Brand', '600 / 700'),
-      P('compsych', 'image', 'compsych-identity.jpg', 'Identity', 'Brand', '3200 / 1870'),
+      P('compsych', 'image', 'compsych-identity.webp', 'Identity', 'Brand', '3200 / 1870'),
       P('compsych', 'image', 'compsych-wordmark-a.webp', 'Wordmark', 'Brand', '1000 / 701'),
       A('compsych', 'compsych-graphics', 'Graphics', 'Brand', '1 / 1'),
       A('compsych', 'compsych-palette-font', 'Palette & Font', 'Systems', '20 / 13'),
-      P('compsych', 'image', 'compsych-font-use.jpg', 'Font in Use', 'Systems', '16 / 9'),
-      P('compsych', 'image', 'compsych-percentage.jpg', 'Data', 'Systems', '3727 / 2096'),
+      P('compsych', 'image', 'compsych-font-use.webp', 'Font in Use', 'Systems', '16 / 9'),
+      P('compsych', 'image', 'compsych-percentage.webp', 'Data', 'Systems', '3727 / 2096'),
       A('compsych', 'compsych-guidelines', 'Guidelines', 'Systems', '4 / 3'),
       A('compsych', 'compsych-brand-hub', 'Brand Hub', 'Systems', '960 / 538'),
       A('compsych', 'compsych-button', 'Buttons', 'Systems', '16 / 9'),
       P('compsych', 'image', 'compsych-posters.webp', 'Posters I', 'Brand', '800 / 891'),
       P('compsych', 'image', 'compsych-posters-b.webp', 'Posters II', 'Brand', '800 / 891'),
-      P('compsych', 'image', 'compsych-print.jpg', 'Print', 'Brand', '16 / 9'),
+      P('compsych', 'image', 'compsych-print.webp', 'Print', 'Brand', '16 / 9'),
       A('compsych', 'compsych-website', 'Website', 'Websites', '4 / 3'),
       A('compsych', 'compsych-web-preview', 'Web Preview', 'Websites', '16 / 9'),
       A('compsych', 'compsych-loading', 'Loading', 'Websites', '16 / 9'),
       A('compsych', 'compsych-elements', 'Elements', 'Websites', '10 / 7'),
-      P('compsych', 'image', 'compsych-awards.jpg', 'Awards', 'Brand', '2110 / 1406'),
+      P('compsych', 'image', 'compsych-awards.webp', 'Awards', 'Brand', '2110 / 1406'),
     ] },
   { key: 'coachable', industry: 'Coaching', org: 'Startup', title: 'Coachable', cat: 'Brand', tag: 'Career Coaching', sub: 'Identity and website for career-changing coaching.',
     cover: A('coachable', 'coachable-hero', 'Coachable', 'Brand', '4 / 3'),
@@ -2119,26 +2082,26 @@ const PROJECTS = [
     cards: [
       A('systemone', 'systemone-logo', 'Logo', 'Brand', '3 / 2'),
       A('systemone', 'systemone-scrolling-type', 'Scrolling Type', 'Websites', '3 / 2'),
-      P('systemone', 'image', 'systemone-app-icon.jpeg', 'App Icon', 'Brand', '1592 / 2149'),
+      P('systemone', 'image', 'systemone-app-icon.webp', 'App Icon', 'Brand', '1592 / 2149'),
       A('systemone', 'systemone-girl', 'Film', 'Websites', '4 / 5'),
-      P('systemone', 'image', 'systemone-website.jpeg', 'Website', 'Websites', '3224 / 2149'),
+      P('systemone', 'image', 'systemone-website.webp', 'Website', 'Websites', '3224 / 2149'),
       A('systemone', 'systemone-services', 'Services', 'Websites', '3 / 2'),
-      P('systemone', 'image', 'systemone-in-hand.jpeg', 'In Hand', 'Product', '1593 / 2149'),
+      P('systemone', 'image', 'systemone-in-hand.webp', 'In Hand', 'Product', '1593 / 2149'),
       A('systemone', 'systemone-live', 'Live', 'Brand', '16 / 9'),
       P('systemone', 'image', 'systemone-mobile.webp', 'Mobile', 'Product', '1323 / 1790'),
-      P('systemone', 'image', 'systemone-dashboard.jpeg', 'Dashboard', 'Product', '3222 / 2149'),
-      P('systemone', 'image', 'systemone-artist.jpeg', 'Artist Page', 'Product', '1592 / 2149'),
-      P('systemone', 'image', 'systemone-stage.jpeg', 'On Stage', 'Brand', '1593 / 2149'),
-      P('systemone', 'image', 'systemone-billboard.jpeg', 'Billboard', 'Brand', '3226 / 2149'),
-      P('systemone', 'image', 'systemone-ooh.jpeg', 'OOH', 'Brand', '3226 / 2149'),
-      P('systemone', 'image', 'systemone-poster.jpeg', 'Poster', 'Brand', '3222 / 2149'),
-      P('systemone', 'image', 'systemone-cards.jpeg', 'Cards', 'Brand', '3222 / 2149'),
+      P('systemone', 'image', 'systemone-dashboard.webp', 'Dashboard', 'Product', '3222 / 2149'),
+      P('systemone', 'image', 'systemone-artist.webp', 'Artist Page', 'Product', '1592 / 2149'),
+      P('systemone', 'image', 'systemone-stage.webp', 'On Stage', 'Brand', '1593 / 2149'),
+      P('systemone', 'image', 'systemone-billboard.webp', 'Billboard', 'Brand', '3226 / 2149'),
+      P('systemone', 'image', 'systemone-ooh.webp', 'OOH', 'Brand', '3226 / 2149'),
+      P('systemone', 'image', 'systemone-poster.webp', 'Poster', 'Brand', '3222 / 2149'),
+      P('systemone', 'image', 'systemone-cards.webp', 'Cards', 'Brand', '3222 / 2149'),
       A('systemone', 'systemone-stories', 'Stories', 'Websites', '3 / 2'),
-      P('systemone', 'image', 'systemone-tagline.jpeg', 'Tagline', 'Brand', '3222 / 2149'),
+      P('systemone', 'image', 'systemone-tagline.webp', 'Tagline', 'Brand', '3222 / 2149'),
       P('systemone', 'image', 'systemone-scheme-a.webp', 'Scheme I', 'Systems', '3842 / 2163'),
       P('systemone', 'image', 'systemone-scheme-b.webp', 'Scheme II', 'Systems', '1921 / 1081'),
       A('systemone', 'systemone-outro', 'Outro', 'Brand', '16 / 9'),
-      P('systemone', 'image', 'systemone-numbers.png', 'Numbers', 'Websites', '124 / 37'),
+      P('systemone', 'image', 'systemone-numbers.webp', 'Numbers', 'Websites', '124 / 37'),
     ] },
   // ILI.DIGITAL runs on the "Nexus" are.na channel — a longer, mixed
   // image/video stack that stress-tests the inline-expand pattern.
@@ -2148,14 +2111,14 @@ const PROJECTS = [
       A('ili', 'ili-figma', 'Figma File', 'Brand', '96 / 47'),
       N('video', 'logos-2.mp4', 'Logos', 'Brand', '4 / 3'),
       N('video', 'detail.mp4', 'Logo Detail', 'Brand', '4 / 5'),
-      N('image', 'technical-logo.png', 'Blueprint', 'Brand', '14 / 17'),
+      N('image', 'technical-logo.webp', 'Blueprint', 'Brand', '14 / 17'),
       N('video', 'reveal.mp4', 'Reveal', 'Brand', '21 / 9'),
       P('ili', 'image', 'ili-palette.webp', 'Palette', 'Systems', '647 / 140'),
       P('ili', 'image', 'ili-typeface.webp', 'Söhne', 'Systems', '246 / 217'),
       P('ili', 'image', 'ili-principles.webp', 'Fast, Focused', 'Brand', '771 / 656'),
       N('image', 'type.webp', 'Glyphs', 'Systems', '166 / 67'),
       N('image', 'status.webp', 'Portrait', 'Brand', '967 / 543'),
-      P('ili', 'image', 'ili-print.png', 'Print', 'Brand', '1505 / 837'),
+      P('ili', 'image', 'ili-print.webp', 'Print', 'Brand', '1505 / 837'),
       N('video', 'smile.mp4', 'Smile', 'Brand', '4 / 3'),
       N('image', 'bade.webp', 'Badge', 'Brand', '743 / 1008'),
       N('image', 'poster.webp', 'Poster', 'Brand', '3 / 4'),
@@ -2183,33 +2146,33 @@ const PROJECTS = [
       N('image', 'type-ii.webp', 'Typography', 'Systems', '3 / 2'),
       N('image', 'technical-smile.webp', 'Smile Blueprint', 'Systems', '1638 / 899'),
       N('video', 'charts.mp4', 'Charts', 'Product', '3 / 2'),
-      N('image', 'book.jpg', 'Book', 'Brand', '16 / 9'),
+      N('image', 'book.webp', 'Book', 'Brand', '16 / 9'),
     ] },
   { key: 'hutte', industry: 'DevTools', org: 'Startup', title: 'Hutte', cat: 'Brand', tag: 'Salesforce DevOps', sub: 'Identity and product for the home of Salesforce DevOps.',
     cover: A('hutte', 'hutte-logo', 'Hutte', 'Brand', '3 / 2'),
     cards: [
       A('hutte', 'hutte-hero', 'Hero', 'Websites', '16 / 9'),
-      P('hutte', 'image', 'hutte-glyphs.png', 'Glyph Set', 'Systems', '1611 / 1882'),
-      P('hutte', 'image', 'hutte-founders.jpeg', 'Founders', 'Brand', '1611 / 1121'),
+      P('hutte', 'image', 'hutte-glyphs.webp', 'Glyph Set', 'Systems', '1611 / 1882'),
+      P('hutte', 'image', 'hutte-founders.webp', 'Founders', 'Brand', '1611 / 1121'),
       P('hutte', 'image', 'hutte-color.webp', 'Color', 'Systems', '200 / 127'),
       P('hutte', 'image', 'hutte-keyboard.webp', 'Keyboard', 'Brand', '700 / 521'),
       A('hutte', 'hutte-emojis', 'Emojis', 'Brand', '1 / 1'),
       A('hutte', 'hutte-logo-reduction', 'Logo Reduction', 'Brand', '160 / 81'),
-      P('hutte', 'image', 'hutte-team.jpeg', 'Team', 'Brand', '248 / 165'),
+      P('hutte', 'image', 'hutte-team.webp', 'Team', 'Brand', '248 / 165'),
       P('hutte', 'image', 'hutte-beanie.webp', 'Beanie', 'Brand', '1 / 1'),
       P('hutte', 'image', 'hutte-flag.webp', 'Flag', 'Brand', '2761 / 2022'),
       P('hutte', 'image', 'hutte-bottle.webp', 'Bottle', 'Brand', '1378 / 919'),
       A('hutte', 'hutte-social-a', 'Social I', 'Brand', '480 / 289'),
-      P('hutte', 'image', 'hutte-landing.jpeg', 'Landing', 'Websites', '1593 / 1792'),
-      P('hutte', 'image', 'hutte-landing-b.jpeg', 'Landing II', 'Websites', '797 / 896'),
-      P('hutte', 'image', 'hutte-outdoors.jpeg', 'Outdoors', 'Brand', '3221 / 2241'),
+      P('hutte', 'image', 'hutte-landing.webp', 'Landing', 'Websites', '1593 / 1792'),
+      P('hutte', 'image', 'hutte-landing-b.webp', 'Landing II', 'Websites', '797 / 896'),
+      P('hutte', 'image', 'hutte-outdoors.webp', 'Outdoors', 'Brand', '3221 / 2241'),
       A('hutte', 'hutte-social-b', 'Social II', 'Brand', '120 / 67'),
-      P('hutte', 'image', 'hutte-remote.jpeg', 'Remote', 'Product', '3222 / 2041'),
+      P('hutte', 'image', 'hutte-remote.webp', 'Remote', 'Product', '3222 / 2041'),
       P('hutte', 'image', 'hutte-screens.webp', 'Screens', 'Product', '75 / 56'),
       A('hutte', 'hutte-tablet', 'Tablet', 'Brand', '4 / 3'),
       A('hutte', 'hutte-flow', 'Flow', 'Product', '1920 / 1091'),
       A('hutte', 'hutte-salesforce', 'Salesforce', 'Product', '16 / 9'),
-      P('hutte', 'image', 'hutte-isometric.jpeg', 'Isometric', 'Websites', '3222 / 2041'),
+      P('hutte', 'image', 'hutte-isometric.webp', 'Isometric', 'Websites', '3222 / 2041'),
       A('hutte', 'hutte-slider', 'Slider', 'Websites', '1920 / 1043'),
       A('hutte', 'hutte-members', 'Members', 'Product', '1920 / 1037'),
       A('hutte', 'hutte-onboarding', 'Onboarding', 'Product', '128 / 85'),
@@ -2240,8 +2203,8 @@ const ARTIFACTS = [];
 
 // ─── asset warmup ─────────────────────────────────────────────
 // The blue gate is dead time, so the moment the app mounts we spend
-// it fetching what the first screen will paint — every poster/image
-// of the first deal, then the first few cover clips — into the HTTP
+// it fetching what the first screen will paint (every poster/image of
+// the first deal; clips stream on their own) into the HTTP
 // cache. LazyVideo/AssetMedia then hit cache instead of the network
 // when the reveal runs. Progress feeds the blueprint's counter.
 // every clip ships a "<name>-poster.jpg" first frame; light renditions
@@ -2255,9 +2218,10 @@ function startWarmup() {
   const light = flat.slice(0, 30)
     .map((a) => (a.type === 'video' ? posterOf(a.src) : a.type === 'image' ? a.src : a.preview))
     .filter(Boolean);
-  // the clips are the heavy part — skipped for data-saver visitors
-  const saveData = navigator.connection && navigator.connection.saveData;
-  const clips = saveData ? [] : flat.filter((a) => a.type === 'video').slice(0, 6).map((a) => a.src);
+  // Clips are NOT warmed: <video> fetches in byte ranges and never reuses
+  // a whole-file fetch() from the cache, so every warmed clip downloaded
+  // twice (and held the gate). LazyVideo streams them near the fold.
+  const clips = [];
   WARM.total = light.length + clips.length;
   const notify = () => WARM.listeners.forEach((fn) => fn(WARM));
   const get = (url) => fetch(url).then((r) => (r.ok ? r.blob() : null)).catch(() => null)

@@ -73,13 +73,18 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="preconnect" href="https://unpkg.com" crossorigin />
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400..600&family=JetBrains+Mono:wght@400;500&family=Gochi+Hand&family=Google+Sans:wght@400..500&display=swap" />
+  <!-- webfont CSS loads without blocking first paint; window.fontCSS
+       resolves once it lands, and the hero waits on it before measuring -->
+  <script>window.fontCSS = new Promise(function (r) { window.__fontCSS = r; });</script>
+  <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400..600&family=JetBrains+Mono:wght@400;500&family=Gochi+Hand&family=Google+Sans:wght@400..500&display=swap" onload="this.onload=null;this.rel='stylesheet';window.__fontCSS()" onerror="window.__fontCSS()" />
+  <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400..600&family=JetBrains+Mono:wght@400;500&family=Gochi+Hand&family=Google+Sans:wght@400..500&display=swap" /></noscript>
   <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png" />
   <link rel="icon" type="image/png" sizes="192x192" href="favicon-192.png" />
   <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png" />
-  <link rel="preload" as="script" href="app.compiled.js?v=04c124e9" />
-  <link rel="stylesheet" href="styles.css?v=2146a115" />
+  <link rel="preload" as="script" href="app.compiled.js?v=ac4e2e89" />
+  <link rel="stylesheet" href="styles.css?v=93077a81" />
   <link rel="stylesheet" href="vendor/locomotive-scroll.css" />
+  <link rel="stylesheet" href="vendor/ui-generation.css" />
 </head>
 <body>
   <!-- Production: precompiled app.compiled.js + minified React (no Babel).
@@ -90,6 +95,9 @@
     import { animate } from 'https://cdn.jsdelivr.net/npm/animejs@4/+esm';
     window.__anime = { animate };
   </script>
+  <!-- transitions.dev's UI generation runtime (window.UIGeneration) —
+       draws the hero's dotted skeleton on the gate's blueprint sheet -->
+  <script type="module" src="vendor/ui-generation.js"></script>
   <!-- Locomotive Scroll v5 rides on Lenis; its UMD looks for a lowercase
        `lenis` global, hence the one-line shim between the two -->
   <script src="vendor/lenis.min.js"></script>
@@ -97,6 +105,6 @@
   <script src="vendor/locomotive-scroll.umd.js"></script>
   <script src="https://unpkg.com/react@18.3.1/umd/react.production.min.js" integrity="sha384-DGyLxAyjq0f9SPpVevD6IgztCFlnMF6oW/XQGmfe+IsZ8TqEiDrcHkMLKI6fiB/Z" crossorigin="anonymous"></script>
   <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js" integrity="sha384-gTGxhz21lVGYNMcdJOyq01Edg0jhn/c22nsx0kyqP0TxaV5WVdsSH1fSDUf5YJj1" crossorigin="anonymous"></script>
-  <script src="app.compiled.js?v=04c124e9"></script>
+  <script src="app.compiled.js?v=ac4e2e89"></script>
 </body>
 </html>

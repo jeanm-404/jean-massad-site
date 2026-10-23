@@ -18,3 +18,4 @@ uploads/*.webp
 uploads/*.csv
 uploads/CleanShot*.png
 uploads/pasted-*.png
+.app.babel.js
