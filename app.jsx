@@ -446,7 +446,7 @@ function Gate({ onEnter, entering, count = 1, blueprint = false }) {
               ref={i === 0 ? inputRef : undefined}
               checked={on}
               onChange={flip}
-              aria-label="Turn on the lights"
+              aria-label="Enter the site (turn on the lights)"
             />
             <span
               className="gate-toggle-knob"
@@ -1198,7 +1198,7 @@ function Headline() {
       <h1 className="headline">
         {/* who this is, for search and screen readers; the visible
             headline stays the line itself */}
-        <span className="sr-only">Jean Massad, design lead. </span>
+        <span className="sr-only">Jean Massad: design lead at Surge AI, runs Konpo. </span>
         {HEADLINE_SEGMENTS.map(([text, tone], si) => (
           <React.Fragment key={si}>
             {text.split(' ').map((word, wi) => {
@@ -2494,6 +2494,22 @@ function WorkModal({ tile, onClose }) {
       <div className="work-modal-caption">
         <span className="work-modal-caption-title">{asset.title}</span>
         <span className="work-modal-caption-meta mono">{tile.fig} · {(tile.note || '').toUpperCase()}</span>
+        {/* the project line + its case study: the one place the feed
+            links out (people and agents alike would otherwise dead-end) */}
+        {tile.proj && (
+          <span className="work-modal-caption-sub">
+            {tile.proj.title !== asset.title && <>{tile.proj.title}. </>}
+            {tile.proj.sub}
+            {CASE[tile.proj.key] && CASE[tile.proj.key].href && (
+              <>
+                {' '}
+                <a className="work-modal-caption-link" href={CASE[tile.proj.key].href} target="_blank" rel="noreferrer" onClick={stop}>
+                  Case study ↗
+                </a>
+              </>
+            )}
+          </span>
+        )}
       </div>
       {asset.type === 'image' ? (
         <img className="work-lightbox-media" src={fullSrc(asset.src)} alt={asset.title} style={{ aspectRatio: asset.aspect }} onClick={stop} />
@@ -2574,6 +2590,11 @@ function useTapGuard(threshold = 10) {
   };
 }
 
+// "Surge AI: Website" (a cover is just "Surge AI"), so a screen reader or
+// a browsing agent knows whose piece each tile is
+const tileName = (tile) => (tile.proj && tile.proj.title !== tile.asset.title
+  ? `${tile.proj.title}: ${tile.asset.title}` : tile.asset.title);
+
 // One tile in the flat feed — cover or piece, identical anatomy: just
 // the framed media (recent.design-style — no FIG, no title, no category
 // on the tile; all of that surfaces in the WorkModal on tap). Clicking
@@ -2598,7 +2619,7 @@ function FeedTile({ tile, onOpen, slotStyle }) {
         data-scroll=""
         onClick={onOpen}
         aria-haspopup="dialog"
-        aria-label={`${tile.asset.title} — details`}
+        aria-label={`${tileName(tile)}, open details`}
         {...guard}
       >
         <div className="asset-frame">
@@ -2795,9 +2816,9 @@ function AssetsFeed() {
   PROJECTS.forEach((p) => {
     // covers are flagged: they start a fresh row, large and LEFT, so
     // scanning the feed shows where each project begins
-    tiles.push({ asset: p.cover, note: p.tag || p.cat, key: p.key, cover: true,
+    tiles.push({ asset: p.cover, note: p.tag || p.cat, key: p.key, cover: true, proj: p,
       industry: p.industry, org: p.org, scope: SCOPE_LABELS[p.cover.cat] || p.cover.cat });
-    p.cards.forEach((a, j) => tiles.push({ asset: a, note: a.cat, key: `${p.key}-${j}`,
+    p.cards.forEach((a, j) => tiles.push({ asset: a, note: a.cat, key: `${p.key}-${j}`, proj: p,
       industry: p.industry, org: p.org, scope: SCOPE_LABELS[a.cat] || a.cat }));
   });
   ARTIFACTS.forEach((a, i) => {

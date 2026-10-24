@@ -1,4 +1,31 @@
+# Search engines, AI search and agents browsing for a person: welcome.
+# Training crawlers: no thanks. A plain-text version for agents lives at
+# https://jean.md/llms.txt (and https://jean.md/index.md).
 User-agent: *
 Allow: /
+
+User-agent: GPTBot
+Disallow: /
+
+User-agent: ClaudeBot
+Disallow: /
+
+User-agent: Google-Extended
+Disallow: /
+
+User-agent: Applebot-Extended
+Disallow: /
+
+User-agent: CCBot
+Disallow: /
+
+User-agent: meta-externalagent
+Disallow: /
+
+User-agent: Bytespider
+Disallow: /
+
+User-agent: cohere-training-data-crawler
+Disallow: /
 
 Sitemap: https://jean.md/sitemap.xml

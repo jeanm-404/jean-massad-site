@@ -1,0 +1,40 @@
+# Jean Massad
+
+> Jean Massad is a design lead at Surge AI and runs Konpo, a design studio. Brand, websites, product and design systems for startups, F500, government and everything in between, from napkin sketch through final_final release.
+
+- Name: Jean Massad
+- Role: Design Lead at Surge AI (https://www.surgehq.ai)
+- Studio: runs Konpo, a design studio (https://www.konpo.studio)
+- Website: https://jean.md
+- Focus: brand identity, websites, product design, design systems
+
+The site at https://jean.md is a single interactive page (a feed of work stills and clips). The same content is available as plain Markdown at https://jean.md/index.md, and each project links to its full case study on konpo.studio.
+
+## Work
+
+- [Surge AI](https://www.konpo.studio/?news=surge-ai): Brand and website for the data engine behind frontier AI. Brand, Website.
+- [Fyler](https://www.konpo.studio/work/fyler-search-engine): Brand, marketing site, and product UI for AI-native search. Website, Product, Brand.
+- [ComPsych](https://www.konpo.studio/work/compsych): Rebranding the world's largest employee mental-health provider. Brand, Website.
+- [Coachable](https://www.konpo.studio/work/coachable): Identity and website for career-changing coaching. Brand, Website.
+- [System One](https://www.konpo.studio/work/system-one): Brand and website for film-led storytelling. Brand, Website.
+- [ILI.DIGITAL](https://www.konpo.studio/work/ili-digital): The Nexus brand system, from logo to product. Brand, Website.
+- [Hutte](https://www.konpo.studio/work/hutte): Identity and product for the home of Salesforce DevOps. Brand, Product.
+
+## About
+
+- [Full page as Markdown](https://jean.md/index.md): bio, recognition, work and links in one file.
+- [Konpo](https://www.konpo.studio): Jean's design studio.
+- [Surge AI](https://www.surgehq.ai): where Jean is a design lead.
+
+## Elsewhere
+
+- [LinkedIn](https://www.linkedin.com/in/jeanmassad/)
+- [GitHub](https://github.com/jeanm-404)
+- [Substack](https://konpo.substack.com/)
+- [Are.na](https://www.are.na/jean-massad-b5kb-hfgjv0/channels)
+- [Dribbble](https://dribbble.com/jeanmassad)
+- [Instagram](https://www.instagram.com/heychacho/)
+
+## Contact
+
+- Email: [jean@konpo.studio](mailto:jean@konpo.studio)

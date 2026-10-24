@@ -1839,8 +1839,8 @@ html[data-reveal="go"] .contrib-cell {
   align-items: center;
   justify-content: center;
   padding: clamp(14px, 3.5vw, 48px);
-  /* keep the media clear of the bottom caption */
-  padding-bottom: 64px;
+  /* keep the media clear of the bottom caption (title, meta, project line) */
+  padding-bottom: 96px;
   background: rgba(251, 251, 251, 0.55);
   backdrop-filter: blur(22px);
   -webkit-backdrop-filter: blur(22px);
@@ -1894,6 +1894,22 @@ html[data-reveal="go"] .contrib-cell {
   letter-spacing: 0.08em;
   color: var(--muted-2);
   white-space: nowrap;
+}
+.work-modal-caption-sub {
+  max-width: 520px;
+  margin-top: 4px;
+  font-family: var(--sans);
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--muted);
+}
+.work-modal-caption-link {
+  color: var(--ink);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+  white-space: nowrap;
+  pointer-events: auto; /* the caption itself lets clicks through */
 }
 .work-lightbox-media {
   display: block;
