@@ -2,15 +2,17 @@
   "name": "jean-massad-site",
   "version": "1.0.0",
   "private": true,
-  "description": "Personal portfolio \u2014 no framework, precompiled JSX for production.",
+  "description": "Personal portfolio — no framework, precompiled JSX for production.",
   "scripts": {
-    "build": "babel app.jsx -o .app.babel.js --presets @babel/preset-react && terser .app.babel.js -c -m -o app.compiled.js && rm .app.babel.js && node stamp.js",
-    "deploy": "npm run build && vercel deploy --prod --yes"
+    "build": "babel app.jsx -o .app.babel.js --presets @babel/preset-react && terser media.js .app.babel.js -c -m -o app.compiled.js && rm .app.babel.js && node stamp.js",
+    "deploy": "npm run build && vercel deploy --prod --yes",
+    "media": "node scripts/media.js"
   },
   "devDependencies": {
     "@babel/cli": "^7.24.0",
     "@babel/core": "^7.24.0",
     "@babel/preset-react": "^7.24.0",
+    "sharp": "^0.33.5",
     "terser": "^5.51.2"
   }
 }

@@ -1196,6 +1196,9 @@ function Headline() {
         {C(<span className="chip" {...bio('surge')}>Surge<SurgeMark className="chip-logo chip-logo--surge" /></span>, 'surge')}
       </p>
       <h1 className="headline">
+        {/* who this is, for search and screen readers; the visible
+            headline stays the line itself */}
+        <span className="sr-only">Jean Massad, design lead. </span>
         {HEADLINE_SEGMENTS.map(([text, tone], si) => (
           <React.Fragment key={si}>
             {text.split(' ').map((word, wi) => {
@@ -1927,30 +1930,16 @@ const CASE = {
   hutte: { href: 'https://www.konpo.studio/work/hutte',
     desc: 'Brand identity for Hutte, the visual home for Salesforce DevOps — logo, emojis, and a system that scales.', scope: ['Brand', 'Product'] },
 };
-// Clips with a light feed rendition on disk: <name>-lite.mp4 = the same
-// clip capped at 1280px, H.264 CRF 27, silent, faststart (ffmpeg libx264
-// -preset slow), kept only where it saved ≥25%. The feed autoplays the
-// light file (`src`); the lightbox plays the untouched original (`full`).
-const LITE = new Set([
-  'coachable-bento', 'coachable-figma', 'coachable-grow', 'coachable-home-page', 'coachable-logo',
-  'coachable-menu', 'coachable-portraits', 'coachable-typeface', 'hutte-fields', 'hutte-flow',
-  'hutte-hero', 'hutte-members', 'hutte-onboarding', 'hutte-slider', 'hutte-social-a',
-  'hutte-social-b', 'ili-figma', 'systemone-live', 'systemone-scrolling-type', 'systemone-services',
-]);
-const clip = (src) => {
-  const m = src.match(/([^/]+)\.mp4$/);
-  return m && LITE.has(m[1]) ? { src: src.replace(/\.mp4$/, '-lite.mp4'), full: src } : { src };
-};
 const A = (proj, file, title, cat, aspect) => ({
-  type: 'video', ...clip(`uploads/cases/${file}.mp4`), title, cat, aspect, ...CASE[proj],
+  type: 'video', src: `uploads/cases/${file}.mp4`, title, cat, aspect, ...CASE[proj],
 });
 // nexus assets (pulled from the are.na channel) — mixed images + videos
 const N = (type, file, title, cat, aspect) => ({
-  type, ...(type === 'video' ? clip(`uploads/cases/nexus/${file}`) : { src: `uploads/cases/nexus/${file}` }), title, cat, aspect, ...CASE.ili,
+  type, src: `uploads/cases/nexus/${file}`, title, cat, aspect, ...CASE.ili,
 });
 // generic case asset — any media type, full filename, project's CASE meta
 const P = (proj, type, file, title, cat, aspect) => ({
-  type, ...(type === 'video' ? clip(`uploads/cases/${file}`) : { src: `uploads/cases/${file}` }), title, cat, aspect, ...CASE[proj],
+  type, src: `uploads/cases/${file}`, title, cat, aspect, ...CASE[proj],
 });
 // One cover per project; clicking it unfolds the project's other cards
 // inline, in the same column — no popup, the scroll just keeps going.
@@ -2201,45 +2190,132 @@ const DEMOS = { toggle: DemoToggle, book: DemoBook, segment: DemoSegment };
 // ({ title, type, src|demo|preview, aspect, desc, at }).
 const ARTIFACTS = [];
 
+// ─── media picks ──────────────────────────────────────────────
+// window.MEDIA (media.js, built by scripts/media.js) indexes every
+// still and clip by the path the asset builders use: its feed
+// renditions and content hashes (12px blurred placeholders come from
+// media-lqip.json, below). The feed
+// asks for the smallest file that still covers the tile, and every URL
+// carries its hash (?v=), which vercel.json caches for a year.
+const MEDIA = window.MEDIA || {};
+const IMG_W = [640, 960, 1280, 1600];
+const feedPath = (src, suffix) => `uploads/feed/${src.replace(/^uploads\//, '').replace(/\.[a-z0-9]+$/i, '')}${suffix}`;
+const withV = (url, v) => (v ? `${url}?v=${v}` : url);
+// device px a tile can reach, by role only (not its exact span), so the
+// warmup and the tile always land on the same file: desktop covers run
+// ~75vw and cards up to ~60vw; phones are one column, tablets two.
+// DPR capped at 2, past which nobody can tell. The answer only ever
+// grows: tiles re-render often, and a window that shrinks (or a phone
+// that rotates) must not refetch every image at a smaller size.
+const NEED = { true: 0, false: 0 };
+function tileNeed(cover) {
+  const vw = window.innerWidth;
+  const frac = vw >= 901 ? (cover ? 0.75 : 0.6) : vw <= 480 ? 1 : (cover ? 1 : 0.5);
+  NEED[cover] = Math.max(NEED[cover], vw * frac * Math.min(window.devicePixelRatio || 1, 2));
+  return NEED[cover];
+}
+function imgSrc(src, cover) {
+  const m = MEDIA[src];
+  if (!m) return src;
+  const need = tileNeed(cover);
+  const w = IMG_W.find((x) => x >= need && m.v[x]);
+  return w ? withV(feedPath(src, `-${w}.webp`), m.v[w]) : withV(src, m.v.o);
+}
+const fullSrc = (src) => withV(src, MEDIA[src] && MEDIA[src].v.o);
+// placeholders arrive in their own file while the gate is up; the feed
+// is already mounted under it, so tiles subscribe and re-render once
+// it lands (shimmering until then)
+const LQIP = { map: {}, ready: false, subs: new Set() };
+if (window.MEDIA_LQIP) {
+  fetch(window.MEDIA_LQIP).then((r) => r.json()).then((d) => {
+    LQIP.map = d;
+    LQIP.ready = true;
+    LQIP.subs.forEach((fn) => fn());
+  }).catch(() => {});
+}
+function useLqip(src) {
+  const [, bump] = useState(0);
+  useEffect(() => {
+    if (LQIP.ready) return undefined;
+    const fn = () => bump((n) => n + 1);
+    LQIP.subs.add(fn);
+    return () => LQIP.subs.delete(fn);
+  }, []);
+  return (src && LQIP.map[src]) || null;
+}
+// AV1 only where the browser decodes it smoothly (and, on touch devices,
+// in hardware: software AV1 on a phone costs battery for a few KB)
+const CODEC = { av1: false };
+if (navigator.mediaCapabilities && navigator.mediaCapabilities.decodingInfo) {
+  navigator.mediaCapabilities.decodingInfo({
+    type: 'file',
+    video: { contentType: 'video/mp4; codecs="av01.0.08M.08"', width: 1280, height: 720, bitrate: 1500000, framerate: 60 },
+  }).then((r) => {
+    const fine = window.matchMedia && window.matchMedia('(pointer: fine)').matches;
+    CODEC.av1 = r.supported && r.smooth && (r.powerEfficient || fine);
+  }).catch(() => {});
+}
+// feed clip: 720 wide when the tile is small enough, else 1280 (or the
+// original, when it's no wider than that)
+function clipPick(src, cover) {
+  const m = MEDIA[src];
+  if (!m) return { src, poster: null };
+  const v = m.v;
+  const small = tileNeed(cover) <= 800 && v.h720;
+  const t = small ? '720' : '1280';
+  const h264 = small ? withV(feedPath(src, '-720.mp4'), v.h720)
+    : v.h1280 ? withV(feedPath(src, '-1280.mp4'), v.h1280) : withV(src, v.o);
+  const av1 = v[`a${t}`] && withV(feedPath(src, `-${t}.av1.mp4`), v[`a${t}`]);
+  const poster = v[`p${t}`] ? withV(feedPath(src, `-${t}-poster.webp`), v[`p${t}`])
+    : withV(feedPath(src, '-1280-poster.webp'), v.p1280);
+  return { src: CODEC.av1 && av1 ? av1 : h264, poster };
+}
+// lightbox: the full clip (AV1 copy when there is one)
+function clipFull(src) {
+  const m = MEDIA[src];
+  if (!m) return { src, poster: null };
+  const v = m.v;
+  return {
+    src: CODEC.av1 && v.af ? withV(feedPath(src, '.av1.mp4'), v.af) : withV(src, v.o),
+    poster: withV(feedPath(src, '-1280-poster.webp'), v.p1280),
+  };
+}
+
 // ─── asset warmup ─────────────────────────────────────────────
 // The blue gate is dead time, so the moment the app mounts we spend
 // it fetching what the first screen will paint (every poster/image of
-// the first deal; clips stream on their own) into the HTTP
-// cache. LazyVideo/AssetMedia then hit cache instead of the network
-// when the reveal runs. Progress feeds the blueprint's counter.
-// every clip ships a "<name>-poster.jpg" first frame; light renditions
-// (<name>-lite.mp4) share the original's poster
-const posterOf = (src) => src.replace(/(-lite)?\.mp4$/, '-poster.jpg');
+// the first deal, at the exact size the tile will ask for; clips stream
+// on their own) into the HTTP cache. LazyVideo/AssetMedia then hit
+// cache instead of the network when the reveal runs. Progress feeds
+// the blueprint's counter.
 const WARM = { total: 0, done: 0, started: false, listeners: new Set() };
 function startWarmup() {
   if (WARM.started) return;
   WARM.started = true;
-  const flat = PROJECTS.flatMap((p) => [p.cover, ...p.cards]);
+  const flat = PROJECTS.flatMap((p) => [[p.cover, true], ...p.cards.map((c) => [c, false])]);
   const light = flat.slice(0, 30)
-    .map((a) => (a.type === 'video' ? posterOf(a.src) : a.type === 'image' ? a.src : a.preview))
+    .map(([a, cover]) => (a.type === 'video' ? clipPick(a.src, cover).poster
+      : a.type === 'image' ? imgSrc(a.src, cover) : a.preview && imgSrc(a.preview, cover)))
     .filter(Boolean);
   // Clips are NOT warmed: <video> fetches in byte ranges and never reuses
   // a whole-file fetch() from the cache, so every warmed clip downloaded
   // twice (and held the gate). LazyVideo streams them near the fold.
-  const clips = [];
-  WARM.total = light.length + clips.length;
+  WARM.total = light.length;
   const notify = () => WARM.listeners.forEach((fn) => fn(WARM));
-  const get = (url) => fetch(url).then((r) => (r.ok ? r.blob() : null)).catch(() => null)
+  // the first row goes out at high priority, the rest behind it
+  const get = (url, i) => fetch(url, { priority: i < 4 ? 'high' : 'low' })
+    .then((r) => (r.ok ? r.blob() : null)).catch(() => null)
     .then(() => { WARM.done++; notify(); });
-  // light assets four at a time, then the clips one by one — no
-  // bandwidth fight with the reveal's own first paints
-  const queue = light.slice();
+  // four at a time: no bandwidth fight with the reveal's own first paints
+  const queue = light.map((url, i) => [url, i]);
   let running = 0;
-  new Promise((resolve) => {
-    const next = () => {
-      if (!queue.length && running === 0) return resolve();
-      while (queue.length && running < 4) {
-        running++;
-        get(queue.shift()).then(() => { running--; next(); });
-      }
-    };
-    next();
-  }).then(async () => { for (const c of clips) await get(c); });
+  const next = () => {
+    while (queue.length && running < 4) {
+      running++;
+      get(...queue.shift()).then(() => { running--; next(); });
+    }
+  };
+  next();
 }
 
 // Video that only downloads + plays while it's near the viewport. This
@@ -2269,16 +2345,17 @@ function playerStops(el) {
     if (next) playerWants(next);
   }
 }
-function LazyVideo({ src, aspect }) {
+function LazyVideo({ asset, cover }) {
   const ref = useRef(null);
   const [ready, setReady] = useState(false); // poster painted or first frame decoded
-  // the poster is ~40KB, so the tile paints in one round-trip instead of
-  // waiting on megabytes of video
-  const poster = posterOf(src);
+  // the poster is a few dozen KB, so the tile paints in one round-trip
+  // instead of waiting on megabytes of video
+  const { poster } = clipPick(asset.src, cover);
+  const q = useLqip(asset.src);
   useEffect(() => {
     const im = new Image();
     im.onload = () => setReady(true); // poster visible → shimmer off
-    im.src = poster;
+    if (poster) im.src = poster;
     const el = ref.current;
     if (!el) return;
     el.muted = true; // belt-and-suspenders for autoplay policies
@@ -2295,7 +2372,8 @@ function LazyVideo({ src, aspect }) {
       // reads ~2 Mbps on an idle 200 Mbps line)
       const c = navigator.connection;
       const slow = c && (c.saveData || (c.effectiveType && c.effectiveType !== '4g'));
-      el.src = src;
+      // codec is read here, not at render: the AV1 probe has settled by now
+      el.src = clipPick(asset.src, cover).src;
       el.preload = slow ? 'metadata' : 'auto';
     };
     const near = new IntersectionObserver(
@@ -2317,15 +2395,19 @@ function LazyVideo({ src, aspect }) {
       playerStops(el);
       el.removeEventListener('loadeddata', onData);
     };
-  }, [src]);
+  }, [asset.src]);
   return (
-    <div className={`asset-media asset-media--video ${ready ? 'asset-media--ready' : ''}`} style={{ aspectRatio: aspect }}>
-      <video ref={ref} muted loop playsInline preload="none" poster={poster} />
+    <div
+      className={`asset-media asset-media--video${q ? ' asset-media--lqip' : ''} ${ready ? 'asset-media--ready' : ''}`}
+      style={{ aspectRatio: asset.aspect, ...(q && { '--lqip': `url(${q})` }) }}
+    >
+      <video ref={ref} muted loop playsInline preload="none" poster={poster || undefined} />
     </div>
   );
 }
 
-function AssetMedia({ asset }) {
+function AssetMedia({ asset, cover }) {
+  const q = useLqip(asset.type === 'embed' ? asset.preview : asset.type === 'image' ? asset.src : null);
   // skeleton control for the image branches — cleared on load (or
   // immediately when the image is already in cache)
   const [ready, setReady] = useState(false);
@@ -2335,10 +2417,10 @@ function AssetMedia({ asset }) {
     // loads inside folds land after snap() has already run
     return (
       <div
-        className={`asset-media asset-media--img${asset.aspect ? ' asset-media--fixed' : ''} ${ready ? 'asset-media--ready' : ''}`}
-        style={asset.aspect ? { aspectRatio: asset.aspect } : undefined}
+        className={`asset-media asset-media--img${asset.aspect ? ' asset-media--fixed' : ''}${q ? ' asset-media--lqip' : ''} ${ready ? 'asset-media--ready' : ''}`}
+        style={{ ...(asset.aspect && { aspectRatio: asset.aspect }), ...(q && { '--lqip': `url(${q})` }) }}
       >
-        <img ref={imgRef} src={asset.src} alt={asset.title} loading="lazy" decoding="async" onLoad={() => setReady(true)} />
+        <img ref={imgRef} src={imgSrc(asset.src, cover)} alt={asset.title} loading="lazy" decoding="async" onLoad={() => setReady(true)} />
       </div>
     );
   }
@@ -2346,14 +2428,17 @@ function AssetMedia({ asset }) {
     // live-prototype artifact: the tile shows a captured preview — the
     // real page loads as an iframe in the shot overlay
     return (
-      <div className={`asset-media asset-media--img asset-media--fixed ${ready ? 'asset-media--ready' : ''}`} style={{ aspectRatio: asset.aspect }}>
-        <img ref={imgRef} src={asset.preview} alt={asset.title} loading="lazy" decoding="async" onLoad={() => setReady(true)} />
+      <div
+        className={`asset-media asset-media--img asset-media--fixed${q ? ' asset-media--lqip' : ''} ${ready ? 'asset-media--ready' : ''}`}
+        style={{ aspectRatio: asset.aspect, ...(q && { '--lqip': `url(${q})` }) }}
+      >
+        <img ref={imgRef} src={imgSrc(asset.preview, cover)} alt={asset.title} loading="lazy" decoding="async" onLoad={() => setReady(true)} />
       </div>
     );
   }
   if (asset.type === 'video') {
     if (asset.src) {
-      return <LazyVideo src={asset.src} aspect={asset.aspect} />;
+      return <LazyVideo asset={asset} cover={cover} />;
     }
     return (
       <div className="asset-media asset-media--canvas" style={{ aspectRatio: asset.aspect }}>
@@ -2411,7 +2496,7 @@ function WorkModal({ tile, onClose }) {
         <span className="work-modal-caption-meta mono">{tile.fig} · {(tile.note || '').toUpperCase()}</span>
       </div>
       {asset.type === 'image' ? (
-        <img className="work-lightbox-media" src={asset.src} alt={asset.title} style={{ aspectRatio: asset.aspect }} onClick={stop} />
+        <img className="work-lightbox-media" src={fullSrc(asset.src)} alt={asset.title} style={{ aspectRatio: asset.aspect }} onClick={stop} />
       ) : asset.type === 'component' ? (
         <div className="work-lightbox-demo" onClick={stop}>
           {React.createElement(DEMOS[asset.demo] || DemoToggle)}
@@ -2423,8 +2508,8 @@ function WorkModal({ tile, onClose }) {
       ) : (
         <video
           className="work-lightbox-media"
-          src={asset.full || asset.src}
-          poster={asset.src && posterOf(asset.src)}
+          src={clipFull(asset.src).src}
+          poster={clipFull(asset.src).poster || undefined}
           style={{ aspectRatio: asset.aspect }}
           autoPlay
           muted
@@ -2517,7 +2602,7 @@ function FeedTile({ tile, onOpen, slotStyle }) {
         {...guard}
       >
         <div className="asset-frame">
-          <AssetMedia asset={tile.asset} />
+          <AssetMedia asset={tile.asset} cover={!!tile.cover} />
         </div>
       </button>
     </div>
@@ -2763,6 +2848,7 @@ function AssetsFeed() {
   if (row.length) rows.push(row);
   return (
     <section className="feed-section" data-screen-label="02 Work">
+      <h2 className="sr-only">Selected work</h2>
       {/* no divider band between hero and work any more (2026-09-14,
           Jean: "remove this text and divider") — the tiles just start */}
       <div

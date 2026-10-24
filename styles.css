@@ -1399,16 +1399,16 @@ html[data-reveal="go"] .contrib-cell {
 .media-pop-img--forbes      { aspect-ratio: 554 / 704; }
 .media-pop-img--president   { aspect-ratio: 315 / 420; }
 .media-pop-img--terrycrews  { aspect-ratio: 462 / 663; }
-.pops-armed .media-pop-img--snow        { background-image: url("uploads/hover/ski.jpg"); }
-.pops-armed .media-pop-img--surf        { background-image: url("uploads/hover/surf.webp"); }
-.pops-armed .media-pop-img--awwwards    { background-image: url("uploads/hover/awwwards.webp"); }
-.pops-armed .media-pop-img--webby       { background-image: url("uploads/hover/webby-2026.webp"); }
-.pops-armed .media-pop-img--producthunt { background-image: url("uploads/hover/producthunt.webp"); }
-.pops-armed .media-pop-img--timcook     { background-image: url("uploads/hover/timcook.webp"); }
-.pops-armed .media-pop-img--appstore    { background-image: url("uploads/hover/appstore-aotd.webp"); }
-.pops-armed .media-pop-img--forbes      { background-image: url("uploads/hover/forbes.webp"); }
-.pops-armed .media-pop-img--president   { background-image: url("uploads/hover/president.webp"); }
-.pops-armed .media-pop-img--terrycrews  { background-image: url("uploads/hover/terrycrews.webp"); }
+.pops-armed .media-pop-img--snow        { background-image: url("uploads/hover/ski.jpg?v=1fe899f1"); }
+.pops-armed .media-pop-img--surf        { background-image: url("uploads/hover/surf.webp?v=8d16da51"); }
+.pops-armed .media-pop-img--awwwards    { background-image: url("uploads/hover/awwwards.webp?v=63e04cde"); }
+.pops-armed .media-pop-img--webby       { background-image: url("uploads/hover/webby-2026.webp?v=6742b700"); }
+.pops-armed .media-pop-img--producthunt { background-image: url("uploads/hover/producthunt.webp?v=adb5ac19"); }
+.pops-armed .media-pop-img--timcook     { background-image: url("uploads/hover/timcook.webp?v=8db8daa8"); }
+.pops-armed .media-pop-img--appstore    { background-image: url("uploads/hover/appstore-aotd.webp?v=a54da8c0"); }
+.pops-armed .media-pop-img--forbes      { background-image: url("uploads/hover/forbes.webp?v=d24edacc"); }
+.pops-armed .media-pop-img--president   { background-image: url("uploads/hover/president.webp?v=f51a72bd"); }
+.pops-armed .media-pop-img--terrycrews  { background-image: url("uploads/hover/terrycrews.webp?v=c51be8fc"); }
 
 .intro-meta {
   display: flex;
@@ -2029,6 +2029,15 @@ html[data-loco="off"] .asset-tile[data-scroll] {
   opacity: 0;
   animation: none;
 }
+/* blurred placeholder (12px, inlined from window.MEDIA) in place of
+   the shimmer: the tile shows its picture at once and the real file
+   sharpens in under it. scale() hides the blur's soft edge. */
+.asset-media--lqip::after {
+  background: var(--lqip) center / cover no-repeat;
+  filter: blur(12px);
+  transform: scale(1.12);
+  animation: none;
+}
 @keyframes media-shimmer {
   from { background-position: 210% 0; }
   to   { background-position: -110% 0; }
@@ -2036,6 +2045,9 @@ html[data-loco="off"] .asset-tile[data-scroll] {
 @media (prefers-reduced-motion: reduce) {
   .asset-media--img::after,
   .asset-media--video::after { animation: none; opacity: 0; }
+  /* the placeholder isn't motion, so it stays */
+  .asset-media--lqip::after { opacity: 1; }
+  .asset-media--lqip.asset-media--ready::after { opacity: 0; }
 }
 
 /* video placeholder — quiet play affordance */
@@ -2156,6 +2168,18 @@ html[data-loco="off"] .asset-tile[data-scroll] {
   text-transform: uppercase;
   letter-spacing: 0.08em;
   margin-bottom: 14px;
+}
+/* there for search engines and screen readers, never painted */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
 }
 .footer-links {
   list-style: none;
