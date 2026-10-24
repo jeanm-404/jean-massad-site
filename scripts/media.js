@@ -4,7 +4,7 @@
 // For every still: WebP widths the feed can pick from (640…1600, only
 // below the source width), a 12px blurred placeholder, a content hash.
 // For every clip: 720 + 1280 wide feed files in H.264 and AV1, WebP
-// posters at both widths, an AV1 copy of the full clip for the lightbox
+// posters at both widths (first non-blank frame), an AV1 copy of the full clip for the lightbox
 // when the source is wider than 1280, a placeholder and hashes.
 //
 // Everything lands in uploads/feed/ (same tree as uploads/, minus the
@@ -23,6 +23,9 @@ const OUT = 'uploads/feed';
 const DIRS = ['uploads/cases', 'uploads/cases/nexus', 'uploads/artifacts'];
 const IMG_W = [640, 960, 1280, 1600];
 const JOBS = 3; // ffmpeg processes at once (SVT-AV1 is multithreaded already)
+// `npm run media -- --posters` redraws every poster (after changing how
+// the frame is picked); otherwise posters only follow their source clip
+const FORCE_POSTERS = process.argv.includes('--posters');
 
 const abs = (p) => path.join(ROOT, p);
 const hash = (p) => crypto.createHash('sha1').update(fs.readFileSync(abs(p))).digest('hex').slice(0, 8);
@@ -88,20 +91,37 @@ function encode(src, out, args) {
   });
 }
 
-async function poster(src, out, w) {
-  if (!stale(out, src)) return;
+// one frame at time t, w wide, as PNG on stdout (a Buffer, hence no run())
+const frame = (src, t, w) => new Promise((ok, fail) => execFile('ffmpeg', ['-hide_banner', '-loglevel', 'error',
+  '-ss', String(t), '-i', src, '-frames:v', '1', '-vf', `scale='min(${w},iw)':-2:flags=lanczos`,
+  '-f', 'image2pipe', '-c:v', 'png', '-'],
+{ cwd: ROOT, encoding: 'buffer', maxBuffer: 1 << 26 }, (e, so) => (e ? fail(e) : ok(so))));
+// contrast of a frame: the busiest channel's standard deviation
+const busy = async (buf) => Math.max(...(await sharp(buf).stats()).channels.slice(0, 3).map((c) => c.stdev));
+
+// The poster is the first frame, unless that frame is close to blank (a
+// clip that opens on black, a flat color, or a near-empty canvas): then
+// the first sampled frame with at least half the contrast of the
+// busiest sample, so a fade-in doesn't hand back a half-dark frame.
+async function posterTime(src, duration) {
+  const times = [0, 0.5, 1, 1.5, 2, 3, 4, 5, 6, 8, 10].filter((t) => t === 0 || t < duration - 0.1);
+  const scores = [];
+  for (const t of times) scores.push([t, await busy(await frame(src, t, 160))]);
+  const best = Math.max(...scores.map(([, b]) => b));
+  return scores.find(([, b]) => b >= best * 0.5)[0];
+}
+
+async function poster(src, out, w, t) {
+  if (!stale(out, src) && !FORCE_POSTERS) return;
   fs.mkdirSync(path.dirname(abs(out)), { recursive: true });
-  // first frame as PNG on stdout (as a Buffer, hence no run())
-  const buf = await new Promise((ok, fail) => execFile('ffmpeg', ['-hide_banner', '-loglevel', 'error', '-i', src,
-    '-frames:v', '1', '-vf', `scale='min(${w},iw)':-2:flags=lanczos`, '-f', 'image2pipe', '-c:v', 'png', '-'],
-  { cwd: ROOT, encoding: 'buffer', maxBuffer: 1 << 26 }, (e, so) => (e ? fail(e) : ok(so))));
-  await sharp(buf).webp({ quality: 78, effort: 6 }).toFile(abs(out));
+  await sharp(await frame(src, t, w)).webp({ quality: 78, effort: 6 }).toFile(abs(out));
 }
 
 async function video(src) {
   const probe = JSON.parse(await run('ffprobe', ['-v', 'error', '-select_streams', 'v:0',
-    '-show_entries', 'stream=width,height', '-of', 'json', src]));
+    '-show_entries', 'stream=width,height:format=duration', '-of', 'json', src]));
   const { width: w, height: h } = probe.streams[0];
+  const duration = parseFloat(probe.format.duration) || 0;
   const s = `${OUT}/${stem(src)}`;
   const lite = src.replace(/\.mp4$/, '-lite.mp4');
   const plan = [];
@@ -117,8 +137,10 @@ async function video(src) {
   }
   plan.push(encode(src, `${s}-1280.av1.mp4`, AV1(1280, 50)));
   if (w > 1280) plan.push(encode(src, `${s}.av1.mp4`, AV1(0, 44)));
-  if (w > 760) await poster(src, `${s}-720-poster.webp`, 720);
-  await poster(src, `${s}-1280-poster.webp`, 1280);
+  const pt = await posterTime(src, duration);
+  if (pt) console.log(`  poster ${stem(src)} @ ${pt}s (first frame is close to blank)`);
+  if (w > 760) await poster(src, `${s}-720-poster.webp`, 720, pt);
+  await poster(src, `${s}-1280-poster.webp`, 1280, pt);
   return { w, h, plan, s };
 }
 
