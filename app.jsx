@@ -3025,18 +3025,19 @@ function OffSwitch({ onOff }) {
 }
 
 /* ------------------------------------------------------------------
-   HoloCard — the footer "avatar": Jean as a Stage 2 rare-holo card.
-   Hover tilts it and lights the Konpo-mark foil; click/tap/Enter picks
-   it up (springs to the viewport centre, enlarges to ~440px, a single
-   360° flip shows the Konpo back), click again / backdrop / Esc puts
-   it down. On touch devices the picked-up card follows the phone's
+   HoloCard — Jean as a Stage 2 rare-holo card, peeking from the
+   bottom-right corner. Hover tilts it and lights the Konpo-mark foil;
+   click/tap/Enter picks it up (springs to the viewport centre, enlarges
+   to ~440px, one 360° spin on every pick-up). Click/tap the
+   picked-up card again to flip it to its holo Konpo back (and again to
+   flip it home); backdrop / Esc puts it down. On touch devices the picked-up card follows the phone's
    tilt where that needs no permission (Android); iOS would prompt for
    motion access, so there the card just doesn't tilt.
    Pointer state is written straight to CSS vars — no React re-render
    per frame. Source of truth for markup/CSS: scratch/holo-card.html.
    ------------------------------------------------------------------ */
 const HC_DEFS = '<defs><symbol id="hc-e-water" viewBox="0 0 32 32"><circle cx="16" cy="16" r="15" fill="#3aa0ea" stroke="#fff" stroke-width="1.6"/><circle cx="16" cy="16" r="15" fill="url(#hc-wg)" opacity=".9"/><path d="M16 6.5c3.6 5 6.3 8.6 6.3 12.1a6.3 6.3 0 0 1-12.6 0C9.7 15.1 12.4 11.5 16 6.5z" fill="#fff"/><path d="M13.2 18.2c0 1.4.7 2.6 1.9 3.2" stroke="#3aa0ea" stroke-width="1.4" fill="none" stroke-linecap="round"/></symbol><radialGradient id="hc-wg" cx=".35" cy=".3" r=".9"><stop offset="0" stop-color="#8fd3ff"/><stop offset="1" stop-color="#1f6fc2"/></radialGradient><symbol id="hc-e-figma" viewBox="0 0 32 32"><circle cx="16" cy="16" r="15" fill="#1e1e1e" stroke="#fff" stroke-width="1.6"/><circle cx="16" cy="16" r="15" fill="url(#hc-fg)" opacity=".9"/><g transform="translate(9.67 6.5) scale(.3333)"><path fill="#1abcfe" d="M19 28.5a9.5 9.5 0 1 1 19 0 9.5 9.5 0 1 1-19 0z"/><path fill="#0acf83" d="M0 47.5A9.5 9.5 0 0 1 9.5 38H19v9.5a9.5 9.5 0 1 1-19 0z"/><path fill="#ff7262" d="M19 0v19h9.5a9.5 9.5 0 1 0 0-19H19z"/><path fill="#f24e1e" d="M0 9.5A9.5 9.5 0 0 0 9.5 19H19V0H9.5A9.5 9.5 0 0 0 0 9.5z"/><path fill="#a259ff" d="M0 28.5A9.5 9.5 0 0 0 9.5 38H19V19H9.5A9.5 9.5 0 0 0 0 28.5z"/></g></symbol><radialGradient id="hc-fg" cx=".35" cy=".3" r=".9"><stop offset="0" stop-color="#3a3a3a"/><stop offset="1" stop-color="#111"/></radialGradient><symbol id="hc-e-claude" viewBox="0 0 32 32"><circle cx="16" cy="16" r="15" fill="#d97757" stroke="#fff" stroke-width="1.6"/><circle cx="16" cy="16" r="15" fill="url(#hc-cg)" opacity=".9"/><g transform="translate(6.5 6.5) scale(.79)"><path d="m4.7144 15.9555 4.7174-2.6471.079-.2307-.079-.1275h-.2307l-.7893-.0486-2.6956-.0729-2.3375-.0971-2.2646-.1214-.5707-.1215-.5343-.7042.0546-.3522.4797-.3218.686.0608 1.5179.1032 2.2767.1578 1.6514.0972 2.4468.255h.3886l.0546-.1579-.1336-.0971-.1032-.0972L6.973 9.8356l-2.55-1.6879-1.3356-.9714-.7225-.4918-.3643-.4614-.1578-1.0078.6557-.7225.8803.0607.2246.0607.8925.686 1.9064 1.4754 2.4893 1.8336.3643.3035.1457-.1032.0182-.0728-.164-.2733-1.3539-2.4467-1.445-2.4893-.6435-1.032-.17-.6194c-.0607-.255-.1032-.4674-.1032-.7285L6.287.1335 6.6997 0l.9957.1336.419.3642.6192 1.4147 1.0018 2.2282 1.5543 3.0296.4553.8985.2429.8318.091.255h.1579v-.1457l.1275-1.706.2368-2.0947.2307-2.6957.0789-.7589.3764-.9107.7468-.4918.5828.2793.4797.686-.0668.4433-.2853 1.8517-.5586 2.9021-.3643 1.9429h.2125l.2429-.2429.9835-1.3053 1.6514-2.0643.7286-.8196.85-.9046.5464-.4311h1.0321l.759 1.1293-.34 1.1657-1.0625 1.3478-.8804 1.1414-1.2628 1.7-.7893 1.36.0729.1093.1882-.0183 2.8535-.607 1.5421-.2794 1.8396-.3157.8318.3886.091.3946-.3278.8075-1.967.4857-2.3072.4614-3.4364.8136-.0425.0304.0486.0607 1.5482.1457.6618.0364h1.621l3.0175.2247.7892.522.4736.6376-.079.4857-1.2142.6193-1.6393-.3886-3.825-.9107-1.3113-.3279h-.1822v.1093l1.0929 1.0686 2.0035 1.8092 2.5075 2.3314.1275.5768-.3218.4554-.34-.0486-2.2039-1.6575-.85-.7468-1.9246-1.621h-.1275v.17l.4432.6496 2.3436 3.5214.1214 1.0807-.17.3521-.6071.2125-.6679-.1214-1.3721-1.9246L14.38 17.959l-1.1414-1.9428-.1397.079-.674 7.2552-.3156.3703-.7286.2793-.6071-.4614-.3218-.7468.3218-1.4753.3886-1.9246.3157-1.53.2853-1.9004.17-.6314-.0121-.0425-.1397.0182-1.4328 1.9672-2.1796 2.9446-1.7243 1.8456-.4128.164-.7164-.3704.0667-.6618.4008-.5889 2.386-3.0357 1.4389-1.882.929-1.0868-.0062-.1579h-.0546l-6.3385 4.1164-1.1293.1457-.4857-.4554.0608-.7467.2307-.2429 1.9064-1.3114Z" fill="#fff"/></g></symbol><radialGradient id="hc-cg" cx=".35" cy=".3" r=".9"><stop offset="0" stop-color="#e9a08a"/><stop offset="1" stop-color="#b8542f"/></radialGradient><symbol id="hc-e-jira" viewBox="0 0 32 32"><circle cx="16" cy="16" r="15" fill="#1868db" stroke="#fff" stroke-width="1.6"/><circle cx="16" cy="16" r="15" fill="url(#hc-jg)" opacity=".9"/><g transform="translate(7 7) scale(.75)"><path d="M11.571 11.513H0a5.218 5.218 0 0 0 5.232 5.215h2.13v2.057A5.215 5.215 0 0 0 12.575 24V12.518a1.005 1.005 0 0 0-1.005-1.005zm5.723-5.756H5.736a5.215 5.215 0 0 0 5.215 5.214h2.129v2.058a5.218 5.218 0 0 0 5.215 5.214V6.758a1.001 1.001 0 0 0-1.001-1.001zM23.013 0H11.455a5.215 5.215 0 0 0 5.215 5.215h2.129v2.057A5.215 5.215 0 0 0 24 12.483V1.005A1.001 1.001 0 0 0 23.013 0Z" fill="#fff"/></g></symbol><radialGradient id="hc-jg" cx=".35" cy=".3" r=".9"><stop offset="0" stop-color="#4c9aff"/><stop offset="1" stop-color="#0747a6"/></radialGradient><symbol id="hc-e-snow" viewBox="0 0 32 32"><circle cx="16" cy="16" r="15" fill="#8fd0f5" stroke="#fff" stroke-width="1.6"/><circle cx="16" cy="16" r="15" fill="url(#hc-sg)" opacity=".9"/><g stroke="#fff" stroke-width="1.7" stroke-linecap="round" fill="none"><path d="M16 6.5v19M7.8 11.25l16.4 9.5M7.8 20.75l16.4-9.5"/><path d="M13.2 8.6L16 10.4l2.8-1.8M13.2 23.4L16 21.6l2.8 1.8M8.9 14.6l2.9-1.6.2-3.3M23.1 17.4l-2.9 1.6-.2 3.3M8.9 17.4l2.9 1.6.2 3.3M23.1 14.6l-2.9-1.6-.2-3.3"/></g></symbol><radialGradient id="hc-sg" cx=".35" cy=".3" r=".9"><stop offset="0" stop-color="#c9ecff"/><stop offset="1" stop-color="#4aa3dd"/></radialGradient><symbol id="hc-e-surf" viewBox="0 0 32 32"><circle cx="16" cy="16" r="15" fill="#1f5fc2" stroke="#fff" stroke-width="1.6"/><circle cx="16" cy="16" r="15" fill="url(#hc-ug)" opacity=".9"/><path d="M6.5 22.5c2.6-.2 3.6-2.4 5.2-4.6 2.2-3.1 5.3-6 9.4-5.6 3 .3 5 2.4 5.7 5.2-1.3-1.5-3-2.1-4.8-1.6 1.7 1.2 2.3 3 1.9 4.9-.6-1.6-1.9-2.5-3.4-2.6-2.2-.1-3.4 1.7-5.4 3.2-2.3 1.7-5.3 2.2-8.6 1.1z" fill="#fff"/><path d="M8 24.6c5.4 1.4 10.9 1.4 16.4 0" stroke="#fff" stroke-width="1.6" stroke-linecap="round" fill="none"/></symbol><radialGradient id="hc-ug" cx=".35" cy=".3" r=".9"><stop offset="0" stop-color="#5aa5f0"/><stop offset="1" stop-color="#123f8f"/></radialGradient><symbol id="hc-e-hn" viewBox="0 0 32 32"><rect x="1.5" y="1.5" width="29" height="29" rx="4" fill="#fff" stroke="#fff" stroke-width="1.6"/><path transform="translate(2.5 2.5) scale(1.125)" fill="#ff6600" fill-rule="evenodd" d="M0 24V0h24v24H0zM6.951 5.896l4.112 7.708v5.064h1.583v-4.972l4.148-7.799h-1.749l-2.457 4.875c-.372.745-.688 1.434-.688 1.434s-.297-.708-.651-1.434L8.831 5.896h-1.88z"/></symbol><symbol id="hc-star" viewBox="0 0 24 24"><path d="M12 2.2l2.95 6.35 6.95.8-5.15 4.75 1.4 6.85L12 17.5l-6.15 3.45 1.4-6.85L2.1 9.35l6.95-.8z" fill="#fff" stroke="#0f1a2e" stroke-width="1.2" stroke-linejoin="round"/></symbol><symbol id="hc-set-rain" viewBox="0 0 32 32"><path d="M9 20a5 5 0 0 1 .6-9.96A7 7 0 0 1 23 12a4.5 4.5 0 0 1 .5 8H9z" fill="#fff" stroke="#0f1a2e" stroke-width="1.2" stroke-linejoin="round"/><g stroke="#fff" stroke-width="1.8" stroke-linecap="round"><path d="M12 23.5l-1.5 4"/><path d="M17 23.5l-1.5 4"/><path d="M22 23.5l-1.5 4"/></g></symbol></defs>';
-const HC_BACK = '<svg class="hc-mark" viewBox="-1.6 -1.6 79.2 79.2"><path d="M4.63768 47.3768C10.8177 41.1926 20.8417 41.1963 27.0254 47.3768C33.209 53.5573 33.209 63.5822 27.0254 69.7664C20.8454 75.9506 10.8213 75.947 4.63768 69.7664C-1.54587 63.5859 -1.54592 53.5609 4.63768 47.3768ZM47.3799 47.3768C53.5599 41.193 63.583 41.1965 69.7666 47.3768C75.9502 53.5573 75.9502 63.5822 69.7666 69.7664C63.5867 75.9504 53.5635 75.9466 47.3799 69.7664C41.1962 63.5859 41.1962 53.561 47.3799 47.3768ZM4.63768 4.63653C10.8176 -1.54735 20.8417 -1.54354 27.0254 4.63653C29.5008 7.11068 30.984 10.2016 31.4775 13.4149C24.2363 15.8276 19.0149 22.6598 19.0146 30.7117C19.0146 30.9214 19.0193 31.1308 19.0264 31.3387C13.9895 32.3707 8.54638 30.9329 4.63768 27.0262C-1.54557 20.8456 -1.54584 10.8206 4.63768 4.63653ZM47.3789 4.63653C53.5588 -1.54746 63.5829 -1.54356 69.7666 4.63653C75.9502 10.8171 75.9502 20.842 69.7666 27.0262C65.8806 30.9148 60.4752 32.3552 55.4599 31.3533C55.4673 31.1406 55.4726 30.9263 55.4726 30.7117C55.4724 22.6305 50.2128 15.7787 42.9306 13.3895C43.4285 10.1859 44.9107 7.10499 47.3789 4.63653Z" fill="#fff"/></svg><svg class="hc-wordmark" viewBox="42.0265 0 87.9925 26.7738"><path d="M42.0265 21.7259V1.0946H45.6396V10.562L54.7195 1.0946H59.2437L49.4726 11.3789L59.5579 21.7259H54.7823L45.6396 12.4785V21.7259H42.0265Z" fill="#fff"/><path d="M58.7144 13.9342C58.7144 9.37856 62.3275 5.82829 66.946 5.82829C71.5645 5.82829 75.1462 9.37856 75.1462 13.9342C75.1462 18.4899 71.5331 22.0401 66.946 22.0401C62.3589 22.0401 58.7144 18.4899 58.7144 13.9342ZM63.4586 10.4625C61.542 12.379 61.542 15.4894 63.4586 17.4059C65.3751 19.3224 68.4855 19.3224 70.402 17.4059C72.3185 15.4894 72.3185 12.379 70.402 10.4625C68.4855 8.54598 65.3751 8.54598 63.4586 10.4625Z" fill="#fff"/><path d="M77.4717 21.7259V6.14248H80.802V7.74481C81.8074 6.55092 83.4097 5.82829 85.3891 5.82829C89.2221 5.82829 91.9555 8.56169 91.9555 12.866V21.7259H88.4681V13.1802C88.4681 10.6353 87.0857 9.12721 84.8236 9.12721C82.5614 9.12721 80.9591 10.6981 80.9591 13.1802V21.7259H77.4717Z" fill="#fff"/><path d="M113.587 13.9342C113.587 9.37856 117.2 5.82829 121.818 5.82829C126.437 5.82829 130.019 9.37856 130.019 13.9342C130.019 18.4899 126.406 22.0401 121.818 22.0401C117.231 22.0401 113.587 18.4899 113.587 13.9342ZM118.331 10.4625C116.415 12.379 116.415 15.4894 118.331 17.4059C120.248 19.3224 123.358 19.3224 125.274 17.4059C127.191 15.4894 127.191 12.379 125.274 10.4625C123.358 8.54598 120.248 8.54598 118.331 10.4625Z" fill="#fff"/><path d="M95.1286 26.7738V6.14248H98.4589V8.21609C99.59 6.70801 101.475 5.82829 103.674 5.82829C108.136 5.82829 111.875 9.36285 111.875 13.9185C111.875 18.4742 108.136 22.0401 103.674 22.0401C101.569 22.0401 99.7785 21.2233 98.616 19.8094V26.7738H95.1286ZM100.025 10.4468C98.1081 12.3633 98.1081 15.4737 100.025 17.3902C101.941 19.3067 105.052 19.3067 106.968 17.3902C108.885 15.4737 108.885 12.3633 106.968 10.4468C105.052 8.53027 101.941 8.53027 100.025 10.4468Z" fill="#fff"/></svg><span class="hc-url">jean.md</span>';
+const HC_BACK = '<svg class="hc-mark" viewBox="-1.6 -1.6 79.2 79.2"><path d="M4.63768 47.3768C10.8177 41.1926 20.8417 41.1963 27.0254 47.3768C33.209 53.5573 33.209 63.5822 27.0254 69.7664C20.8454 75.9506 10.8213 75.947 4.63768 69.7664C-1.54587 63.5859 -1.54592 53.5609 4.63768 47.3768ZM47.3799 47.3768C53.5599 41.193 63.583 41.1965 69.7666 47.3768C75.9502 53.5573 75.9502 63.5822 69.7666 69.7664C63.5867 75.9504 53.5635 75.9466 47.3799 69.7664C41.1962 63.5859 41.1962 53.561 47.3799 47.3768ZM4.63768 4.63653C10.8176 -1.54735 20.8417 -1.54354 27.0254 4.63653C29.5008 7.11068 30.984 10.2016 31.4775 13.4149C24.2363 15.8276 19.0149 22.6598 19.0146 30.7117C19.0146 30.9214 19.0193 31.1308 19.0264 31.3387C13.9895 32.3707 8.54638 30.9329 4.63768 27.0262C-1.54557 20.8456 -1.54584 10.8206 4.63768 4.63653ZM47.3789 4.63653C53.5588 -1.54746 63.5829 -1.54356 69.7666 4.63653C75.9502 10.8171 75.9502 20.842 69.7666 27.0262C65.8806 30.9148 60.4752 32.3552 55.4599 31.3533C55.4673 31.1406 55.4726 30.9263 55.4726 30.7117C55.4724 22.6305 50.2128 15.7787 42.9306 13.3895C43.4285 10.1859 44.9107 7.10499 47.3789 4.63653Z" fill="#fff"/></svg><svg class="hc-wordmark" viewBox="42.0265 0 87.9925 26.7738"><path d="M42.0265 21.7259V1.0946H45.6396V10.562L54.7195 1.0946H59.2437L49.4726 11.3789L59.5579 21.7259H54.7823L45.6396 12.4785V21.7259H42.0265Z" fill="#fff"/><path d="M58.7144 13.9342C58.7144 9.37856 62.3275 5.82829 66.946 5.82829C71.5645 5.82829 75.1462 9.37856 75.1462 13.9342C75.1462 18.4899 71.5331 22.0401 66.946 22.0401C62.3589 22.0401 58.7144 18.4899 58.7144 13.9342ZM63.4586 10.4625C61.542 12.379 61.542 15.4894 63.4586 17.4059C65.3751 19.3224 68.4855 19.3224 70.402 17.4059C72.3185 15.4894 72.3185 12.379 70.402 10.4625C68.4855 8.54598 65.3751 8.54598 63.4586 10.4625Z" fill="#fff"/><path d="M77.4717 21.7259V6.14248H80.802V7.74481C81.8074 6.55092 83.4097 5.82829 85.3891 5.82829C89.2221 5.82829 91.9555 8.56169 91.9555 12.866V21.7259H88.4681V13.1802C88.4681 10.6353 87.0857 9.12721 84.8236 9.12721C82.5614 9.12721 80.9591 10.6981 80.9591 13.1802V21.7259H77.4717Z" fill="#fff"/><path d="M113.587 13.9342C113.587 9.37856 117.2 5.82829 121.818 5.82829C126.437 5.82829 130.019 9.37856 130.019 13.9342C130.019 18.4899 126.406 22.0401 121.818 22.0401C117.231 22.0401 113.587 18.4899 113.587 13.9342ZM118.331 10.4625C116.415 12.379 116.415 15.4894 118.331 17.4059C120.248 19.3224 123.358 19.3224 125.274 17.4059C127.191 15.4894 127.191 12.379 125.274 10.4625C123.358 8.54598 120.248 8.54598 118.331 10.4625Z" fill="#fff"/><path d="M95.1286 26.7738V6.14248H98.4589V8.21609C99.59 6.70801 101.475 5.82829 103.674 5.82829C108.136 5.82829 111.875 9.36285 111.875 13.9185C111.875 18.4742 108.136 22.0401 103.674 22.0401C101.569 22.0401 99.7785 21.2233 98.616 19.8094V26.7738H95.1286ZM100.025 10.4468C98.1081 12.3633 98.1081 15.4737 100.025 17.3902C101.941 19.3067 105.052 19.3067 106.968 17.3902C108.885 15.4737 108.885 12.3633 106.968 10.4468C105.052 8.53027 101.941 8.53027 100.025 10.4468Z" fill="#fff"/></svg><span class="hc-url">jean.md</span><div class="hc-back-markfoil"></div><div class="hc-shine hc-shine--back"></div><div class="hc-glare"></div>';
 
 function HoloCard() {
   const rootRef = useRef(null);
@@ -3091,7 +3092,8 @@ function HoloCard() {
     const springs = [rotate, glare, bg, scale, translate, rotDelta];
     const TILT = 14, POP_W = 440;
     let raf = null, last = 0, alive = true;
-    let active = false, firstPop = true, popScale = 1, interacting = false, leaveTimer = null;
+    let active = false, popScale = 1, interacting = false, leaveTimer = null;
+    let turn = 0; // rotateY carried by rotDelta: a multiple of 360 = front, +180 = back
 
     const render = () => {
       const r = rotate.cur, g = glare.cur, b = bg.cur, st = card.style;
@@ -3179,9 +3181,11 @@ function HoloCard() {
       stopShowcase();
       freeHost();
       popScale = Math.min((innerWidth / natW) * .9, (innerHeight / natH) * .9, POP_W / natW);   // 1 = crisp 1:1 raster
-      const delay = firstPop ? 1000 : 100;
-      if (firstPop) rotDelta.set({ x: 360, y: 0 }, POP.k, POP.d);
-      firstPop = false;
+      // every pick-up spins one full turn on the way in (it's always put
+      // down face up, so turn is a multiple of 360 here)
+      const delay = 1000;
+      turn += 360;
+      rotDelta.set({ x: turn, y: 0 }, POP.k, POP.d);
       active = true; orientBase = null;
       center();
       scale.set({ s: popScale }, POP.k, POP.d);
@@ -3194,20 +3198,35 @@ function HoloCard() {
       active = false;
       scale.set({ s: REST }, POP.k, POP.d);
       translate.set({ x: 0, y: 0 }, POP.k, POP.d);
-      rotDelta.set({ x: 0, y: 0 }, POP.k, POP.d);
+      // put down face up: from the back, keep turning forward to the front
+      if (turn % 360) turn += 180;
+      rotDelta.set({ x: turn, y: 0 }, POP.k, POP.d);
       card.classList.remove('hc--active'); backdrop.classList.remove('hc--on');
       rotator.setAttribute('aria-pressed', 'false');
       setTimeout(() => { if (!active) scene.classList.remove('hc-scene--active'); }, 900);
       setTimeout(rest, 100);
       kick();
     };
-    const toggle = () => { if (active) { retreat(); playStateChange(false); } else { enableOrientation(); popover(); playStateChange(true); haptic(8); } };
+    // a tap on the picked-up card turns it over (half a turn each time),
+    // then the foil sweeps once on its own: on a phone there's no hover
+    // to light it
+    let sweepTimer;
+    const flip = () => {
+      stopShowcase(); clearTimeout(sweepTimer);
+      turn += 180;
+      rotDelta.set({ x: turn, y: 0 }, POP.k, POP.d);
+      rotator.setAttribute('aria-label', turn % 360 ? 'Jean, rare holo card (back) — flip' : 'Jean, rare holo card — flip');
+      kick(); haptic(8); playStateChange(true);
+      if (!reduced) sweepTimer = setTimeout(() => { if (alive && active && !interacting) showcaseRaf = requestAnimationFrame(showcase); }, 700);
+    };
+    const toggle = () => { if (active) flip(); else { enableOrientation(); popover(); playStateChange(true); haptic(8); } };
     let downAt = null;
     const onDown = (e) => { downAt = { x: e.clientX, y: e.clientY }; };
     const onClick = (e) => { if (downAt && Math.hypot(e.clientX - downAt.x, e.clientY - downAt.y) > 8) return; toggle(); };
     const onKey = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); } };
-    const onBackdrop = () => { if (active) retreat(); };
-    const onEsc = (e) => { if (e.key === 'Escape' && active) retreat(); };
+    const putDown = () => { stopShowcase(); clearTimeout(sweepTimer); retreat(); playStateChange(false); rotator.setAttribute('aria-label', 'Jean, rare holo card — pick up'); };
+    const onBackdrop = () => { if (active) putDown(); };
+    const onEsc = (e) => { if (e.key === 'Escape' && active) putDown(); };
     let repositionTimer;
     const reposition = () => { clearTimeout(repositionTimer); repositionTimer = setTimeout(() => { if (active) center(); }, 300); };
     box.addEventListener('pointerdown', onDown);
@@ -3241,13 +3260,14 @@ function HoloCard() {
       pose: (x, y) => aim(x, y, .3, .6),
       settle: (ms) => { const n = Math.round(ms / (1000 / 60)); for (let i = 0; i < n; i++) springs.forEach(sp => sp.step(1)); render(); },
       pick: toggle,
+      drop: () => { if (active) putDown(); },
     };
     render();
 
     return () => {
       alive = false;
       cancelAnimationFrame(raf); stopShowcase(); io.disconnect();
-      clearTimeout(leaveTimer); clearTimeout(repositionTimer);
+      clearTimeout(leaveTimer); clearTimeout(repositionTimer); clearTimeout(sweepTimer);
       box.removeEventListener('pointermove', onMove); box.removeEventListener('pointerdown', onMove);
       box.removeEventListener('pointerleave', onLeave); box.removeEventListener('pointerup', onUp); box.removeEventListener('pointercancel', onLeave);
       box.removeEventListener('pointerdown', onDown); box.removeEventListener('click', onClick);

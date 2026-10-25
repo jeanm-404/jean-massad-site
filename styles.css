@@ -117,6 +117,9 @@ body {
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
+/* viewport-fit=cover and no theme-color: Safari's bars stay clear and the
+   feed scrolls under them; the insets keep the first and last rows clear */
+body { padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); }
 
 ::selection { background: var(--ink); color: var(--paper); }
 
@@ -1656,12 +1659,15 @@ html[data-reveal="go"] .contrib-cell {
 @media (prefers-reduced-motion: reduce) { .more-btn { transition: none; } }
 
 /* Contact, pinned top right on every screen (under the top ruler on
-   desktop); waits for the gate to lift. Lede-sized like the intro. */
+   desktop); waits for the gate to lift. Lede-sized like the intro.
+   White + difference blend: it inverts whatever passes under it, so it
+   reads dark on the paper and light over a dark tile. */
 .contact-sticky {
   position: fixed;
-  top: 12px;
-  right: 16px;
+  top: calc(12px + env(safe-area-inset-top));
+  right: calc(16px + env(safe-area-inset-right));
   z-index: 60;
+  mix-blend-mode: difference;
   transition: opacity .5s ease;
 }
 .contact-sticky .footer-contact {
@@ -1671,20 +1677,20 @@ html[data-reveal="go"] .contrib-cell {
   font-weight: 500;
   letter-spacing: -0.012em;
   line-height: 1.45;
-  color: var(--ink);
+  color: #fff;
   text-decoration: none;
   border-bottom: 0;
   padding-bottom: 0;
-  transition: color .2s ease;
 }
+/* hover = the scramble only: an accent color would invert to yellow */
 .contact-sticky .footer-contact:hover,
-.contact-sticky .footer-contact:focus-visible { color: var(--accent); outline: none; }   /* elsewhere-link hover: accent + scramble, no underline */
+.contact-sticky .footer-contact:focus-visible { color: #fff; outline: none; }
 html[data-reveal="pending"] .contact-sticky { opacity: 0; pointer-events: none; }
 @media (min-width: 901px) {
-  .contact-sticky { top: 30px; right: 24px; }
+  .contact-sticky { top: calc(30px + env(safe-area-inset-top)); right: calc(24px + env(safe-area-inset-right)); }
 }
 @media (max-width: 720px) {
-  .contact-sticky .footer-contact { font-size: 20px; }
+  .contact-sticky .footer-contact { font-size: 18px; }
 }
 
 /* endless feed: the sentinel the next deal waits on */
@@ -2301,8 +2307,8 @@ html[data-loco="off"] .asset-tile[data-scroll] {
 @property --hc-rest-tilt { syntax: '<angle>'; inherits: true; initial-value: 0deg; }
 .hc-corner {
   position: fixed;
-  right: calc(var(--hc-w) * -0.56);
-  bottom: calc(var(--hc-w) / .718 * -0.62);
+  right: calc(var(--hc-w) * -0.56 + env(safe-area-inset-right));
+  bottom: calc(var(--hc-w) / .718 * -0.62 + env(safe-area-inset-bottom));
   z-index: 45;
   --hc-rest-tilt: -16deg;
   transition: opacity .5s ease;
@@ -2581,6 +2587,25 @@ html[data-reveal="pending"] .hc-corner { opacity: 0; visibility: hidden; pointer
 .hc-back .hc-mark { width: 34%; display: block; filter: drop-shadow(0 6px 18px rgba(0, 0, 30, .35)); }
 .hc-back .hc-wordmark { position: absolute; left: 50%; top: 66%; width: 30%; transform: translateX(-50%); display: block; opacity: .95; }
 .hc-back .hc-url { position: absolute; left: 50%; bottom: 6.5%; transform: translateX(-50%); font: 600 2.4cqw/1 var(--mono); letter-spacing: .12em; color: rgba(255, 255, 255, .7); }
+/* the back is holo too: the front's foil stack over the whole face
+   (no art window to skip) + glare, and an iridescent band riding the
+   big Konpo mark, all driven by the same pointer/tilt vars. The flip
+   sweeps it once on its own, so it shows on phones without a hover. */
+.hc-back { isolation: isolate; }
+.hc-back .hc-shine--back { clip-path: none; }
+.hc-back-markfoil {
+  position: absolute; left: 50%; top: 50%; width: 34%; aspect-ratio: 1;
+  transform: translate(-50%, -50%);
+  -webkit-mask: url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='-1.6 -1.6 79.2 79.2'%3E%3Cpath d='M4.63768 47.3768C10.8177 41.1926 20.8417 41.1963 27.0254 47.3768C33.209 53.5573 33.209 63.5822 27.0254 69.7664C20.8454 75.9506 10.8213 75.947 4.63768 69.7664C-1.54587 63.5859 -1.54592 53.5609 4.63768 47.3768ZM47.3799 47.3768C53.5599 41.193 63.583 41.1965 69.7666 47.3768C75.9502 53.5573 75.9502 63.5822 69.7666 69.7664C63.5867 75.9504 53.5635 75.9466 47.3799 69.7664C41.1962 63.5859 41.1962 53.561 47.3799 47.3768ZM4.63768 4.63653C10.8176 -1.54735 20.8417 -1.54354 27.0254 4.63653C29.5008 7.11068 30.984 10.2016 31.4775 13.4149C24.2363 15.8276 19.0149 22.6598 19.0146 30.7117C19.0146 30.9214 19.0193 31.1308 19.0264 31.3387C13.9895 32.3707 8.54638 30.9329 4.63768 27.0262C-1.54557 20.8456 -1.54584 10.8206 4.63768 4.63653ZM47.3789 4.63653C53.5588 -1.54746 63.5829 -1.54356 69.7666 4.63653C75.9502 10.8171 75.9502 20.842 69.7666 27.0262C65.8806 30.9148 60.4752 32.3552 55.4599 31.3533C55.4673 31.1406 55.4726 30.9263 55.4726 30.7117C55.4724 22.6305 50.2128 15.7787 42.9306 13.3895C43.4285 10.1859 44.9107 7.10499 47.3789 4.63653Z'/%3E%3C/svg%3E") center / contain no-repeat;
+  mask: url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='-1.6 -1.6 79.2 79.2'%3E%3Cpath d='M4.63768 47.3768C10.8177 41.1926 20.8417 41.1963 27.0254 47.3768C33.209 53.5573 33.209 63.5822 27.0254 69.7664C20.8454 75.9506 10.8213 75.947 4.63768 69.7664C-1.54587 63.5859 -1.54592 53.5609 4.63768 47.3768ZM47.3799 47.3768C53.5599 41.193 63.583 41.1965 69.7666 47.3768C75.9502 53.5573 75.9502 63.5822 69.7666 69.7664C63.5867 75.9504 53.5635 75.9466 47.3799 69.7664C41.1962 63.5859 41.1962 53.561 47.3799 47.3768ZM4.63768 4.63653C10.8176 -1.54735 20.8417 -1.54354 27.0254 4.63653C29.5008 7.11068 30.984 10.2016 31.4775 13.4149C24.2363 15.8276 19.0149 22.6598 19.0146 30.7117C19.0146 30.9214 19.0193 31.1308 19.0264 31.3387C13.9895 32.3707 8.54638 30.9329 4.63768 27.0262C-1.54557 20.8456 -1.54584 10.8206 4.63768 4.63653ZM47.3789 4.63653C53.5588 -1.54746 63.5829 -1.54356 69.7666 4.63653C75.9502 10.8171 75.9502 20.842 69.7666 27.0262C65.8806 30.9148 60.4752 32.3552 55.4599 31.3533C55.4673 31.1406 55.4726 30.9263 55.4726 30.7117C55.4724 22.6305 50.2128 15.7787 42.9306 13.3895C43.4285 10.1859 44.9107 7.10499 47.3789 4.63653Z'/%3E%3C/svg%3E") center / contain no-repeat;
+  background-image: repeating-linear-gradient(var(--angle, 133deg),
+    #ff5fb0 0%, #ffb454 7%, #fff36a 14%, #6dffb0 21%, #55c7ff 28%, #a86bff 35%, #ff5fb0 42%);
+  background-size: 260% 260%;
+  background-position: var(--background-x) var(--background-y);
+  mix-blend-mode: multiply;
+  opacity: calc(.25 + var(--card-opacity) * .6);
+  z-index: 2; pointer-events: none;
+}
 .hc-backdrop {
   position: fixed; inset: 0; z-index: 998; background: rgba(8, 8, 20, .42);
   opacity: 0; pointer-events: none; transition: opacity .55s ease;
