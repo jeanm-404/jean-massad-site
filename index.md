@@ -21,11 +21,11 @@ My work has won over Awwwards and the Webbys, survived Product Hunt, been torn a
 | Project | What | Scope | Case study |
 |---|---|---|---|
 | Surge AI | Brand and website for the data engine behind frontier AI. | Brand, Website | [konpo.studio](https://www.konpo.studio/?news=surge-ai) |
-| Fyler | Brand, marketing site, and product UI for AI-native search. | Website, Product, Brand | [konpo.studio](https://www.konpo.studio/work/fyler-search-engine) |
 | ComPsych | Rebranding the world's largest employee mental-health provider. | Brand, Website | [konpo.studio](https://www.konpo.studio/work/compsych) |
+| ILI.DIGITAL | The Nexus brand system, from logo to product. | Brand, Website | [konpo.studio](https://www.konpo.studio/work/ili-digital) |
+| Fyler | Brand, marketing site, and product UI for AI-native search. | Website, Product, Brand | [konpo.studio](https://www.konpo.studio/work/fyler-search-engine) |
 | Coachable | Identity and website for career-changing coaching. | Brand, Website | [konpo.studio](https://www.konpo.studio/work/coachable) |
 | System One | Brand and website for film-led storytelling. | Brand, Website | [konpo.studio](https://www.konpo.studio/work/system-one) |
-| ILI.DIGITAL | The Nexus brand system, from logo to product. | Brand, Website | [konpo.studio](https://www.konpo.studio/work/ili-digital) |
 | Hutte | Identity and product for the home of Salesforce DevOps. | Brand, Product | [konpo.studio](https://www.konpo.studio/work/hutte) |
 
 ## Elsewhere

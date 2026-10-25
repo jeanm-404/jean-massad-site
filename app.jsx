@@ -573,33 +573,6 @@ function Rulers() {
   );
 }
 
-// "Gimmie More" — outline button at the feed's end: press it and the
-// feed deals another hand of shots. (The only switch left down there
-// is the lights-out one in the colophon.) Hidden once everything's dealt.
-function MoreToggle({ onMore }) {
-  const [busy, setBusy] = useState(false);
-  const pull = () => {
-    if (busy) return;
-    setBusy(true);
-    playStateChange(true); // velvet up-chirp: more is coming
-    haptic(10);
-    onMore();
-    setTimeout(() => setBusy(false), 650);
-  };
-  return (
-    <div className="more-row">
-      <button
-        type="button"
-        className={`more-btn mono ${busy ? 'more-btn--busy' : ''}`}
-        onClick={pull}
-        aria-label="Gimmie more — load more work"
-      >
-        GIMMIE MORE
-      </button>
-    </div>
-  );
-}
-
 // ─────────────────────────────────────────────────────────────
 // Locomotive Scroll (v5, Lenis underneath): smooth wheel scrolling
 // plus the feed's scroll reveal. Booted when the gate flips, torn
@@ -822,11 +795,17 @@ function App() {
         </section>
 
         <div className="board-divider reveal" style={{ '--reveal-delay': '3600ms' }} aria-hidden="true" />
-
-        <div className="reveal" style={{ '--reveal-delay': '3800ms' }}>
-          <Colophon />
-        </div>
       </main>
+      {/* Contact, pinned top right on desktop and mobile: same voice as
+          before (lede-sized, scrambles into the address on hover) */}
+      <div className="contact-sticky">
+        <GlitchLink className="footer-contact" from="Contact" to="jean@konpo.studio" href="mailto:jean@konpo.studio" newTab={false} />
+      </div>
+      {/* the holo card is an easter egg now: a corner peeking in at the
+          bottom right; tap or click still picks it up */}
+      <div className="hc-corner">
+        <HoloCard />
+      </div>
     </div>);
 
 }
@@ -1976,31 +1955,6 @@ const PROJECTS = [
         desc: 'A cross-board radial horizon comparing four frontier models across nine Surge benches. Live prototype, embedded.',
         cat: 'IDK', scope: ['Craft', 'Data viz'] },
     ] },
-  { key: 'fyler', industry: 'AI', org: 'Startup', title: 'Fyler', cat: 'Websites', tag: 'Search Engine', sub: 'Brand, marketing site, and product UI for AI-native search.',
-    cover: P('fyler', 'image', 'fyler-moodboard-brand.webp', 'Fyler', 'Brand', '1600 / 1034'),
-    cards: [
-      A('fyler', 'fyler-walkthrough', 'Walkthrough', 'Product', '3 / 2'),
-      A('fyler', 'fyler-showcase', 'Showcase', 'Product', '16 / 9'),
-      A('fyler', 'fyler-interface', 'Interface', 'Product', '16 / 9'),
-      P('fyler', 'image', 'fyler-inside-search.webp', 'Inside Search', 'Product', '16 / 9'),
-      P('fyler', 'image', 'fyler-rich-weather.webp', 'Weather', 'Product', '1571 / 2031'),
-      P('fyler', 'image', 'fyler-widget-discovery.webp', 'Discovery Widget', 'Product', '1600 / 996'),
-      P('fyler', 'image', 'fyler-widget-graphic.webp', 'Graphic Widget', 'Product', '1600 / 996'),
-      P('fyler', 'image', 'fyler-widget-mobile.webp', 'Mobile Widget', 'Product', '1600 / 996'),
-      P('fyler', 'image', 'fyler-widget-comparative.webp', 'Comparative Widget', 'Product', '1600 / 996'),
-      A('fyler', 'fyler-ds-cards', 'System Cards', 'Systems', '1280 / 828'),
-      P('fyler', 'image', 'fyler-ds-1.webp', 'Design System I', 'Systems', '1600 / 1034'),
-      P('fyler', 'image', 'fyler-ds-2.webp', 'Design System II', 'Systems', '1600 / 1033'),
-      P('fyler', 'image', 'fyler-ds-3.webp', 'Design System III', 'Systems', '1600 / 1034'),
-      P('fyler', 'image', 'fyler-ds-4.webp', 'Design System IV', 'Systems', '1600 / 1033'),
-      P('fyler', 'image', 'fyler-typography.webp', 'Typography', 'Systems', '1600 / 930'),
-      A('fyler', 'fyler-insp-type', 'Type Inspiration', 'Brand', '1280 / 826'),
-      A('fyler', 'fyler-insp-icons', 'Icon Inspiration', 'Brand', '1280 / 712'),
-      A('fyler', 'fyler-insp-patterns', 'Pattern Inspiration', 'Brand', '16 / 9'),
-      A('fyler', 'fyler-insp-palettes', 'Palette Inspiration', 'Brand', '16 / 9'),
-      A('fyler', 'fyler-darklight', 'Dark / Light', 'Product', '3 / 2'),
-      P('fyler', 'image', 'fyler-moodboard-1.webp', 'Moodboard', 'Brand', '1600 / 1034'),
-    ] },
   { key: 'compsych', industry: 'Healthcare', org: 'Enterprise', title: 'ComPsych', cat: 'Brand', tag: 'Mental Health', sub: 'Rebranding the world\u2019s largest employee mental-health provider.',
     cover: A('compsych', 'compsych-hero', 'ComPsych', 'Brand', '4 / 3'),
     cards: [
@@ -2030,6 +1984,74 @@ const PROJECTS = [
       A('compsych', 'compsych-loading', 'Loading', 'Websites', '16 / 9'),
       A('compsych', 'compsych-elements', 'Elements', 'Websites', '10 / 7'),
       P('compsych', 'image', 'compsych-awards.webp', 'Awards', 'Brand', '2110 / 1406'),
+    ] },
+  { key: 'ili', industry: 'Venture', org: 'Enterprise', title: 'ILI.DIGITAL', cat: 'Websites', tag: 'Venture Studio', sub: 'The Nexus brand system, from logo to product.',
+    cover: N('video', 'hero.mp4', 'ILI.DIGITAL', 'Websites', '16 / 9'),
+    cards: [
+      A('ili', 'ili-figma', 'Figma File', 'Brand', '96 / 47'),
+      N('video', 'logos-2.mp4', 'Logos', 'Brand', '4 / 3'),
+      N('video', 'detail.mp4', 'Logo Detail', 'Brand', '4 / 5'),
+      N('image', 'technical-logo.webp', 'Blueprint', 'Brand', '14 / 17'),
+      N('video', 'reveal.mp4', 'Reveal', 'Brand', '21 / 9'),
+      P('ili', 'image', 'ili-palette.webp', 'Palette', 'Systems', '647 / 140'),
+      P('ili', 'image', 'ili-typeface.webp', 'Söhne', 'Systems', '246 / 217'),
+      P('ili', 'image', 'ili-principles.webp', 'Fast, Focused', 'Brand', '771 / 656'),
+      N('image', 'type.webp', 'Glyphs', 'Systems', '166 / 67'),
+      N('image', 'status.webp', 'Portrait', 'Brand', '967 / 543'),
+      P('ili', 'image', 'ili-print.webp', 'Print', 'Brand', '1505 / 837'),
+      N('video', 'smile.mp4', 'Smile', 'Brand', '4 / 3'),
+      N('image', 'bade.webp', 'Badge', 'Brand', '743 / 1008'),
+      N('image', 'poster.webp', 'Poster', 'Brand', '3 / 4'),
+      N('image', 'corner.webp', 'Signage', 'Brand', '1505 / 874'),
+      N('image', 'system.webp', 'Objects', 'Brand', '768 / 805'),
+      N('image', 'website.webp', 'Web Hero', 'Websites', '539 / 337'),
+      N('video', 'categories.mp4', 'Categories', 'Websites', '320 / 217'),
+      N('video', 'animation.mp4', 'Animation', 'Brand', '21 / 9'),
+      P('ili', 'image', 'ili-strategies.webp', 'AI Strategies', 'Websites', '31 / 17'),
+      N('image', 'website-ii.webp', 'Website', 'Websites', '16 / 9'),
+      A('ili', 'ili-statement', 'Statement', 'Websites', '160 / 101'),
+      N('video', 'frames.mp4', 'Frames', 'Brand', '6 / 5'),
+      N('image', 'category-ii.webp', 'Editorial', 'Websites', '403 / 255'),
+      N('image', 'site-category.webp', 'People', 'Websites', '31 / 18'),
+      N('image', 'footer.webp', 'Digital Builder', 'Websites', '62 / 41'),
+      N('image', 'system-i.webp', 'Type Scale', 'Systems', '1600 / 1067'),
+      N('image', 'system-color.webp', 'Color', 'Systems', '3 / 2'),
+      N('image', 'type-sysrtem.webp', 'Type System', 'Systems', '3218 / 2037'),
+      N('image', 'icon-system.webp', 'Icons', 'Systems', '6 / 5'),
+      N('video', 'iconography.mp4', 'Iconography', 'Systems', '31 / 18'),
+      N('image', 'form-field.webp', 'Form Field', 'Systems', '3276 / 1987'),
+      N('image', 'button-system.webp', 'Buttons', 'Systems', '2 / 3'),
+      N('image', 'tags.webp', 'Tags', 'Systems', '67 / 90'),
+      N('image', 'spacing.webp', 'Spacing', 'Systems', '3222 / 2149'),
+      N('image', 'type-ii.webp', 'Typography', 'Systems', '3 / 2'),
+      N('image', 'technical-smile.webp', 'Smile Blueprint', 'Systems', '1638 / 899'),
+      N('video', 'charts.mp4', 'Charts', 'Product', '3 / 2'),
+      N('image', 'book.webp', 'Book', 'Brand', '16 / 9'),
+    ] },
+  { key: 'fyler', industry: 'AI', org: 'Startup', title: 'Fyler', cat: 'Websites', tag: 'Search Engine', sub: 'Brand, marketing site, and product UI for AI-native search.',
+    cover: P('fyler', 'image', 'fyler-moodboard-brand.webp', 'Fyler', 'Brand', '1600 / 1034'),
+    cards: [
+      A('fyler', 'fyler-walkthrough', 'Walkthrough', 'Product', '3 / 2'),
+      A('fyler', 'fyler-showcase', 'Showcase', 'Product', '16 / 9'),
+      A('fyler', 'fyler-interface', 'Interface', 'Product', '16 / 9'),
+      P('fyler', 'image', 'fyler-inside-search.webp', 'Inside Search', 'Product', '16 / 9'),
+      P('fyler', 'image', 'fyler-rich-weather.webp', 'Weather', 'Product', '1571 / 2031'),
+      P('fyler', 'image', 'fyler-widget-discovery.webp', 'Discovery Widget', 'Product', '1600 / 996'),
+      P('fyler', 'image', 'fyler-widget-graphic.webp', 'Graphic Widget', 'Product', '1600 / 996'),
+      P('fyler', 'image', 'fyler-widget-mobile.webp', 'Mobile Widget', 'Product', '1600 / 996'),
+      P('fyler', 'image', 'fyler-widget-comparative.webp', 'Comparative Widget', 'Product', '1600 / 996'),
+      A('fyler', 'fyler-ds-cards', 'System Cards', 'Systems', '1280 / 828'),
+      P('fyler', 'image', 'fyler-ds-1.webp', 'Design System I', 'Systems', '1600 / 1034'),
+      P('fyler', 'image', 'fyler-ds-2.webp', 'Design System II', 'Systems', '1600 / 1033'),
+      P('fyler', 'image', 'fyler-ds-3.webp', 'Design System III', 'Systems', '1600 / 1034'),
+      P('fyler', 'image', 'fyler-ds-4.webp', 'Design System IV', 'Systems', '1600 / 1033'),
+      P('fyler', 'image', 'fyler-typography.webp', 'Typography', 'Systems', '1600 / 930'),
+      A('fyler', 'fyler-insp-type', 'Type Inspiration', 'Brand', '1280 / 826'),
+      A('fyler', 'fyler-insp-icons', 'Icon Inspiration', 'Brand', '1280 / 712'),
+      A('fyler', 'fyler-insp-patterns', 'Pattern Inspiration', 'Brand', '16 / 9'),
+      A('fyler', 'fyler-insp-palettes', 'Palette Inspiration', 'Brand', '16 / 9'),
+      A('fyler', 'fyler-darklight', 'Dark / Light', 'Product', '3 / 2'),
+      P('fyler', 'image', 'fyler-moodboard-1.webp', 'Moodboard', 'Brand', '1600 / 1034'),
     ] },
   { key: 'coachable', industry: 'Coaching', org: 'Startup', title: 'Coachable', cat: 'Brand', tag: 'Career Coaching', sub: 'Identity and website for career-changing coaching.',
     cover: A('coachable', 'coachable-hero', 'Coachable', 'Brand', '4 / 3'),
@@ -2094,49 +2116,6 @@ const PROJECTS = [
     ] },
   // ILI.DIGITAL runs on the "Nexus" are.na channel — a longer, mixed
   // image/video stack that stress-tests the inline-expand pattern.
-  { key: 'ili', industry: 'Venture', org: 'Enterprise', title: 'ILI.DIGITAL', cat: 'Websites', tag: 'Venture Studio', sub: 'The Nexus brand system, from logo to product.',
-    cover: N('video', 'hero.mp4', 'ILI.DIGITAL', 'Websites', '16 / 9'),
-    cards: [
-      A('ili', 'ili-figma', 'Figma File', 'Brand', '96 / 47'),
-      N('video', 'logos-2.mp4', 'Logos', 'Brand', '4 / 3'),
-      N('video', 'detail.mp4', 'Logo Detail', 'Brand', '4 / 5'),
-      N('image', 'technical-logo.webp', 'Blueprint', 'Brand', '14 / 17'),
-      N('video', 'reveal.mp4', 'Reveal', 'Brand', '21 / 9'),
-      P('ili', 'image', 'ili-palette.webp', 'Palette', 'Systems', '647 / 140'),
-      P('ili', 'image', 'ili-typeface.webp', 'Söhne', 'Systems', '246 / 217'),
-      P('ili', 'image', 'ili-principles.webp', 'Fast, Focused', 'Brand', '771 / 656'),
-      N('image', 'type.webp', 'Glyphs', 'Systems', '166 / 67'),
-      N('image', 'status.webp', 'Portrait', 'Brand', '967 / 543'),
-      P('ili', 'image', 'ili-print.webp', 'Print', 'Brand', '1505 / 837'),
-      N('video', 'smile.mp4', 'Smile', 'Brand', '4 / 3'),
-      N('image', 'bade.webp', 'Badge', 'Brand', '743 / 1008'),
-      N('image', 'poster.webp', 'Poster', 'Brand', '3 / 4'),
-      N('image', 'corner.webp', 'Signage', 'Brand', '1505 / 874'),
-      N('image', 'system.webp', 'Objects', 'Brand', '768 / 805'),
-      N('image', 'website.webp', 'Web Hero', 'Websites', '539 / 337'),
-      N('video', 'categories.mp4', 'Categories', 'Websites', '320 / 217'),
-      N('video', 'animation.mp4', 'Animation', 'Brand', '21 / 9'),
-      P('ili', 'image', 'ili-strategies.webp', 'AI Strategies', 'Websites', '31 / 17'),
-      N('image', 'website-ii.webp', 'Website', 'Websites', '16 / 9'),
-      A('ili', 'ili-statement', 'Statement', 'Websites', '160 / 101'),
-      N('video', 'frames.mp4', 'Frames', 'Brand', '6 / 5'),
-      N('image', 'category-ii.webp', 'Editorial', 'Websites', '403 / 255'),
-      N('image', 'site-category.webp', 'People', 'Websites', '31 / 18'),
-      N('image', 'footer.webp', 'Digital Builder', 'Websites', '62 / 41'),
-      N('image', 'system-i.webp', 'Type Scale', 'Systems', '1600 / 1067'),
-      N('image', 'system-color.webp', 'Color', 'Systems', '3 / 2'),
-      N('image', 'type-sysrtem.webp', 'Type System', 'Systems', '3218 / 2037'),
-      N('image', 'icon-system.webp', 'Icons', 'Systems', '6 / 5'),
-      N('video', 'iconography.mp4', 'Iconography', 'Systems', '31 / 18'),
-      N('image', 'form-field.webp', 'Form Field', 'Systems', '3276 / 1987'),
-      N('image', 'button-system.webp', 'Buttons', 'Systems', '2 / 3'),
-      N('image', 'tags.webp', 'Tags', 'Systems', '67 / 90'),
-      N('image', 'spacing.webp', 'Spacing', 'Systems', '3222 / 2149'),
-      N('image', 'type-ii.webp', 'Typography', 'Systems', '3 / 2'),
-      N('image', 'technical-smile.webp', 'Smile Blueprint', 'Systems', '1638 / 899'),
-      N('video', 'charts.mp4', 'Charts', 'Product', '3 / 2'),
-      N('image', 'book.webp', 'Book', 'Brand', '16 / 9'),
-    ] },
   { key: 'hutte', industry: 'DevTools', org: 'Startup', title: 'Hutte', cat: 'Brand', tag: 'Salesforce DevOps', sub: 'Identity and product for the home of Salesforce DevOps.',
     cover: A('hutte', 'hutte-logo', 'Hutte', 'Brand', '3 / 2'),
     cards: [
@@ -2604,7 +2583,7 @@ function FeedTile({ tile, onOpen, slotStyle }) {
   // Every tile reveals on scroll: Locomotive flags it `is-inview` as it
   // enters the viewport (styles: .asset-tile[data-scroll]). Tiles that
   // exist when the gate flips are picked up by locoBoot wholesale;
-  // tiles dealt later (Gimmie More) register themselves here.
+  // tiles dealt later (as the feed scrolls on) register themselves here.
   const slot = useRef(null);
   useEffect(() => {
     const el = slot.current;
@@ -2759,8 +2738,8 @@ function FilterMenu({ filter, groups, onPick }) {
 }
 
 function AssetsFeed() {
-  const PAGE = 14;        // tiles per Gimmie More pull
-  const FIRST_DEAL = 28;  // tiles before the toggle appears (Jean: 2× the pull)
+  const PAGE = 14;        // tiles per deal as the scroll nears the end
+  const FIRST_DEAL = 28;  // tiles in the first deal (2× a page)
   const [cols, setCols] = useState(feedColCount);
   const [desktop, setDesktop] = useState(feedIsDesktop);
   const [active, setActive] = useState(null);   // the shot open in the info overlay
@@ -2768,7 +2747,8 @@ function AssetsFeed() {
   const [filter, setFilterOn] = useState(null);
   // dice roll: null = natural order, otherwise the shuffle seed
   const [shuffleSeed, setShuffleSeed] = useState(null);
-  const [limit, setLimit] = useState(FIRST_DEAL);  // grown by the Gimmie More switch
+  const [limit, setLimit] = useState(FIRST_DEAL);  // grown by the end-of-feed sentinel
+  const moreRef = useRef(null);
   useEffect(() => {
     const onResize = () => { setCols(feedColCount()); setDesktop(feedIsDesktop()); };
     window.addEventListener('resize', onResize);
@@ -2848,6 +2828,23 @@ function AssetsFeed() {
   // Deal only `limit` tiles; the Gimmie More switch below grows it.
   const dealt = ordered.slice(0, limit);
   const hasMore = visible.length > dealt.length;
+  // Endless feed: a sentinel under the last row deals the next hand
+  // while it's still a screen away, so tiles are laid out (and their
+  // lazy media queued) before you reach them. Re-observed after every
+  // deal: if the sentinel is still in range it fires again at once.
+  useEffect(() => {
+    const el = moreRef.current;
+    if (!el || !hasMore) return undefined;
+    let t;
+    const io = new IntersectionObserver((entries) => {
+      if (!entries[0].isIntersecting) return;
+      io.disconnect();
+      setLimit((l) => l + PAGE);
+      t = setTimeout(() => window.dispatchEvent(new Event('resize')), 120); // snap relayout
+    }, { rootMargin: '0px 0px 100% 0px' });
+    io.observe(el);
+    return () => { io.disconnect(); clearTimeout(t); };
+  }, [hasMore, dealt.length]);
   // Row-major grid; desktop subdivides into 12 tracks so tiles take
   // varied spans + offsets (coverSlot), tablet/mobile one track per tile.
   // A project COVER always opens a fresh row (large, left) — if one
@@ -2890,29 +2887,7 @@ function AssetsFeed() {
       {visible.length === 0 && (
         <p className="feed-empty mono">NOTHING HERE YET — LOOSEN A FILTER</p>
       )}
-      {hasMore && (
-        <MoreToggle
-          onMore={() => {
-            // The new tiles land ABOVE the toggle, and scroll anchoring
-            // keeps the toggle pinned under the cursor — so without a
-            // nudge the deal happens off-screen. Glide to the first
-            // fresh tile; Locomotive reveals each one as it scrolls in.
-            const prev = dealt.length;
-            setLimit((l) => l + PAGE);
-            setTimeout(() => {
-              window.dispatchEvent(new Event('resize'));
-              const first = document.querySelectorAll('.feed-masonry .proj')[prev];
-              if (first) {
-                const cell = parseFloat(
-                  getComputedStyle(document.documentElement).getPropertyValue('--board-cell')
-                ) || 32;
-                const y = first.getBoundingClientRect().top + window.scrollY - cell * 2;
-                locoScrollTo(y, { duration: 1.1 });
-              }
-            }, 120);
-          }}
-        />
-      )}
+      {hasMore && <div className="feed-more" ref={moreRef} aria-hidden="true" />}
       {/* the sticky controls capsule is gone: filter funnel cut
           2026-08-31, dice cut 2026-09-14 (Jean). FilterMenu / DiceButton
           + the filter and shuffle state stay dormant in this file. */}
@@ -3055,7 +3030,8 @@ function OffSwitch({ onOff }) {
    it up (springs to the viewport centre, enlarges to ~440px, a single
    360° flip shows the Konpo back), click again / backdrop / Esc puts
    it down. On touch devices the picked-up card follows the phone's
-   tilt (DeviceOrientation, permission asked inside the tap on iOS).
+   tilt where that needs no permission (Android); iOS would prompt for
+   motion access, so there the card just doesn't tilt.
    Pointer state is written straight to CSS vars — no React re-render
    per frame. Source of truth for markup/CSS: scratch/holo-card.html.
    ------------------------------------------------------------------ */
@@ -3189,11 +3165,9 @@ function HoloCard() {
     const enableOrientation = () => {
       if (orientOn || !coarse || typeof DeviceOrientationEvent === 'undefined') return;
       const start = () => { if (!alive || orientOn) return; orientOn = true; orientBase = null; addEventListener('deviceorientation', onOrient); };
-      try {
-        if (typeof DeviceOrientationEvent.requestPermission === 'function') {
-          DeviceOrientationEvent.requestPermission().then((res) => { if (res === 'granted') start(); }).catch(() => {});
-        } else start();
-      } catch (_) {}
+      // iOS gates it behind a permission prompt: not worth one for a tilt
+      if (typeof DeviceOrientationEvent.requestPermission === 'function') return;
+      start();
     };
 
     // --- pick up / put down -----------------------------------------------
@@ -3353,20 +3327,7 @@ function HoloCard() {
   );
 }
 
-function Colophon() {
-  return (
-    <div className="colophon" data-screen-label="04 Colophon">
-      {/* The holo card sits where Jean's 48px avatar (and before it the
-          lights-out switch) sat. OffSwitch + App.lightsOut
-          are still here, dormant: render <OffSwitch onOff={onOff} /> to
-          bring the loop back; <img className="colophon-avatar" .../> for
-          the plain avatar. */}
-      <HoloCard />
-      {/* the small rule that sat here was cut 2026-09-14; Contact scrambles
-          into the address on hover, same GlitchLink as the Where fold */}
-      <GlitchLink className="footer-contact" from="Contact" to="jean@konpo.studio" href="mailto:jean@konpo.studio" newTab={false} />
-    </div>);
-
-}
+// (The Colophon that held the holo card + Contact under the feed is
+// gone: the card peeks from the corner, Contact is pinned top right.)
 
 ReactDOM.createRoot(document.getElementById('root')).render(<App />);
