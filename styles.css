@@ -381,9 +381,11 @@ html[data-reveal="pending"] .rulers {
   border-bottom: 1px solid var(--rk-faint);
   transition: background-color .6s ease;
 }
-/* phones: rulers only while the gate is up — the feed runs edge-tight */
+/* phones: rulers only while the gate is up — the feed runs edge-tight.
+   Hidden, not just clear: Safari 26 reads a full-screen fixed layer as an
+   overlay and keeps its bars in the gate's blue while one is there */
 @media (max-width: 900px) {
-  html:not([data-reveal="pending"]) .rulers { opacity: 0; }
+  html:not([data-reveal="pending"]) .rulers { opacity: 0; visibility: hidden; transition: opacity .5s ease, visibility 0s linear .5s; }
 }
 /* the fixed chrome steps down under the top ruler */
 @media (min-width: 901px) {
@@ -2608,9 +2610,10 @@ html[data-reveal="pending"] .hc-corner { opacity: 0; visibility: hidden; pointer
 }
 .hc-backdrop {
   position: fixed; inset: 0; z-index: 998; background: rgba(8, 8, 20, .42);
-  opacity: 0; pointer-events: none; transition: opacity .55s ease;
+  opacity: 0; pointer-events: none; visibility: hidden;  /* hidden when off, same Safari 26 overlay rule as .rulers */
+  transition: opacity .55s ease, visibility 0s linear .55s;
 }
-.hc-backdrop.hc--on { opacity: 1; pointer-events: auto; }
+.hc-backdrop.hc--on { opacity: 1; pointer-events: auto; visibility: visible; transition: opacity .55s ease; }
 .hc.hc--active .hc-rotator {
   box-shadow: 0 50px 110px -30px rgba(0, 0, 0, .6), 0 0 0 1px rgba(255, 255, 255, .06);
 }
