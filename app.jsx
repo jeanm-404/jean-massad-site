@@ -1,5 +1,5 @@
 /* global React, ReactDOM */
-const { useState, useMemo, useRef, useEffect } = React;
+const { useState, useMemo, useRef, useEffect, useLayoutEffect } = React;
 
 // Hand-painted ".md" — dot, then m (three humps), then d.
 // Same brush as the old ".com": 2.8 stroke, round caps, tiny wobble.
@@ -96,14 +96,6 @@ const SIGNATURE = {
   transient: { amt: 0.16, hz: 420, shape: 'lowpass', ms: 12 },
   sub: 0.23, pitchVarPct: 2, volJitterPct: 5,
   reverbWet: 0.18, layerSpreadMs: 3,
-};
-const UI_CONFIRM = {
-  hits: [
-    { pitch: 1.04, gain: 0.56, glide: 1.03 },
-    { dt: 0.104, pitch: 1.68, gain: 0.5, glide: 1.1 },
-  ],
-  tone: { dt: 0.106, pitch: 4.9, gain: 0.085, decay: 1.3, glide: 1.04, jitter: 0.08 },
-  decay: 1.72, reverb: 0.92, transient: 0.42, sub: 0.28,
 };
 
 let _actx = null, _master = null, _reverb = null, _noise = null;
@@ -260,7 +252,6 @@ function playEvent(ev) {
     ev.hits.forEach((hit) => playHit(now + (hit.dt || 0), SIGNATURE, ev, hit));
   } catch (e) { /* sound is a bonus layer, never the message */ }
 }
-function playConfirm() { playEvent(UI_CONFIRM); }
 function playToggleOff() { playEvent(TOGGLE_OFF); }
 function playStateChange(opening) { playEvent(opening ? STATE_UP : STATE_DOWN); }
 
@@ -291,8 +282,9 @@ function haptic(ms = 12) {
 }
 
 // ─────────────────────────────────────────────────────────────
-// Gate — the site opens dark with a single light switch.
-// Flipping it floods the page white and starts the reveal.
+// Gate — the site opens on the blue with a scrambled name: the
+// characters settle on "Jean Massad", flip to "Design Lead", then the
+// page floods white and the reveal starts. No input needed.
 // ─────────────────────────────────────────────────────────────
 // ─── the blueprint sheet: traced from the REAL page ─────────────
 // The site is already laid out behind the gate (held at opacity 0 by
@@ -319,14 +311,13 @@ function frameRect() {
   return { x: b.left + pl, y: b.top + pt, w: b.width - pl - pr, h: b.height - pt };
 }
 
-function Gate({ onEnter, entering, count = 1, blueprint = false }) {
-  const [on, setOn] = useState(false);     // click registered
-  const [lit, setLit] = useState(false);   // the switch finally gave in
+function Gate({ onEnter, entering, blueprint = false }) {
+  const [lit, setLit] = useState(false);   // the lights came on
   const [gone, setGone] = useState(false);
   const [draft, setDraft] = useState(null); // { frame } while the blueprint beat runs
   const [warm, setWarm] = useState({ done: WARM.done, total: WARM.total });
-  const knobRefs = useRef([]);             // one knob per switch — all move as one
-  const inputRef = useRef(null);
+  const [word, setWord] = useState('');
+  const [said, setSaid] = useState(false); // the words are done, the gate moves on
 
   // warmup progress feeds the sheet's counter
   useEffect(() => {
@@ -340,60 +331,47 @@ function Gate({ onEnter, entering, count = 1, blueprint = false }) {
     return () => document.documentElement.classList.remove('bp-draft');
   }, [draft]);
 
-  // Delayed ticks are Android-only (vibrate). iOS gates ALL synthetic
-  // switch clicks — confirmed on-device — so there the choreography is
-  // just the native tap tick; no point re-clicking anything.
-  const tick = (ms) => {
-    try { if (navigator.vibrate) navigator.vibrate(ms); } catch (e) { /* fine */ }
-  };
-
-  const flip = () => {
-    if (on) return;
-    setOn(true);
-    const knobs = knobRefs.current.filter(Boolean);
+  // The words: noise that settles on the name, holds, scrambles over
+  // to the role, holds, then the lights. Same glitch as the links.
+  useEffect(() => {
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    // The knob struggles: shoves forward, slips back, strains, loses
-    // grip, then breaks free. The lights only come on when it lands.
-    // With a multiplied gate, EVERY knob runs the struggle in unison.
-    const SUCCESS = reduced || !window.__anime ? 0 : 1350;
-    // Haptics follow the struggle. The press tick comes from the native
-    // switch itself; these are the slips and the win.
-    if (SUCCESS > 0) {
-      setTimeout(() => tick(8), 300);   // slips back
-      setTimeout(() => tick(8), 960);   // loses grip
-    }
-    setTimeout(() => tick(24), SUCCESS); // breaks free — lights on
-    knobs.forEach((knob) => {
-      if (reduced) {
-        knob.style.transform = 'translateX(52px)';
-      } else if (window.__anime) {
-        window.__anime.animate(knob, {
-          x: [
-            { to: 15, duration: 300, ease: 'outQuad' },   // first shove
-            { to: 4,  duration: 280, ease: 'outQuad' },   // slips back
-            { to: 33, duration: 380, ease: 'inOutQuad' }, // strains harder
-            { to: 21, duration: 240, ease: 'outQuad' },   // loses grip
-            { to: 52, duration: 420, ease: 'outBounce' }, // breaks free
-          ],
+    const timers = [];
+    let cancel = () => {};
+    const later = (fn, ms) => timers.push(setTimeout(fn, ms));
+    const NAME = 'Jean Massad', ROLE = 'Design Lead';
+    if (reduced) {
+      setWord(NAME);
+      later(() => setWord(ROLE), 1100);
+      later(() => { setSaid(true); go(); }, 2200);
+    } else {
+      const noise = Array.from(NAME, () => GLITCH_CHARS[Math.floor(Math.random() * GLITCH_CHARS.length)]).join('');
+      setWord(noise);
+      later(() => {
+        cancel = scramble(noise, NAME, setWord, { lead: 10, settle: 18 }, () => {
+          later(() => {
+            cancel = scramble(NAME, ROLE, setWord, {}, () => {
+              later(() => { setSaid(true); go(); }, 1100);
+            });
+          }, 1000);
         });
-      } else {
-        // CDN fallback: plain CSS transition
-        knob.style.transition = 'transform .45s cubic-bezier(.3, .8, .3, 1)';
-        knob.style.transform = 'translateX(52px)';
-      }
-    });
-    // Success: track fills, chime plays, the page floods in
+      }, 250);
+    }
+    return () => { timers.forEach(clearTimeout); cancel(); };
+  }, []);
+
+  const go = () => {
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    // The lights: the page floods in
     const flood = () => {
       setLit(true);
-      playConfirm();
       // the page starts landing while the blue is still lifting — the
       // blueprint hands straight over to the content it traced
       setTimeout(onEnter, 250);
       setTimeout(() => setGone(true), 1100);
     };
-    if (!blueprint || reduced || !window.UIGeneration) { setTimeout(flood, SUCCESS); return; }
-    // First visit: the DRAFT beat between the knob landing and the
-    // flood. The switch steps aside and the hero gets generated on the
+    if (!blueprint || reduced || !window.UIGeneration) { setTimeout(flood, 350); return; }
+    // First visit: the DRAFT beat between the words and the flood.
+    // The words step aside and the hero gets generated on the
     // blue like a Figma sheet — rulers, 100px grid, dotted skeleton —
     // while the asset warmup runs behind it. The lights come on
     // mid-drawing and the real hero wipes in behind the scan line.
@@ -422,39 +400,16 @@ function Gate({ onEnter, entering, count = 1, blueprint = false }) {
         window.UIGeneration.generate(hero, { mode: 'skeleton', duration: ms, maxParts: 120 });
         setTimeout(flood, ms * HERO_GEN_FLOOD);
       });
-    }, SUCCESS + 180);
+    }, 350);
   };
 
   const pad = (n) => String(n).padStart(3, '0');
   const warmDone = warm.total > 0 && warm.done >= warm.total;
 
   if (gone) return null;
-  // A real native switch input (invisible, full-size) sits under the
-  // finger: on iOS the tap toggles an actual switch control, so the
-  // system haptic fires natively — no programmatic .click() to gate.
-  // Each return trip doubles the field (2, 4, 8 …) — flipping ANY
-  // switch flips them ALL: one shared `on/lit` state, one knob anim.
   return (
     <div className={`gate ${lit ? 'gate--on' : ''} ${entering ? 'gate--fadein' : ''} ${draft ? 'gate--draft' : ''}`}>
-      <div className={`gate-field ${count > 1 ? 'gate-field--many' : ''}`}>
-        {Array.from({ length: count }, (_, i) => (
-          <label key={i} className={`gate-toggle ${lit ? 'gate-toggle--on' : ''}`}>
-            <input
-              type="checkbox"
-              switch=""
-              className="gate-toggle-input"
-              ref={i === 0 ? inputRef : undefined}
-              checked={on}
-              onChange={flip}
-              aria-label="Enter the site (turn on the lights)"
-            />
-            <span
-              className="gate-toggle-knob"
-              ref={(el) => { knobRefs.current[i] = el; }}
-            />
-          </label>
-        ))}
-      </div>
+      <div className={`gate-words ${said ? 'gate-words--out' : ''}`} aria-hidden="true">{word}</div>
       {/* the sheet, in imdaryl.com's blueprint idiom: the frame's true
           width and the warmup counter. The hero's dotted skeleton is
           the runtime's own overlay, drawn above the gate. Dissolves
@@ -659,6 +614,38 @@ function App() {
     setGateGen((g) => g + 1);
   };
 
+  // The hero sits centered in the first screen, between the top edge
+  // and the first artwork, which just peeks in at the bottom. The room
+  // goes OUTSIDE the hero (its top margin + the feed's top margin) so
+  // the hero box stays its natural size: the blueprint draft traces that
+  // box. Base spacing differs by breakpoint, so it's measured; svh, so
+  // iOS toolbars collapsing never re-flows the page.
+  useLayoutEffect(() => {
+    const fit = () => {
+      const hero = document.querySelector('.hero');
+      const area = document.querySelector('.grid-area');
+      const first = document.querySelector('.feed-masonry .asset-media') || document.querySelector('.feed-masonry');
+      if (!hero || !area || !first) return;
+      hero.style.marginTop = '';
+      area.style.marginTop = '';
+      const y = (el) => el.getBoundingClientRect().top + window.scrollY;
+      const above = y(hero);
+      const h = hero.offsetHeight;
+      const below = y(first) - (above + h);
+      const base = parseFloat(getComputedStyle(area).marginTop) || 0;
+      const peek = window.innerWidth <= 720 ? 40 : 48;
+      // each side gets half of what's left of the screen
+      const side = `(100svh - ${Math.round(h + peek)}px) / 2`;
+      hero.style.marginTop = `max(0px, calc(${side} - ${Math.round(above)}px))`;
+      area.style.marginTop = `calc(${base}px + max(0px, calc(${side} - ${Math.round(below)}px)))`;
+    };
+    fit();
+    // the hero's height moves when the webfonts land
+    (window.fontCSS || Promise.resolve()).then(() => document.fonts && document.fonts.ready).then(fit);
+    window.addEventListener('resize', fit);
+    return () => window.removeEventListener('resize', fit);
+  }, []);
+
   // Snap divider bands to the whiteboard grid: nudge each one down so
   // its top rule sits exactly on a background line. Re-runs when late
   // layout shifts things (fonts, masonry images, resizes).
@@ -771,7 +758,6 @@ function App() {
         entering={gateGen > 0}
         blueprint={gateGen === 0}
         onEnter={enter}
-        count={Math.min(1 << gateGen, 512)}
       />
       <main className="container">
         <div className="board-grid" aria-hidden="true" />
@@ -1157,22 +1143,14 @@ function Headline() {
   const C = (node, key, trail) => (
     <span key={key} className="reveal-word" style={T()}>{node}{trail ? ' ' : ''}</span>
   );
-  // Hovering (or focusing) a chip spotlights its bio passages: stamp
-  // html[data-bio-focus] and let CSS dim every .bio-part but that tag.
-  const bio = (key) => ({
-    onMouseEnter: () => document.documentElement.setAttribute('data-bio-focus', key),
-    onMouseLeave: () => document.documentElement.removeAttribute('data-bio-focus'),
-    onFocus: () => document.documentElement.setAttribute('data-bio-focus', key),
-    onBlur: () => document.documentElement.removeAttribute('data-bio-focus'),
-  });
   return (
     <section className="headline-block" data-screen-label="00 Headline">
       <p className="headline-eyebrow">
-        {/* plain marks, not links — hovering spotlights that bio passage
-            (the konpo.studio / surgehq.ai links live in the intro copy) */}
-        {C(<span className="chip" {...bio('jean')}>Jean<img className="chip-avatar" src="jean-avatar.png" alt="" /></span>, 'jean', true)}
-        {C(<span className="chip" {...bio('konpo')}>Konpo<KonpoMark className="chip-logo chip-logo--konpo" /></span>, 'konpo', true)}
-        {C(<span className="chip" {...bio('surge')}>Surge<SurgeMark className="chip-logo chip-logo--surge" /></span>, 'surge')}
+        {/* plain marks, no links and no hover (the konpo.studio /
+            surgehq.ai links live in the intro copy) */}
+        {C(<span className="chip">Jean<img className="chip-avatar" src="jean-avatar.png" alt="" /></span>, 'jean', true)}
+        {C(<span className="chip">Konpo<KonpoMark className="chip-logo chip-logo--konpo" /></span>, 'konpo', true)}
+        {C(<span className="chip">Surge<SurgeMark className="chip-logo chip-logo--surge" /></span>, 'surge')}
       </p>
       <h1 className="headline">
         {/* who this is, for search and screen readers; the visible
@@ -1530,9 +1508,6 @@ function IntroDial() {
 
   return (
     <section className="intro" data-screen-label="01 Intro" style={{ padding: "0px" }}>
-      {/* Passages are wrapped in .bio-part spans tagged by who they're
-          about — hovering an eyebrow chip (Jean/Konpo/Surge) sets
-          html[data-bio-focus] and CSS dims every part but that tag. */}
       {/* lead block — the whole opener carries the heavier, larger cut;
           the .md line closes it */}
       <p className="intro-heading bio-part" data-bio="jean">
@@ -1658,9 +1633,8 @@ function Intro() {
     return { W, I, POP, Gap, Surge, Konpo };
   };
   const lede = typer(900, 28, 260);
-  // Passages are wrapped in .bio-part spans tagged by who they're about —
-  // hovering an eyebrow chip (Jean/Konpo/Surge) sets html[data-bio-focus]
-  // and CSS dims every part but that tag.
+  // Passages are wrapped in .bio-part spans tagged by who they're about
+  // (the chips' hover spotlight is gone; the tags are inert for now).
   const who = (({ W, I, Surge, Konpo }) => (
     <p className="intro-paragraph">
       <span className="bio-part" data-bio="jean">
@@ -2901,52 +2875,53 @@ function AssetsFeed() {
 // ─────────────────────────────────────────────────────────────
 const GLITCH_CHARS = '!<>-_\\/[]{}—=+*^?#________';
 
+// Scramble `from` into `to`, one frame of text per ~30ms through
+// onFrame. Each character holds, glitches, then locks at its own time:
+// `lead` frames of pure glitch before any lock window opens, `settle`
+// frames of extra spread on top. Returns a cancel function.
+function scramble(from, to, onFrame, { lead = 0, settle = 0 } = {}, onDone) {
+  const len = Math.max(from.length, to.length);
+  // Per-char "lock" times — each character settles at a different point
+  const locks = Array.from({ length: len }, () => {
+    const start = Math.floor(Math.random() * 5);
+    const end = lead + start + 5 + Math.floor(Math.random() * (7 + settle));
+    return [start, end];
+  });
+  const t0 = performance.now();
+  let raf = null;
+  const tick = (now) => {
+    const elapsed = (now - t0) / 30; // ~30ms per "frame"
+    let out = '';
+    let done = 0;
+    for (let i = 0; i < len; i++) {
+      const [s, e] = locks[i];
+      if (elapsed < s) {
+        out += from[i] ?? '';
+      } else if (elapsed < e) {
+        out += GLITCH_CHARS[Math.floor(Math.random() * GLITCH_CHARS.length)];
+      } else {
+        out += to[i] ?? '';
+        done++;
+      }
+    }
+    onFrame(out);
+    if (done < len) raf = requestAnimationFrame(tick);
+    else { raf = null; if (onDone) onDone(); }
+  };
+  raf = requestAnimationFrame(tick);
+  return () => { if (raf) cancelAnimationFrame(raf); };
+}
+
 function GlitchLink({ from, to, href = '#', className = '', newTab = true }) {
   const [display, setDisplay] = useState(from);
-  const rafRef = useRef(null);
-  const startRef = useRef(0);
-  const targetRef = useRef(from);
+  const cancelRef = useRef(null);
 
   const startScramble = (target) => {
-    targetRef.current = target;
-    if (rafRef.current) cancelAnimationFrame(rafRef.current);
-    const startStr = display;
-    const len = Math.max(startStr.length, target.length);
-    // Per-char "lock" times — each character settles at a different point
-    const locks = Array.from({ length: len }, (_, i) => {
-      const start = Math.floor(Math.random() * 5);
-      const end = start + 5 + Math.floor(Math.random() * 7);
-      return [start, end];
-    });
-    startRef.current = performance.now();
-
-    const tick = (now) => {
-      const elapsed = (now - startRef.current) / 30; // ~30ms per "frame"
-      let out = '';
-      let done = 0;
-      for (let i = 0; i < len; i++) {
-        const targetCh = target[i] ?? '';
-        const [s, e] = locks[i];
-        if (elapsed < s) {
-          out += startStr[i] ?? '';
-        } else if (elapsed < e) {
-          out += GLITCH_CHARS[Math.floor(Math.random() * GLITCH_CHARS.length)];
-        } else {
-          out += targetCh;
-          done++;
-        }
-      }
-      setDisplay(out);
-      if (done < len) {
-        rafRef.current = requestAnimationFrame(tick);
-      } else {
-        rafRef.current = null;
-      }
-    };
-    rafRef.current = requestAnimationFrame(tick);
+    if (cancelRef.current) cancelRef.current();
+    cancelRef.current = scramble(display, target, setDisplay);
   };
 
-  useEffect(() => () => { if (rafRef.current) cancelAnimationFrame(rafRef.current); }, []);
+  useEffect(() => () => { if (cancelRef.current) cancelRef.current(); }, []);
 
   return (
     <a
